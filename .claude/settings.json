@@ -1,6 +1,7 @@
 {
   "enabledPlugins": [
-    "feature-dev@claude-plugins-official"
+    "feature-dev@claude-plugins-official",
+    "claude-md-management@claude-plugins-official"
   ],
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
