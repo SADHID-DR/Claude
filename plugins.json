@@ -36,6 +36,12 @@
       "marketplace": "thedotmack",
       "command": "claude plugin install claude-mem@thedotmack",
       "description": "Persistent memory compression system for Claude Code - persist context across sessions"
+    },
+    {
+      "name": "caveman",
+      "marketplace": "caveman",
+      "command": "claude plugin install caveman@caveman",
+      "description": "Ultra-compressed communication mode - cuts ~75% output tokens while keeping full technical accuracy"
     }
   ],
   "marketplaces": [
@@ -54,13 +60,21 @@
       "source": "https://github.com/thedotmack/claude-mem",
       "type": "github",
       "description": "Plugins by Alex Newman - Memory compression and context management"
+    },
+    {
+      "name": "caveman",
+      "source": "https://github.com/JuliusBrussee/caveman",
+      "type": "github",
+      "description": "Token compression mode - ultra-concise communication style"
     }
   ],
   "setup_commands": [
     "claude plugin marketplace add f/prompts.chat",
     "claude plugin install prompts.chat@prompts.chat",
     "claude plugin marketplace add thedotmack/claude-mem",
-    "claude plugin install claude-mem@thedotmack"
+    "claude plugin install claude-mem@thedotmack",
+    "claude plugin marketplace add JuliusBrussee/caveman",
+    "claude plugin install caveman@caveman"
   ],
   "notes": "Run plugin installations and marketplace setup when marketplaces are accessible"
 }
