@@ -24,11 +24,29 @@
       "name": "gitlab",
       "marketplace": "claude-plugins-official",
       "command": "claude plugin install gitlab@claude-plugins-official"
+    },
+    {
+      "name": "prompts.chat",
+      "marketplace": "prompts.chat",
+      "command": "claude plugin install prompts.chat@prompts.chat",
+      "description": "Access thousands of AI prompts and skills directly in Claude Code"
     }
   ],
-  "marketplace": {
-    "name": "claude-plugins-official",
-    "source": "https://plugins.anthropic.com/official"
-  },
-  "notes": "Run plugin installations when marketplace is accessible"
+  "marketplaces": [
+    {
+      "name": "claude-plugins-official",
+      "source": "https://plugins.anthropic.com/official"
+    },
+    {
+      "name": "prompts.chat",
+      "source": "https://github.com/f/prompts.chat",
+      "type": "github",
+      "description": "Official prompts.chat marketplace - AI prompts, skills, and tools"
+    }
+  ],
+  "setup_commands": [
+    "claude plugin marketplace add f/prompts.chat",
+    "claude plugin install prompts.chat@prompts.chat"
+  ],
+  "notes": "Run plugin installations and marketplace setup when marketplaces are accessible"
 }
