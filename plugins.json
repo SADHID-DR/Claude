@@ -19,6 +19,11 @@
       "name": "claude-code-setup",
       "marketplace": "claude-plugins-official",
       "command": "claude plugin install claude-code-setup@claude-plugins-official"
+    },
+    {
+      "name": "gitlab",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install gitlab@claude-plugins-official"
     }
   ],
   "marketplace": {
