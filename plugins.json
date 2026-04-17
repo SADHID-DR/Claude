@@ -42,6 +42,12 @@
       "marketplace": "caveman",
       "command": "claude plugin install caveman@caveman",
       "description": "Ultra-compressed communication mode - cuts ~75% output tokens while keeping full technical accuracy"
+    },
+    {
+      "name": "n8n-mcp-skills",
+      "marketplace": "n8n-skills",
+      "command": "claude plugin install n8n-mcp-skills@n8n-skills",
+      "description": "Expert skills for building n8n workflows - 7 complementary skills for MCP tools, expressions, patterns, validation, and code"
     }
   ],
   "marketplaces": [
@@ -66,6 +72,12 @@
       "source": "https://github.com/JuliusBrussee/caveman",
       "type": "github",
       "description": "Token compression mode - ultra-concise communication style"
+    },
+    {
+      "name": "n8n-skills",
+      "source": "https://github.com/czlonkowski/n8n-skills",
+      "type": "github",
+      "description": "Expert skills for n8n workflow automation with n8n-mcp integration"
     }
   ],
   "setup_commands": [
@@ -74,7 +86,9 @@
     "claude plugin marketplace add thedotmack/claude-mem",
     "claude plugin install claude-mem@thedotmack",
     "claude plugin marketplace add JuliusBrussee/caveman",
-    "claude plugin install caveman@caveman"
+    "claude plugin install caveman@caveman",
+    "claude plugin marketplace add czlonkowski/n8n-skills",
+    "claude plugin install n8n-mcp-skills@n8n-skills"
   ],
   "notes": "Run plugin installations and marketplace setup when marketplaces are accessible"
 }
