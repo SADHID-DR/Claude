@@ -30,6 +30,12 @@
       "marketplace": "prompts.chat",
       "command": "claude plugin install prompts.chat@prompts.chat",
       "description": "Access thousands of AI prompts and skills directly in Claude Code"
+    },
+    {
+      "name": "claude-mem",
+      "marketplace": "thedotmack",
+      "command": "claude plugin install claude-mem@thedotmack",
+      "description": "Persistent memory compression system for Claude Code - persist context across sessions"
     }
   ],
   "marketplaces": [
@@ -42,11 +48,19 @@
       "source": "https://github.com/f/prompts.chat",
       "type": "github",
       "description": "Official prompts.chat marketplace - AI prompts, skills, and tools"
+    },
+    {
+      "name": "thedotmack",
+      "source": "https://github.com/thedotmack/claude-mem",
+      "type": "github",
+      "description": "Plugins by Alex Newman - Memory compression and context management"
     }
   ],
   "setup_commands": [
     "claude plugin marketplace add f/prompts.chat",
-    "claude plugin install prompts.chat@prompts.chat"
+    "claude plugin install prompts.chat@prompts.chat",
+    "claude plugin marketplace add thedotmack/claude-mem",
+    "claude plugin install claude-mem@thedotmack"
   ],
   "notes": "Run plugin installations and marketplace setup when marketplaces are accessible"
 }
