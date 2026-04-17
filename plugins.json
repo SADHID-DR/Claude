@@ -9,6 +9,11 @@
       "name": "github",
       "marketplace": "claude-plugins-official",
       "command": "claude plugin install github@claude-plugins-official"
+    },
+    {
+      "name": "code-simplifier",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install code-simplifier@claude-plugins-official"
     }
   ],
   "marketplace": {
