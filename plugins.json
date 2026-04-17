@@ -1,0 +1,19 @@
+{
+  "plugins": [
+    {
+      "name": "frontend-design",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install frontend-design@claude-plugins-official"
+    },
+    {
+      "name": "github",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install github@claude-plugins-official"
+    }
+  ],
+  "marketplace": {
+    "name": "claude-plugins-official",
+    "source": "https://plugins.anthropic.com/official"
+  },
+  "notes": "Run plugin installations when marketplace is accessible"
+}
