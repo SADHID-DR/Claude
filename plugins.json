@@ -1,0 +1,94 @@
+{
+  "plugins": [
+    {
+      "name": "frontend-design",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install frontend-design@claude-plugins-official"
+    },
+    {
+      "name": "github",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install github@claude-plugins-official"
+    },
+    {
+      "name": "code-simplifier",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install code-simplifier@claude-plugins-official"
+    },
+    {
+      "name": "claude-code-setup",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install claude-code-setup@claude-plugins-official"
+    },
+    {
+      "name": "gitlab",
+      "marketplace": "claude-plugins-official",
+      "command": "claude plugin install gitlab@claude-plugins-official"
+    },
+    {
+      "name": "prompts.chat",
+      "marketplace": "prompts.chat",
+      "command": "claude plugin install prompts.chat@prompts.chat",
+      "description": "Access thousands of AI prompts and skills directly in Claude Code"
+    },
+    {
+      "name": "claude-mem",
+      "marketplace": "thedotmack",
+      "command": "claude plugin install claude-mem@thedotmack",
+      "description": "Persistent memory compression system for Claude Code - persist context across sessions"
+    },
+    {
+      "name": "caveman",
+      "marketplace": "caveman",
+      "command": "claude plugin install caveman@caveman",
+      "description": "Ultra-compressed communication mode - cuts ~75% output tokens while keeping full technical accuracy"
+    },
+    {
+      "name": "n8n-mcp-skills",
+      "marketplace": "n8n-skills",
+      "command": "claude plugin install n8n-mcp-skills@n8n-skills",
+      "description": "Expert skills for building n8n workflows - 7 complementary skills for MCP tools, expressions, patterns, validation, and code"
+    }
+  ],
+  "marketplaces": [
+    {
+      "name": "claude-plugins-official",
+      "source": "https://plugins.anthropic.com/official"
+    },
+    {
+      "name": "prompts.chat",
+      "source": "https://github.com/f/prompts.chat",
+      "type": "github",
+      "description": "Official prompts.chat marketplace - AI prompts, skills, and tools"
+    },
+    {
+      "name": "thedotmack",
+      "source": "https://github.com/thedotmack/claude-mem",
+      "type": "github",
+      "description": "Plugins by Alex Newman - Memory compression and context management"
+    },
+    {
+      "name": "caveman",
+      "source": "https://github.com/JuliusBrussee/caveman",
+      "type": "github",
+      "description": "Token compression mode - ultra-concise communication style"
+    },
+    {
+      "name": "n8n-skills",
+      "source": "https://github.com/czlonkowski/n8n-skills",
+      "type": "github",
+      "description": "Expert skills for n8n workflow automation with n8n-mcp integration"
+    }
+  ],
+  "setup_commands": [
+    "claude plugin marketplace add f/prompts.chat",
+    "claude plugin install prompts.chat@prompts.chat",
+    "claude plugin marketplace add thedotmack/claude-mem",
+    "claude plugin install claude-mem@thedotmack",
+    "claude plugin marketplace add JuliusBrussee/caveman",
+    "claude plugin install caveman@caveman",
+    "claude plugin marketplace add czlonkowski/n8n-skills",
+    "claude plugin install n8n-mcp-skills@n8n-skills"
+  ],
+  "notes": "Run plugin installations and marketplace setup when marketplaces are accessible"
+}
