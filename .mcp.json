@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "notebooklm": {
+      "command": "npx",
+      "args": ["notebooklm-mcp"],
+      "env": {
+        "NOTEBOOKLM_API_KEY": "${NOTEBOOKLM_API_KEY}"
+      }
+    }
+  }
+}
