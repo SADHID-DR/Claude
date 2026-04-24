@@ -1,0 +1,41 @@
+=== ANÁLISIS DE NOTEBOOKLM ===
+Documento: "Tendencias de IA en 2024"
+Fecha de procesamiento: 24 de Abril de 2026
+
+RESUMEN GENERAL:
+El documento discute las tendencias principales de Inteligencia Artificial para 2024,
+incluyendo modelos de lenguaje más pequeños y eficientes, IA generativa en empresas,
+y consideraciones éticas.
+
+PUNTOS EXTRAÍDOS (sin depurar):
+- Los LLMs se vuelven más pequeños pero más efectivos
+- OpenAI lanzó GPT-4 Turbo en noviembre
+- Claude 3 de Anthropic compite fuertemente
+- Las empresas adoptan IA pero tienen preocupaciones de privacidad
+- Se menciona "hallucinations" como problema importante
+- Regulación en EU con AI Act
+- Algunos números: 87% de empresas planean usar IA, pero solo 23% han implementado
+- Se discute prompt engineering como habilidad crítica
+- Preocupaciones sobre sesgos en modelos de IA
+- Necesidad de governanza corporativa para IA
+- Mención de RAG (Retrieval Augmented Generation) como solución
+- Costos operacionales de entrenar modelos grandes
+
+SECCIONES IDENTIFICADAS:
+1. Introducción - Contexto del mercado
+2. Modelos de Lenguaje - Arquitecturas y tipos
+3. Aplicaciones Empresariales - Casos de uso
+4. Desafíos y Limitaciones - Problemas actuales
+5. Futuro y Regulación - Perspectivas 2025+
+
+DATOS MENCIONADOS (sin validar):
+- 87% - Adopción planeada de IA en empresas
+- 23% - Implementación real actual
+- Noviembre 2023 - Lanzamiento de GPT-4 Turbo
+- EU AI Act - Regulación propuesta
+
+REFERENCIAS ENCONTRADAS:
+- Papers de Anthropic
+- Blog de OpenAI
+- Documentos del W3C sobre ética
+- Estudios de McKinsey
