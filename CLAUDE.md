@@ -44,18 +44,26 @@ Cuando pases contenido, puedes pedir:
 
 Cuando obtengas una API key de NotebookLM:
 
-### 1. Configura la variable de entorno
+### 1. Instala UV (si no lo tienes)
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# O en Windows:
+powershell -ExecutionPolicy BypassUser -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### 2. Instala NotebookLM MCP CLI
+```bash
+uv tool install notebooklm-mcp-cli
+```
+
+### 3. Configura la API key
 ```bash
 export NOTEBOOKLM_API_KEY="tu-api-key-aqui"
+# O en ~/.claude/settings.local.json si lo prefieres
 ```
 
-### 2. Verifica la instalación
-```bash
-npx notebooklm-mcp --version
-```
-
-### 3. Claude usará el MCP automáticamente
-El `.mcp.json` ya está configurado para usar `notebooklm-mcp` cuando tengas las credenciales.
+### 4. Claude usará el MCP automáticamente
+El `.mcp.json` ya está configurado para usar `notebooklm-mcp-cli` con UV cuando tengas las credenciales.
 
 ## Prompts Útiles para Claude
 

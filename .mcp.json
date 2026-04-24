@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "notebooklm": {
-      "command": "npx",
-      "args": ["notebooklm-mcp"],
+      "command": "uv",
+      "args": ["tool", "run", "notebooklm-mcp-cli"],
       "env": {
         "NOTEBOOKLM_API_KEY": "${NOTEBOOKLM_API_KEY}"
       }
