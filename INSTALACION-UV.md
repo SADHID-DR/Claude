@@ -19,8 +19,8 @@
 # En macOS o Linux:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# En Windows (con PowerShell):
-powershell -ExecutionPolicy BypassUser -c "irm https://astral.sh/uv/install.ps1 | iex"
+# En Windows (con PowerShell) - RECOMENDADO:
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # O con un gestor de paquetes:
 brew install uv          # macOS con Homebrew
