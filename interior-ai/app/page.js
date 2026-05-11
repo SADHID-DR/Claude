@@ -3,45 +3,106 @@
 import { useState, useRef, useCallback } from "react";
 import styles from "./page.module.css";
 
-const STYLES = [
-  { id: "modern", label: "Modern", icon: "◻" },
-  { id: "minimalist", label: "Minimalist", icon: "—" },
-  { id: "scandinavian", label: "Scandinavian", icon: "❄" },
-  { id: "industrial", label: "Industrial", icon: "⚙" },
-  { id: "bohemian", label: "Bohemian", icon: "✦" },
-  { id: "mid-century", label: "Mid-Century", icon: "◑" },
-  { id: "japandi", label: "Japandi", icon: "木" },
-  { id: "coastal", label: "Coastal", icon: "〜" },
+const SPACE_TYPES = [
+  "Master bathroom suite",
+  "Guest bathroom",
+  "Living room",
+  "Kitchen",
+  "Bedroom",
+  "Home office",
+  "Dining room",
+  "Entryway",
+  "Corridor",
+  "Other",
 ];
 
-const ROOMS = [
-  { id: "living-room", label: "Living Room" },
-  { id: "bedroom", label: "Bedroom" },
-  { id: "kitchen", label: "Kitchen" },
-  { id: "bathroom", label: "Bathroom" },
-  { id: "office", label: "Home Office" },
-  { id: "dining-room", label: "Dining Room" },
+const RENDER_ENGINES = [
+  "Gemini Image Studio (Imagen 4)",
+  "Stable Diffusion 3.5",
+  "Midjourney",
+  "3D Studio Max + V-Ray",
+  "Cinema 4D + Corona",
+  "Blender + Cycles",
+];
+
+const STYLES = [
+  "Modern Minimalist",
+  "Tropical Modern",
+  "Industrial",
+  "Scandinavian",
+  "Bohemian",
+  "Japandi",
+  "Coastal",
+  "Mid-Century Modern",
+  "Contemporary",
+  "Traditional",
+];
+
+const PLAN_PERSPECTIVES = [
+  "Full floor plan view with dimensions",
+  "3D axonometric view",
+  "Furniture layout detail",
+];
+
+const ELEVATION_PERSPECTIVES = [
+  "Full wall elevation view",
+  "Material detail close-up",
+  "Fixture and hardware focus",
+  "Overall room perspective",
+  "Ambient interior view",
 ];
 
 export default function Home() {
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
-  const [selectedStyle, setSelectedStyle] = useState("modern");
-  const [selectedRoom, setSelectedRoom] = useState("living-room");
   const [isDragging, setIsDragging] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [drawingType, setDrawingType] = useState(null);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("original");
+
+  const [spaceType, setSpaceType] = useState("Master bathroom suite");
+  const [area, setArea] = useState("");
+  const [renderEngine, setRenderEngine] = useState("Gemini Image Studio (Imagen 4)");
+  const [style, setStyle] = useState("Modern Minimalist");
+  const [notes, setNotes] = useState("");
+  const [perspectives, setPerspectives] = useState([]);
+  const [generating, setGenerating] = useState(false);
+  const [prompts, setPrompts] = useState(null);
+
   const fileRef = useRef(null);
 
-  const handleFile = (file) => {
+  const handleFile = async (file) => {
     if (!file || !file.type.startsWith("image/")) return;
-    setResult(null);
     setError(null);
+    setDrawingType(null);
+    setPrompts(null);
     setImageFile(file);
+
     const reader = new FileReader();
-    reader.onload = (e) => setImage(e.target.result);
+    reader.onload = async (e) => {
+      setImage(e.target.result);
+      setAnalyzing(true);
+
+      try {
+        const base64 = e.target.result.split(",")[1];
+        const res = await fetch("/api/analyze-drawing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: base64, mediaType: file.type }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        setDrawingType(data.type);
+        setPerspectives([]);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setAnalyzing(false);
+      }
+    };
+
     reader.readAsDataURL(file);
   };
 
@@ -59,101 +120,78 @@ export default function Home() {
 
   const onDragLeave = useCallback(() => setIsDragging(false), []);
 
+  const togglePerspective = (p) => {
+    setPerspectives((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+    );
+  };
+
   const handleGenerate = async () => {
-    if (!image || !imageFile) return;
-    setLoading(true);
+    if (!image || !drawingType || perspectives.length === 0) {
+      setError("Please upload a drawing and select at least one perspective");
+      return;
+    }
+
+    setGenerating(true);
     setError(null);
-    setResult(null);
+    setPrompts(null);
 
     try {
       const base64 = image.split(",")[1];
-      const mediaType = imageFile.type;
-
-      const res = await fetch("/api/redesign", {
+      const res = await fetch("/api/generate-prompts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType, style: selectedStyle, room: selectedRoom }),
+        body: JSON.stringify({
+          image: base64,
+          mediaType: imageFile.type,
+          drawingType,
+          spaceType,
+          area,
+          renderEngine,
+          style,
+          notes,
+          perspectives,
+        }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Generation failed");
-      setResult(data);
-      setActiveTab("result");
+      if (!res.ok) throw new Error(data.error);
+      setPrompts(data.prompts);
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setGenerating(false);
     }
   };
 
   const reset = () => {
     setImage(null);
     setImageFile(null);
-    setResult(null);
+    setDrawingType(null);
+    setPrompts(null);
     setError(null);
-    setActiveTab("original");
+    setPerspectives([]);
   };
+
+  const availablePerspectives =
+    drawingType === "floor-plan" ? PLAN_PERSPECTIVES : ELEVATION_PERSPECTIVES;
 
   return (
     <main className={styles.main}>
       <header className={styles.header}>
-        <div className={styles.logo}>interior<span className={styles.logoAccent}>ai</span></div>
-        <p className={styles.tagline}>Transform any room with AI</p>
+        <div className={styles.headerContent}>
+          <p className={styles.studio}>PLAN-TO-RENDER STUDIO</p>
+          <h1 className={styles.title}>Render Prompt Generator</h1>
+        </div>
       </header>
 
-      <div className={styles.workspace}>
-        {/* Left panel: controls */}
-        <aside className={styles.panel}>
-          <section className={styles.section}>
-            <h3 className={styles.sectionLabel}>Room Type</h3>
-            <div className={styles.roomGrid}>
-              {ROOMS.map((r) => (
-                <button
-                  key={r.id}
-                  className={`${styles.roomBtn} ${selectedRoom === r.id ? styles.active : ""}`}
-                  onClick={() => setSelectedRoom(r.id)}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </section>
+      <div className={styles.container}>
+        {/* Upload Section */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            <span className={styles.label}>UPLOAD DRAWING</span>
+          </h2>
 
-          <section className={styles.section}>
-            <h3 className={styles.sectionLabel}>Design Style</h3>
-            <div className={styles.styleGrid}>
-              {STYLES.map((s) => (
-                <button
-                  key={s.id}
-                  className={`${styles.styleBtn} ${selectedStyle === s.id ? styles.active : ""}`}
-                  onClick={() => setSelectedStyle(s.id)}
-                >
-                  <span className={styles.styleIcon}>{s.icon}</span>
-                  <span>{s.label}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {image && (
-            <button className={styles.generateBtn} onClick={handleGenerate} disabled={loading}>
-              {loading ? (
-                <span className={styles.spinner}>Redesigning<span className={styles.dots} /></span>
-              ) : (
-                "Generate Redesign"
-              )}
-            </button>
-          )}
-
-          {image && !loading && (
-            <button className={styles.resetBtn} onClick={reset}>
-              Upload new photo
-            </button>
-          )}
-        </aside>
-
-        {/* Right panel: canvas */}
-        <div className={styles.canvas}>
           {!image ? (
             <div
               className={`${styles.dropzone} ${isDragging ? styles.dragging : ""}`}
@@ -169,89 +207,183 @@ export default function Home() {
                 className={styles.fileInput}
                 onChange={(e) => handleFile(e.target.files[0])}
               />
-              <div className={styles.dropIcon}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
-              </div>
-              <p className={styles.dropTitle}>Drop your room photo here</p>
-              <p className={styles.dropSub}>or click to browse · PNG, JPG, WEBP</p>
+              <div className={styles.dropIcon}>📐</div>
+              <p className={styles.dropTitle}>Drop your drawing here</p>
+              <p className={styles.dropSub}>or click to browse · JPG, PNG, PDF</p>
             </div>
           ) : (
-            <div className={styles.imageView}>
-              {result && (
-                <div className={styles.tabs}>
-                  <button
-                    className={`${styles.tab} ${activeTab === "original" ? styles.tabActive : ""}`}
-                    onClick={() => setActiveTab("original")}
-                  >
-                    Original
-                  </button>
-                  <button
-                    className={`${styles.tab} ${activeTab === "result" ? styles.tabActive : ""}`}
-                    onClick={() => setActiveTab("result")}
-                  >
-                    Redesigned
-                  </button>
+            <div className={styles.uploadedSection}>
+              <div className={styles.uploadedImage}>
+                <img src={image} alt="Uploaded drawing" />
+              </div>
+
+              {analyzing && (
+                <div className={styles.analyzing}>
+                  <div className={styles.spinner} />
+                  <p>Analyzing drawing type...</p>
                 </div>
               )}
 
-              <div className={styles.imageFrame}>
-                {activeTab === "original" || !result ? (
-                  <img src={image} alt="Original room" className={styles.roomImage} />
-                ) : null}
-
-                {result && activeTab === "result" && (
-                  <div className={styles.resultContent}>
-                    <div className={styles.resultBadge}>
-                      {STYLES.find(s => s.id === selectedStyle)?.label} · {ROOMS.find(r => r.id === selectedRoom)?.label}
-                    </div>
-                    <div className={styles.analysisBox}>
-                      <h4 className={styles.analysisTitle}>AI Design Analysis</h4>
-                      <p className={styles.analysisText}>{result.analysis}</p>
-                    </div>
-                    <div className={styles.recommendationsBox}>
-                      <h4 className={styles.analysisTitle}>Design Recommendations</h4>
-                      <ul className={styles.recList}>
-                        {result.recommendations?.map((rec, i) => (
-                          <li key={i} className={styles.recItem}>
-                            <span className={styles.recDot} />
-                            {rec}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    {result.colorPalette && (
-                      <div className={styles.paletteBox}>
-                        <h4 className={styles.analysisTitle}>Suggested Colors</h4>
-                        <div className={styles.palette}>
-                          {result.colorPalette.map((color, i) => (
-                            <div key={i} className={styles.colorChip}>
-                              <div className={styles.colorSwatch} style={{ background: color.hex }} />
-                              <span className={styles.colorName}>{color.name}</span>
-                              <span className={styles.colorHex}>{color.hex}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {loading && (
-                  <div className={styles.loadingOverlay}>
-                    <div className={styles.loadingSpinner} />
-                    <p>Analyzing your room...</p>
-                  </div>
-                )}
-              </div>
-
-              {error && <p className={styles.errorMsg}>{error}</p>}
+              {drawingType && !analyzing && (
+                <div className={styles.drawingInfo}>
+                  <p className={styles.drawingType}>
+                    Detected: <strong>{drawingType === "floor-plan" ? "Floor Plan" : "Elevation"}</strong>
+                  </p>
+                  <button className={styles.changeBtn} onClick={reset}>
+                    Upload different drawing
+                  </button>
+                </div>
+              )}
             </div>
           )}
-        </div>
+
+          {error && <p className={styles.errorMsg}>{error}</p>}
+        </section>
+
+        {image && drawingType && (
+          <>
+            {/* Project Context */}
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <span className={styles.label}>PROJECT CONTEXT</span>
+              </h2>
+
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Space Type</label>
+                  <select
+                    className={styles.select}
+                    value={spaceType}
+                    onChange={(e) => setSpaceType(e.target.value)}
+                  >
+                    {SPACE_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Approximate Area (m²)</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g. 18"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Target Render Engine</label>
+                  <select
+                    className={styles.select}
+                    value={renderEngine}
+                    onChange={(e) => setRenderEngine(e.target.value)}
+                  >
+                    {RENDER_ENGINES.map((e) => (
+                      <option key={e} value={e}>
+                        {e}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Preferred Style</label>
+                  <select
+                    className={styles.select}
+                    value={style}
+                    onChange={(e) => setStyle(e.target.value)}
+                  >
+                    {STYLES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Additional Notes (Materials, Mood, Client Brief, Orientation)
+                </label>
+                <textarea
+                  className={styles.textarea}
+                  placeholder="e.g. client wants travertine floors, brushed bronze fixtures, views to tropical garden, open shower, double vanity on north wall..."
+                  rows={4}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            </section>
+
+            {/* Render Perspectives */}
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <span className={styles.label}>RENDER PERSPECTIVES</span>
+              </h2>
+
+              <div className={styles.perspectiveGrid}>
+                {availablePerspectives.map((p) => (
+                  <button
+                    key={p}
+                    className={`${styles.perspectiveBtn} ${
+                      perspectives.includes(p) ? styles.active : ""
+                    }`}
+                    onClick={() => togglePerspective(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Generate Button */}
+            <button
+              className={styles.generateBtn}
+              onClick={handleGenerate}
+              disabled={generating || perspectives.length === 0}
+            >
+              {generating ? (
+                <span>
+                  Generating prompts<span className={styles.dots} />
+                </span>
+              ) : (
+                "Analyze Plans & Generate Prompts ↗"
+              )}
+            </button>
+
+            {/* Results */}
+            {prompts && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>
+                  <span className={styles.label}>GENERATED PROMPTS</span>
+                </h2>
+
+                <div className={styles.promptsList}>
+                  {prompts.map((prompt, i) => (
+                    <div key={i} className={styles.promptCard}>
+                      <h3 className={styles.promptTitle}>{prompt.perspective}</h3>
+                      <p className={styles.promptText}>{prompt.prompt}</p>
+                      <button
+                        className={styles.copyBtn}
+                        onClick={() => {
+                          navigator.clipboard.writeText(prompt.prompt);
+                          alert("Copied to clipboard!");
+                        }}
+                      >
+                        Copy prompt
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
       </div>
     </main>
   );
