@@ -1,0 +1,170 @@
+// MARES APP — Budget Module
+// SQLite for local prototyping. Use PostgreSQL in production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Catálogos (no versionados)
+// ─────────────────────────────────────────────────────────────
+
+model Material {
+  id            String          @id @default(cuid())
+  code          String          @unique
+  description   String
+  unit          String
+  category      String?
+  currency      String          @default("DOP")
+  fxRate        Float           @default(1.0)
+  priceOriginal Float
+  priceLocal    Float
+  applyITBIS    Boolean         @default(true)
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  components    APUComponent[]
+  priceHistory  MaterialPriceHistory[]
+}
+
+model Labor {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  description String
+  unit        String
+  currentRate Float
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  components  APUComponent[]
+}
+
+model Equipment {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  description String
+  unit        String
+  currentRate Float
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  components  APUComponent[]
+}
+
+model MaterialPriceHistory {
+  id          String   @id @default(cuid())
+  materialId  String
+  material    Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  oldPrice    Float
+  newPrice    Float
+  changedAt   DateTime @default(now())
+  changedBy   String?
+  reason      String?
+}
+
+// ─────────────────────────────────────────────────────────────
+// APU (Análisis de Precio Unitario)
+// ─────────────────────────────────────────────────────────────
+
+model APU {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  description String
+  unit        String
+  overheadPct Float           @default(0)
+  utilityPct  Float           @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  components  APUComponent[]
+  items       Item[]
+}
+
+model APUComponent {
+  id          String   @id @default(cuid())
+  apuId       String
+  apu         APU      @relation(fields: [apuId], references: [id], onDelete: Cascade)
+  type        String   // "MATERIAL" | "LABOR" | "EQUIPMENT"
+  materialId  String?
+  material    Material?  @relation(fields: [materialId], references: [id])
+  laborId     String?
+  labor       Labor?     @relation(fields: [laborId], references: [id])
+  equipmentId String?
+  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+  quantity    Float
+  wastePct    Float    @default(0)
+}
+
+// ─────────────────────────────────────────────────────────────
+// Presupuesto (versionado)
+// ─────────────────────────────────────────────────────────────
+
+model BudgetVersion {
+  id              String   @id @default(cuid())
+  projectName     String
+  versionNo       Int
+  isActive        Boolean  @default(true)
+  status          String   @default("DRAFT") // "DRAFT" | "APPROVED"
+  notes           String?
+  sourceFileName  String?
+  approvedAt      DateTime?
+  approvedBy      String?
+  lockedByUserId  String?
+  lockExpiresAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  chapters        Chapter[]
+  items           Item[]
+  auditLogs       AuditLog[]
+}
+
+model Chapter {
+  id          String        @id @default(cuid())
+  versionId   String
+  version     BudgetVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  code        String
+  description String
+  parentId    String?
+  parent      Chapter?      @relation("Hierarchy", fields: [parentId], references: [id])
+  children    Chapter[]     @relation("Hierarchy")
+  order       Int           @default(0)
+  items       Item[]
+}
+
+model Item {
+  id                    String        @id @default(cuid())
+  versionId             String
+  version               BudgetVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  chapterId             String
+  chapter               Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  apuId                 String?
+  apu                   APU?          @relation(fields: [apuId], references: [id])
+  code                  String
+  description           String
+  unit                  String
+  quantity              Float
+  unitPrice             Float         @default(0)
+  totalPrice            Float         @default(0)
+  materialCostSnapshot  Float         @default(0)
+  laborCostSnapshot     Float         @default(0)
+  equipmentCostSnapshot Float         @default(0)
+  applyITBIS            Boolean       @default(true)
+  notes                 String?
+  order                 Int           @default(0)
+}
+
+model AuditLog {
+  id        String        @id @default(cuid())
+  versionId String?
+  version   BudgetVersion? @relation(fields: [versionId], references: [id])
+  entity    String
+  entityId  String?
+  action    String
+  userId    String?
+  diff      String?       // JSON string
+  createdAt DateTime      @default(now())
+}
