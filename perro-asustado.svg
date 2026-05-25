@@ -1,0 +1,125 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <!-- Background Gradient: Dark, muted, slightly cool to enhance a sense of unease. -->
+    <radialGradient id="backgroundGradient" cx="50%" cy="50%" r="75%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#3c3c4f"/> <!-- Dark blue-grey center -->
+      <stop offset="100%" stop-color="#1a1a2a"/> <!-- Very dark blue-grey edge -->
+    </radialGradient>
+
+    <!-- Dog Fur Gradients: Earthy browns, with variations for depth and texture. -->
+    <linearGradient id="furGradientBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7a5a4a"/> <!-- Medium brown -->
+      <stop offset="50%" stop-color="#6a4a3a"/> <!-- Darker brown -->
+      <stop offset="100%" stop-color="#5a3a2a"/> <!-- Darkest brown -->
+    </linearGradient>
+    <linearGradient id="furGradientLighter" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a08070"/> <!-- Light brown, for belly/muzzle -->
+      <stop offset="100%" stop-color="#8a6a5a"/> <!-- Medium light brown -->
+    </linearGradient>
+    <linearGradient id="furGradientDarker" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5a3a2a"/> <!-- Dark brown, for shadows/ears -->
+      <stop offset="100%" stop-color="#4a2a1a"/> <!-- Very dark brown -->
+    </linearGradient>
+
+    <!-- Eye Gradients: Brown iris, with dark pupil and bright highlight for realism. -->
+    <radialGradient id="eyeIrisGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b4513"/> <!-- Brown iris -->
+      <stop offset="100%" stop-color="#4a2a0a"/> <!-- Dark brown iris -->
+    </radialGradient>
+    <!-- Nose Gradient: Dark grey to black for a moist, realistic nose. -->
+    <linearGradient id="noseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#333333"/> <!-- Dark grey nose -->
+      <stop offset="100%" stop-color="#000000"/> <!-- Black nose -->
+    </linearGradient>
+
+    <!-- Filter for a subtle shadow under the dog, providing depth. -->
+    <filter id="shadowUnderDog" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="15"/>
+      <feOffset dx="0" dy="15"/>
+      <feFlood flood-color="#000" flood-opacity="0.4"/>
+      <feComposite in2="SourceAlpha" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Layer -->
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#backgroundGradient)"/>
+
+  <!-- Floor/Ground: A dark, slightly textured surface for the dog to crouch on. -->
+  <path d="M 0 680 C 250 650, 774 650, 1024 680 L 1024 1024 L 0 1024 Z" fill="#2a2a3a"/>
+  <path d="M 0 680 C 250 660, 774 660, 1024 680" stroke="#4a4a5a" stroke-width="2" opacity="0.3"/>
+
+  <!-- Dog's main shadow: A blurred ellipse to ground the dog. -->
+  <ellipse cx="512" cy="710" rx="300" ry="70" fill="#000" opacity="0.2"/>
+
+  <!-- Dog Body: Constructed with multiple paths for a hunched, fearful posture. -->
+
+  <!-- Main body mass - hunched and low to the ground. -->
+  <path d="M 700 620 C 780 580, 780 450, 700 400 L 600 380 Q 500 350, 400 380 L 320 400 C 240 450, 240 580, 320 620 C 380 670, 620 670, 700 620 Z"
+        fill="url(#furGradientBody)"/>
+
+  <!-- Back of the dog, adding definition and roundedness. -->
+  <path d="M 700 620 C 720 600, 730 500, 700 400 Z" fill="url(#furGradientDarker)"/>
+
+  <!-- Tail: Tucked tightly between the legs, a classic sign of fear. -->
+  <path d="M 320 620 C 280 640, 240 660, 200 640 Q 250 620, 320 620 Z" fill="url(#furGradientBody)"/>
+  <path d="M 200 640 C 180 630, 150 600, 180 580 Q 200 600, 200 640 Z" fill="url(#furGradientDarker)"/> <!-- Tail tip shadow -->
+
+  <!-- Legs: Bent and tucked, emphasizing the dog's desire to appear smaller and hide. -->
+  <!-- Right hind leg (partially obscured) -->
+  <path d="M 680 620 Q 700 700, 650 750 Q 600 760, 580 680 L 680 620 Z" fill="url(#furGradientDarker)"/>
+  <path d="M 650 750 Q 640 780, 680 790 Q 720 780, 710 750 L 650 750 Z" fill="#4a2a1a" opacity="0.7"/> <!-- Paw -->
+
+  <!-- Left hind leg (visible) -->
+  <path d="M 320 620 Q 300 700, 350 750 Q 400 760, 420 680 L 320 620 Z" fill="url(#furGradientDarker)"/>
+  <path d="M 350 750 Q 340 780, 380 790 Q 420 780, 410 750 L 350 750 Z" fill="#4a2a1a" opacity="0.7"/> <!-- Paw -->
+
+  <!-- Left front leg -->
+  <path d="M 450 620 Q 430 700, 480 750 Q 530 760, 550 680 L 450 620 Z" fill="url(#furGradientDarker)"/>
+  <path d="M 480 750 Q 470 780, 510 790 Q 550 780, 540 750 L 480 750 Z" fill="#4a2a1a" opacity="0.7"/> <!-- Paw -->
+
+  <!-- Right front leg (partially obscured) -->
+  <path d="M 580 620 Q 560 700, 610 750 Q 660 760, 680 680 L 580 620 Z" fill="url(#furGradientDarker)"/>
+  <path d="M 610 750 Q 600 780, 640 790 Q 680 780, 670 750 L 610 750 Z" fill="#4a2a1a" opacity="0.7"/> <!-- Paw -->
+
+  <!-- Head: Lowered and slightly turned, avoiding direct gaze. -->
+  <path d="M 400 480 C 350 430, 350 360, 450 330 C 550 360, 550 430, 500 480 Z" fill="url(#furGradientBody)"/>
+
+  <!-- Ears: Flattened back against the head, another clear sign of fear. -->
+  <path d="M 410 350 Q 380 320, 360 340 C 380 370, 400 380, 410 350 Z" fill="url(#furGradientDarker)"/>
+  <path d="M 490 350 Q 520 320, 540 340 C 520 370, 500 380, 490 350 Z" fill="url(#furGradientDarker)"/>
+
+  <!-- Muzzle/Snout -->
+  <path d="M 430 440 C 420 420, 440 400, 460 400 C 480 400, 500 420, 490 440 Z" fill="url(#furGradientLighter)"/>
+
+  <!-- Nose -->
+  <ellipse cx="460" cy="410" rx="15" ry="10" fill="url(#noseGradient)"/>
+  <path d="M 460 410 Q 455 415, 455 420 Q 465 420, 460 410 Z" fill="#fff" opacity="0.2"/> <!-- Nose highlight -->
+
+  <!-- Mouth: Closed with a slight downturn, indicating sadness or apprehension. -->
+  <path d="M 450 440 Q 460 445, 470 440" stroke="url(#furGradientDarker)" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Eyes: Wide open, showing white sclera, with dilated pupils to convey fear. -->
+  <ellipse cx="440" cy="370" rx="18" ry="12" fill="#fff"/> <!-- Eye white -->
+  <ellipse cx="435" cy="370" rx="7" ry="6" fill="url(#eyeIrisGradient)"/> <!-- Iris -->
+  <circle cx="435" cy="370" r="3" fill="#000"/> <!-- Pupil -->
+  <circle cx="437" cy="368" r="1" fill="#fff" opacity="0.8"/> <!-- Highlight -->
+  <path d="M 430 360 Q 440 355, 450 360" stroke="url(#furGradientDarker)" stroke-width="2" fill="none" stroke-linecap="round"/> <!-- Brow line, slight furrow -->
+
+  <ellipse cx="490" cy="370" rx="18" ry="12" fill="#fff"/> <!-- Eye white -->
+  <ellipse cx="485" cy="370" rx="7" ry="6" fill="url(#eyeIrisGradient)"/> <!-- Iris -->
+  <circle cx="485" cy="370" r="3" fill="#000"/> <!-- Pupil -->
+  <circle cx="487" cy="368" r="1" fill="#fff" opacity="0.8"/> <!-- Highlight -->
+  <path d="M 480 360 Q 490 355, 500 360" stroke="url(#furGradientDarker)" stroke-width="2" fill="none" stroke-linecap="round"/> <!-- Brow line, slight furrow -->
+
+  <!-- Belly/Chest: Lighter fur, showing a vulnerable underside. -->
+  <path d="M 400 480 C 420 530, 480 530, 500 480 Q 450 500, 400 480 Z" fill="url(#furGradientLighter)"/>
+
+  <!-- Subtle fur texture/highlights: Small, irregular paths to hint at fur direction and light. -->
+  <path d="M 400 500 Q 420 490, 440 500 C 460 510, 480 500, 460 490 Z" fill="#fff" opacity="0.1"/>
+  <path d="M 350 560 Q 330 550, 370 540 C 390 530, 410 540, 390 560 Z" fill="#fff" opacity="0.1"/>
+  <path d="M 500 560 Q 480 550, 520 540 C 540 530, 560 540, 540 560 Z" fill="#fff" opacity="0.1"/>
+</svg>
