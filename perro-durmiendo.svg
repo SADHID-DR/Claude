@@ -1,0 +1,109 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- Background Gradient - Soft, warm bed/blanket -->
+    <linearGradient id="bgBlanketGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDF8F0"/>
+      <stop offset="100%" stop-color="#EBE3D7"/>
+    </linearGradient>
+
+    <!-- Dog Fur Gradient - Warm browns and tans, with lighter center for highlight -->
+    <radialGradient id="dogFurGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#FAEBD7"/> <!-- Very light tan for the 'top' -->
+      <stop offset="40%" stop-color="#D1AE8E"/>
+      <stop offset="80%" stop-color="#B88F72"/>
+      <stop offset="100%" stop-color="#9C725C"/>
+    </radialGradient>
+
+    <!-- Dog Fur Darker Gradient for shadows/depth (like inside of ear, underside) -->
+    <linearGradient id="dogFurDarkGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#A5846B"/>
+      <stop offset="100%" stop-color="#7C5D49"/>
+    </linearGradient>
+
+    <!-- Nose Gradient -->
+    <radialGradient id="noseGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#C78E7D"/>
+      <stop offset="100%" stop-color="#965E4E"/>
+    </radialGradient>
+
+    <!-- General Soft Blur for background elements -->
+    <filter id="softBlur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="15"/>
+    </filter>
+
+    <!-- Soft shadow for the entire dog -->
+    <filter id="dogShadowFilter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="30"/>
+      <feOffset dx="15" dy="20" result="shadow"/>
+      <feFlood flood-color="#5C4033" flood-opacity="0.25"/>
+      <feComposite in2="shadow" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle texture for the blanket (diagonal lines for coziness) -->
+    <pattern id="blanketTexture" patternUnits="userSpaceOnUse" width="40" height="40">
+      <path d="M0 20 L20 0 M20 40 L40 20 M-10 30 L10 10" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="1"/>
+    </pattern>
+
+  </defs>
+
+  <!-- Background: Soft, warm blanket/rug -->
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#bgBlanketGradient)"/>
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#blanketTexture)"/>
+
+  <!-- Inner oval for the "bed" area, blurred, to give a sense of depth and softness -->
+  <ellipse cx="512" cy="650" rx="450" ry="300" fill="#F0E3D7" filter="url(#softBlur)" opacity="0.8"/>
+  <ellipse cx="512" cy="650" rx="380" ry="250" fill="#E8DBCF" filter="url(#softBlur)" opacity="0.7"/>
+
+  <!-- Dog's main body (curled up) -->
+  <g transform="translate(0, -50)" filter="url(#dogShadowFilter)">
+    <!-- Main body mass - a soft, rounded C-shape -->
+    <path d="M 380 580
+             Q 320 450 450 380
+             T 600 350
+             Q 750 400 780 550
+             Q 800 700 680 780
+             Q 500 820 380 680
+             Q 350 620 380 580 Z"
+          fill="url(#dogFurGradient)"/>
+
+    <!-- Head - tucked in -->
+    <path d="M 450 400
+             C 400 350, 480 300, 550 320
+             C 600 340, 580 390, 520 410 Z"
+          fill="url(#dogFurGradient)"/>
+
+    <!-- Ear 1 - visible, relaxed -->
+    <path d="M 460 330 Q 440 290 470 280 Q 500 290 480 330 Z" fill="url(#dogFurDarkGradient)"/>
+    <!-- Ear 2 - mostly hidden, just a gentle curve -->
+    <path d="M 500 310 Q 520 290 540 300 Q 530 320 510 320 Z" fill="url(#dogFurDarkGradient)" opacity="0.7"/>
+
+    <!-- Muzzle area -->
+    <ellipse cx="515" cy="380" rx="30" ry="20" fill="url(#dogFurGradient)"/>
+    <!-- Nose -->
+    <path d="M 515 380 C 505 385, 510 390, 515 390 S 525 385, 515 380 Z" fill="url(#noseGradient)"/>
+
+    <!-- Closed eye lines, peaceful and small -->
+    <path d="M 485 355 L 500 355" stroke="#5C4033" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 525 355 L 540 355" stroke="#5C4033" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Tail - curled warmly against the body -->
+    <path d="M 700 730
+             Q 750 700 780 650
+             Q 790 600 750 550
+             Q 700 520 650 560 Z"
+          fill="url(#dogFurGradient)" transform="rotate(-10 700 730)" style="transform-origin: 700px 730px;"/>
+
+    <!-- Paws - implied and tucked under, using darker gradient for depth -->
+    <ellipse cx="450" cy="650" rx="35" ry="25" fill="url(#dogFurDarkGradient)" opacity="0.7"/>
+    <ellipse cx="480" cy="670" rx="35" ry="25" fill="url(#dogFurDarkGradient)" opacity="0.7"/>
+    <ellipse cx="580" cy="710" rx="40" ry="30" fill="url(#dogFurDarkGradient)" opacity="0.6"/>
+
+    <!-- Subtle highlights on the dog to give volume and softness -->
+    <path d="M 480 480 C 550 450, 680 550, 650 650 Q 550 720 480 680 Z" fill="#FFFFFF" opacity="0.2"/>
+    <path d="M 490 350 Q 510 330 530 350 Z" fill="#FFFFFF" opacity="0.3"/> <!-- Highlight on head -->
+  </g>
+</svg>
