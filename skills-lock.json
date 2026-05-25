@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/find-skills/SKILL.md",
       "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
+    },
+    "nano-banana": {
+      "source": "kingbootoshi/nano-banana-2-skill",
+      "sourceType": "github",
+      "skillPath": "plugins/nano-banana/skills/nano-banana/SKILL.md",
+      "computedHash": "52227e4869035e53d9abef6017eb289196207a8eb9d341949eaf8e3d500cc562"
     }
   }
 }
