@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
+    },
+    "llm-council": {
+      "source": "aiwithremy/claude-skills-llm-council",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "b6b68e15b1622ea5dc7760e6a3c723c62c8140103fde3052c096f7d8fc675a44"
+    },
+    "nano-banana": {
+      "source": "kingbootoshi/nano-banana-2-skill",
+      "sourceType": "github",
+      "skillPath": "plugins/nano-banana/skills/nano-banana/SKILL.md",
+      "computedHash": "52227e4869035e53d9abef6017eb289196207a8eb9d341949eaf8e3d500cc562"
+    }
+  }
+}
