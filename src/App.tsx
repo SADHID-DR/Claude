@@ -1260,30 +1260,30 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] font-sans text-slate-800 antialiased flex flex-col print:bg-white print:text-black">
-      
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans text-slate-800 antialiased flex flex-col print:bg-white print:text-black">
+
       {/* PROFESSIONAL UPPER HEADER RAIL */}
-      <header className="bg-[#0F172A] border-b border-slate-800 text-white py-4 px-6 sticky top-0 z-40 shadow-sm shrink-0 print:hidden">
+      <header className="bg-gradient-to-r from-[#1a3a52] via-[#1f4a68] to-[#1a3a52] border-b border-[#d4af37]/20 text-white py-4 px-6 sticky top-0 z-40 shadow-lg shrink-0 print:hidden">
         <div className="max-w-full mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Logo & Project summary */}
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/10 px-2 py-1.5 rounded-lg flex items-center justify-center">
-              <AppLogo className="w-4" />
+          <div className="flex items-center space-x-4">
+            <div className="bg-gradient-to-br from-[#d4af37] to-[#c4941f] px-3 py-2 rounded-lg flex items-center justify-center shadow-md">
+              <AppLogo className="w-5 text-[#1a3a52]" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-black uppercase tracking-wider text-white">MARESNOMINAS</span>
-                <span className="bg-slate-850 text-slate-300 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded font-bold">V1.2 XLSM</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-lg font-bold tracking-wide text-white">MARES NÓMINAS</span>
+                <span className="bg-[#d4af37]/20 text-[#d4af37] text-[10px] uppercase font-mono px-2 py-1 rounded-full font-semibold border border-[#d4af37]/30">V1.2</span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Control Presupuestario de Subcontratistas</p>
+              <p className="text-[12px] text-slate-300 font-medium mt-0.5">Sistema de Nóminas y Presupuesto</p>
             </div>
           </div>
 
           {/* Current global context block */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-300 bg-slate-800/60 py-1.5 px-3.5 rounded-lg border border-slate-700/50">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-white bg-white/10 backdrop-blur-sm py-2 px-4 rounded-xl border border-white/20 shadow-sm">
             <div className="flex items-center space-x-2">
-              <span className="text-slate-500 font-bold">OBRA:</span>
+              <span className="text-white/80 font-semibold">PROYECTO:</span>
               <select
                 value={activeProjectId || ''}
                 onChange={(e) => {
@@ -1296,7 +1296,7 @@ export default function App() {
                     setActiveProjectId(val);
                   }
                 }}
-                className="bg-slate-900 border border-slate-700 text-white font-bold px-2 py-0.5 rounded text-xs outline-none cursor-pointer focus:border-blue-500"
+                className="bg-white/15 border border-white/20 text-white font-semibold px-3 py-1 rounded-lg text-sm outline-none cursor-pointer focus:border-[#d4af37] focus:bg-white/20 transition-all"
               >
                 {projects.filter(p => !p.isHidden || p.id === activeProjectId).map((p) => (
                   <option key={p.id} value={p.id}>
@@ -1326,38 +1326,38 @@ export default function App() {
                 </button>
               )}
             </div>
-            <span className="text-slate-700 hidden sm:inline">|</span>
+            <span className="text-white/30 hidden sm:inline">•</span>
             <div>
-              <span className="text-slate-500 font-bold mr-1">TASA RET:</span>
-              <span className="font-mono text-emerald-400">ISR {params.percentIsr}% / TSS {params.percentTss}%</span>
+              <span className="text-white/70 font-medium mr-2">RETENCIONES:</span>
+              <span className="font-mono text-[#d4af37] font-semibold">ISR {params.percentIsr}% • TSS {params.percentTss}%</span>
             </div>
-            
-            <span className="text-slate-700 hidden sm:inline">|</span>
-            <button 
+
+            <span className="text-white/30 hidden sm:inline">•</span>
+            <button
               onClick={handleManualSync}
               disabled={syncStatus === 'syncing' || !isAuthenticated}
-              className={`flex items-center gap-1.5 transition-colors ${isAuthenticated && syncStatus !== 'syncing' ? 'hover:bg-slate-700 cursor-pointer' : ''} px-2 py-1 rounded`} 
-              title="Haz clic para sincronizar y descargar los últimos cambios de la nube"
+              className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-all ${isAuthenticated && syncStatus !== 'syncing' ? 'hover:bg-white/15 cursor-pointer' : 'opacity-60'}`}
+              title="Sincronizar con la nube"
             >
-               <Cloud size={14} className={isAuthenticated ? "text-blue-400" : "text-slate-500"} />
-               <span className="text-[10px] font-bold uppercase tracking-wider">
-                 {isAuthenticated ? <span className="text-blue-300">Sync: <span className="text-emerald-400">Online</span></span> : <span className="text-slate-400">Sync: <span className="text-amber-500">Offline (Local)</span></span>}
+               <Cloud size={16} className={isAuthenticated ? "text-[#d4af37]" : "text-white/40"} />
+               <span className="text-[11px] font-bold uppercase tracking-wider">
+                 {isAuthenticated ? <span>🟢 <span className="text-[#d4af37]">Online</span></span> : <span className="text-white/60">Offline</span>}
                </span>
             </button>
           </div>
 
-          {/* Hard Excel functions buttons macros panel */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 mr-2 pr-2 border-r border-slate-700">
-              <UserIcon size={14} className="text-slate-400 hidden sm:block" />
-              <span className="text-xs font-bold text-slate-300 hidden sm:inline">{currentUser}</span>
-              <button 
+          {/* User & Export Panel */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 mr-2 pr-3 border-r border-white/20">
+              <UserIcon size={16} className="text-[#d4af37] hidden sm:block" />
+              <span className="text-sm font-semibold text-white hidden sm:inline">{currentUser || 'Usuario'}</span>
+              <button
                 onClick={() => {
                   setIsAuthenticated(false);
                   setCurrentUser('');
                   localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
                 }}
-                className="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-0.5 rounded transition-colors flex items-center gap-1 text-slate-200"
+                className="text-[11px] bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 text-white font-medium border border-white/20"
                 title="Cerrar Sesión"
               >
                 <LogOut size={10} />

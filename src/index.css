@@ -1,15 +1,84 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Paleta Corporativa Premium */
+  --color-primary: #1a3a52;      /* Azul oscuro profesional */
+  --color-secondary: #d4af37;    /* Dorado elegante */
+  --color-accent: #2c5aa0;       /* Azul medio */
+  --color-light: #f8f9fa;        /* Gris muy claro */
+  --color-dark: #1a2332;         /* Gris oscuro */
 }
 
 /* Security: Prevent text selection in production apps, except in inputs where user types */
 body {
   user-select: none;
   -webkit-user-select: none;
+  background: linear-gradient(135deg, #f8f9fa 0%, #eef2f5 100%);
+  color: #1a2332;
+}
+
+/* Estilo corporativo elegante */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Animaciones suaves */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Botones elegantes */
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(26, 58, 82, 0.15);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Cards con sombra elegante */
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(26, 58, 82, 0.08);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 12px 24px rgba(26, 58, 82, 0.12);
+  transform: translateY(-4px);
 }
 
 input, textarea, [contenteditable="true"] {
