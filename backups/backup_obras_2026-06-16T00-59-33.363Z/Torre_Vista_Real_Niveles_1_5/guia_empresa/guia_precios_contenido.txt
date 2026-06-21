@@ -1,0 +1,3 @@
+P-01 | Soladura con mortero d=1:4 | m2 | RD$ 450.00
+P-02 | Frotado de muros exteriores | m2 | RD$ 220.00
+P-03 | Revestimiento cerámico baño | m2 | RD$ 550.00

@@ -1,0 +1,8 @@
+===========================================
+REPORTE DE RESPALDO (TEMPLATE ESTIMADO)
+===========================================
+Fecha de generación: 16/6/2026 12:59:33 a. m.
+Destino local: /app/applet/backups/backup_obras_2026-06-16T00-59-33.363Z
+
+ADVERTENCIA: No se pudo obtener conexión mediante la API de Firestore debido a falta de credenciales o de registros vivos en esta sesión. Se generó la estructura representativa de la obra y las plantillas para respaldos con precisión para simular el almacenamiento local.
+===========================================

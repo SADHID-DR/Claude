@@ -1,0 +1,16 @@
+{
+  "projectName": "Torre Residencial Vista Real",
+  "status": "ACTIVA",
+  "createdAt": "2026-06-16T00:59:33.781Z",
+  "params": {
+    "companyName": "Constructora Alba & Sánchez S.R.L.",
+    "address": "Av. Abraham Lincoln #1012, Santo Domingo, D.N.",
+    "percentIsr": 10,
+    "percentTss": 2.87,
+    "percentPension": 1,
+    "percentWarranty": 5,
+    "percentItbis": 18,
+    "isItbisInclusive": false,
+    "currency": "DOP"
+  }
+}

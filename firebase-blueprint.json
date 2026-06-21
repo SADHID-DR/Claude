@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "Information about a construction project.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "params": { 
+          "type": "object",
+          "properties": {
+            "percentIsr": { "type": "number" },
+            "percentTss": { "type": "number" },
+            "percentPension": { "type": "number" },
+            "percentWarranty": { "type": "number" },
+            "percentItbis": { "type": "number" },
+            "isItbisInclusive": { "type": "boolean" }
+          }
+        },
+        "ownerId": { "type": "string", "description": "The UID of the user who owns this project" }
+      },
+      "required": ["name", "createdAt", "updatedAt", "ownerId"]
+    },
+    "ProductionSheet": {
+      "title": "Production Sheet",
+      "description": "Production sheets related to a project.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "supervisor": { "type": "string" },
+        "contractorId": { "type": "string" },
+        "projectId": { "type": "string" }
+      },
+      "required": ["name", "projectId"]
+    },
+    "Contractor": {
+      "title": "Contractor",
+      "description": "Contractor entity.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "document": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Stores user projects."
+    },
+    "/users/{userId}/contractors/{contractorId}": {
+      "schema": "Contractor",
+      "description": "Global contractors for a user."
+    }
+  }
+}

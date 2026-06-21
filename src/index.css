@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Security: Prevent text selection in production apps, except in inputs where user types */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+
+/* Chrome, Safari, Edge, Opera: Remove default spin scroll buttons in numeric fields */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox: Remove default spin scroll buttons in numeric fields */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Disable input scrolling scrollbars */
+input[type=number], input[type=text] {
+  overflow: hidden !important;
+}
+
+/* Ensure no scrollbars exist within table cells */
+td {
+  overflow: hidden !important;
+  text-overflow: ellipsis;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  /* Hide UI elements */
+  button, nav, header, footer, .no-print, .print\:hidden {
+    display: none !important;
+  }
+
+  body, html {
+    background-color: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Ensure background colors print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+  }
+
+  /* Format data tables for readability */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10pt !important;
+    page-break-inside: auto !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  th, td {
+    padding: 6px !important;
+    border: 1px solid #cbd5e1 !important; /* border-slate-300 */
+    color: black !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important; /* bg-slate-100 */
+    font-weight: bold !important;
+  }
+  
+  /* Reset general layout containers to flow properly */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Ensure SVGs / charts fit */
+  .recharts-wrapper {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+}
