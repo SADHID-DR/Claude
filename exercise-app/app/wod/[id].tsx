@@ -58,7 +58,7 @@ export default function WodDetailScreen() {
 
       <Button
         title="⏱️ Abrir temporizador"
-        onPress={() => router.push('/(tabs)/timer')}
+        onPress={() => router.push('/timer')}
         style={{ marginVertical: spacing.md }}
       />
     </ScrollView>

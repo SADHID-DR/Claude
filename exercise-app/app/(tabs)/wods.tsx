@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { WODS } from '@/data/wods';
 import { WodFormat } from '@/lib/types';
 import { Card } from '@/components/ui';
+import { PressableScale } from '@/components/PressableScale';
 import { colors, radius, spacing, wodFormatColors } from '@/lib/theme';
 
 const FILTERS: (WodFormat | 'Todos' | 'Benchmark')[] = [
@@ -15,6 +16,7 @@ const FILTERS: (WodFormat | 'Todos' | 'Benchmark')[] = [
 ];
 
 export default function WodsScreen() {
+  const router = useRouter();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('Todos');
 
   const filtered = useMemo(() => {
@@ -51,30 +53,28 @@ export default function WodsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
         renderItem={({ item }) => (
-          <Link href={`/wod/${item.id}`} asChild>
-            <Pressable>
-              <Card>
-                <View style={styles.row}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <View
-                    style={[
-                      styles.formatPill,
-                      { backgroundColor: wodFormatColors[item.format] },
-                    ]}
-                  >
-                    <Text style={styles.formatText}>
-                      {item.format}
-                      {item.minutes ? ` ${item.minutes}'` : ''}
-                    </Text>
-                  </View>
+          <PressableScale onPress={() => router.push(`/wod/${item.id}`)}>
+            <Card>
+              <View style={styles.row}>
+                <Text style={styles.name}>{item.name}</Text>
+                <View
+                  style={[
+                    styles.formatPill,
+                    { backgroundColor: wodFormatColors[item.format] },
+                  ]}
+                >
+                  <Text style={styles.formatText}>
+                    {item.format}
+                    {item.minutes ? ` ${item.minutes}'` : ''}
+                  </Text>
                 </View>
-                {item.benchmark ? <Text style={styles.badge}>⭐ Benchmark</Text> : null}
-                <Text style={styles.desc} numberOfLines={2}>
-                  {item.description}
-                </Text>
-              </Card>
-            </Pressable>
-          </Link>
+              </View>
+              {item.benchmark ? <Text style={styles.badge}>⭐ Benchmark</Text> : null}
+              <Text style={styles.desc} numberOfLines={2}>
+                {item.description}
+              </Text>
+            </Card>
+          </PressableScale>
         )}
       />
     </View>
@@ -83,8 +83,8 @@ export default function WodsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  chips: { flexGrow: 0, marginTop: spacing.md },
-  chipsContent: { gap: spacing.sm, paddingHorizontal: spacing.md },
+  chips: { flexGrow: 0, height: 40, marginTop: spacing.md },
+  chipsContent: { gap: spacing.sm, paddingHorizontal: spacing.md, alignItems: 'center' },
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,

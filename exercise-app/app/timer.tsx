@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, Vibration, View } from 'react-native';
 import { Button } from '@/components/ui';
+import { tapLight, notifySuccess } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/lib/theme';
 
 const PRESETS = [30, 45, 60, 90, 120, 180];
@@ -43,6 +44,7 @@ export default function TimerScreen() {
         setRemaining((prev) => {
           if (prev <= 1) {
             Vibration.vibrate(600);
+            notifySuccess();
             setRunning(false);
             return 0;
           }
@@ -56,6 +58,7 @@ export default function TimerScreen() {
   }, [running, mode]);
 
   const selectPreset = (seconds: number) => {
+    tapLight();
     setTarget(seconds);
     setRemaining(seconds);
     setRunning(false);

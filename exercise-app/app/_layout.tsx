@@ -27,6 +27,7 @@ export default function RootLayout() {
           />
           <Stack.Screen name="session/[id]" options={{ title: 'Entrenamiento' }} />
           <Stack.Screen name="wod/[id]" options={{ title: 'WOD' }} />
+          <Stack.Screen name="timer" options={{ title: 'Temporizador' }} />
         </Stack>
       </StoreProvider>
     </SafeAreaProvider>

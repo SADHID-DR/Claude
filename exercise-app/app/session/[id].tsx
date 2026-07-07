@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { lastWeightFor, progressionHint } from '@/lib/coach';
+import { notifySuccess, tapMedium } from '@/lib/haptics';
 import { LoggedSet } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
@@ -54,6 +56,17 @@ export default function SessionScreen() {
   }, [routine, sessions]);
 
   const [sets, setSets] = useState(initialSets);
+  const [done, setDone] = useState<Record<string, boolean>>({});
+
+  const totalSets = routine
+    ? routine.exercises.reduce((n, re) => n + re.sets, 0)
+    : 0;
+  const doneCount = Object.values(done).filter(Boolean).length;
+
+  const toggleDone = (key: string) => {
+    tapMedium();
+    setDone((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   if (!routine) {
     return (
@@ -96,7 +109,12 @@ export default function SessionScreen() {
       durationSeconds: elapsed,
       sets: logged,
     });
-    Alert.alert('¡Entrenamiento guardado!', 'Se añadió a tu registro.', [
+    notifySuccess();
+    const vol = Math.round(logged.reduce((sum, s) => sum + s.weight * s.reps, 0));
+    Alert.alert(
+      '¡Entrenamiento guardado! 💪',
+      `${logged.length} series · ${vol} kg de volumen total.\n¡Bien hecho!`,
+      [
       { text: 'OK', onPress: () => router.replace('/(tabs)/history') },
     ]);
   };
@@ -108,6 +126,17 @@ export default function SessionScreen() {
       <Card style={styles.timerCard}>
         <Text style={styles.timerLabel}>Tiempo de sesión</Text>
         <Text style={styles.timer}>{fmt(elapsed)}</Text>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${totalSets > 0 ? (doneCount / totalSets) * 100 : 0}%` },
+            ]}
+          />
+        </View>
+        <Text style={styles.progressText}>
+          {doneCount}/{totalSets} series completadas
+        </Text>
       </Card>
 
       {routine.exercises.map((re) => {
@@ -126,12 +155,14 @@ export default function SessionScreen() {
               <Text style={[styles.colHead, styles.colSet]}>Serie</Text>
               <Text style={[styles.colHead, styles.colInput]}>Peso (kg)</Text>
               <Text style={[styles.colHead, styles.colInput]}>Reps</Text>
+              <Text style={[styles.colHead, styles.colCheck]}>✓</Text>
             </View>
 
             {Array.from({ length: re.sets }).map((_, s) => {
               const key = `${re.exerciseId}-${s}`;
+              const isDone = !!done[key];
               return (
-                <View key={key} style={styles.setRow}>
+                <View key={key} style={[styles.setRow, isDone && styles.setRowDone]}>
                   <Text style={[styles.colSet, styles.setIndex]}>{s + 1}</Text>
                   <TextInput
                     value={sets[key]?.weight ?? ''}
@@ -149,6 +180,12 @@ export default function SessionScreen() {
                     placeholderTextColor={colors.textMuted}
                     style={[styles.cellInput, styles.colInput]}
                   />
+                  <Pressable
+                    onPress={() => toggleDone(key)}
+                    style={[styles.checkBox, isDone && styles.checkBoxDone, styles.colCheck]}
+                  >
+                    <Text style={[styles.checkMark, isDone && styles.checkMarkDone]}>✓</Text>
+                  </Pressable>
                 </View>
               );
             })}
@@ -167,6 +204,16 @@ const styles = StyleSheet.create({
   timerCard: { alignItems: 'center', marginBottom: spacing.md },
   timerLabel: { color: colors.textMuted, fontSize: 13 },
   timer: { color: colors.primary, fontSize: 40, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  progressTrack: {
+    width: '100%',
+    height: 8,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 4,
+    marginTop: spacing.sm,
+    overflow: 'hidden',
+  },
+  progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
+  progressText: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, fontWeight: '700' },
   exName: { color: colors.text, fontSize: 16, fontWeight: '800' },
   exMeta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   coachHint: {
@@ -178,9 +225,18 @@ const styles = StyleSheet.create({
   },
   headerRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },
   colHead: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
-  colSet: { width: 44, textAlign: 'center' },
+  colSet: { width: 40, textAlign: 'center' },
   colInput: { flex: 1, textAlign: 'center' },
-  setRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', marginBottom: spacing.xs },
+  colCheck: { width: 40, textAlign: 'center' },
+  setRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+    borderRadius: radius.sm,
+    paddingVertical: 2,
+  },
+  setRowDone: { backgroundColor: colors.primarySoft },
   setIndex: { color: colors.text, fontWeight: '700' },
   cellInput: {
     backgroundColor: colors.surfaceAlt,
@@ -189,5 +245,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontSize: 15,
   },
+  checkBox: {
+    height: 34,
+    borderRadius: radius.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkBoxDone: { backgroundColor: colors.primary, borderColor: colors.primary },
+  checkMark: { color: colors.surfaceAlt, fontSize: 16, fontWeight: '900' },
+  checkMarkDone: { color: '#08130c' },
   notFound: { color: colors.textMuted, padding: spacing.xl, textAlign: 'center' },
 });

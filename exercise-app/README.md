@@ -6,15 +6,35 @@ localmente en el dispositivo (AsyncStorage); no requiere servidor.
 
 ## Funciones
 
-- 💪 **Catálogo de ejercicios** — 15 ejercicios con grupo muscular, equipo,
-  descripción e instrucciones paso a paso. Con búsqueda y filtro por músculo.
+- 🏠 **Pantalla "Hoy" (coach)** — dashboard con saludo, **anillo de progreso
+  semanal** (estilo Apple Fitness), **racha** de días 🔥, KPIs (entrenos,
+  volumen), entrenamiento del día, WOD del día, accesos rápidos y logros.
+- 💪 **Catálogo de ejercicios** — 34 ejercicios de gym y CrossFit con **filtro
+  por tipo de equipo** (Máquina / Peso libre / Peso corporal / CrossFit) y por
+  músculo. Cada ejercicio incluye **guía de peso/máquina** y **consejos del
+  entrenador**.
 - 📋 **Rutinas personalizadas** — crea rutinas combinando ejercicios y define
   series, repeticiones y descanso para cada uno.
-- 📈 **Registro de entrenamientos** — al entrenar una rutina registras el peso
-  y las repeticiones de cada serie; se guarda el historial con duración y
-  volumen total.
-- ⏱️ **Temporizador** — temporizador de descanso con presets (30–180 s) y
-  vibración al terminar, más un cronómetro para ejercicios por tiempo.
+- 🔥 **WODs de CrossFit** — benchmarks (Fran, Cindy, Murph, Helen, Annie,
+  Grace) y WODs para empezar, con formato (AMRAP/For Time/EMOM) y escalado.
+- 📈 **Progreso** — historial de entrenamientos con volumen total, más
+  estadísticas y **sistema de logros/medallas** desbloqueables.
+- ⏱️ **Temporizador** — descanso con presets (30–180 s) y vibración al
+  terminar, más cronómetro para ejercicios por tiempo.
+
+### Toques de "entrenador personal" e interactividad
+
+- 🎯 **Coach de progresión**: al entrenar pre-rellena el peso de tu última
+  sesión y sugiere cuánto subir.
+- ✅ **Marca cada serie** como completada durante el entrenamiento, con barra
+  de progreso de la sesión.
+- 📳 **Háptica** al completar series, pulsar botones y al terminar el descanso.
+- ✨ **Animaciones**: anillo de progreso animado y micro-interacción de escala
+  al pulsar tarjetas y botones.
+
+Inspirado en patrones de las apps de referencia (Fitbod, Hevy, Strong, Nike
+Training Club): dashboard de coach, gamificación con racha/logros, anillos de
+progreso y micro-interacciones.
 
 ## Cómo probarla en tu Android
 
@@ -50,23 +70,34 @@ Esto compila el APK en la nube de Expo y te da un enlace de descarga.
 exercise-app/
 ├── app/                     # Rutas (expo-router, navegación por archivos)
 │   ├── _layout.tsx          # Layout raíz + proveedores
-│   ├── (tabs)/              # Las 4 pestañas
+│   ├── timer.tsx            # Temporizador / cronómetro (pantalla de stack)
+│   ├── (tabs)/              # Las 5 pestañas
 │   │   ├── _layout.tsx      # Configuración de la barra de pestañas
-│   │   ├── index.tsx        # Catálogo de ejercicios
+│   │   ├── index.tsx        # "Hoy": dashboard de coach
+│   │   ├── exercises.tsx    # Catálogo de ejercicios
 │   │   ├── routines.tsx     # Lista de rutinas
-│   │   ├── history.tsx      # Registro de entrenamientos
-│   │   └── timer.tsx        # Temporizador / cronómetro
+│   │   ├── wods.tsx         # WODs de CrossFit
+│   │   └── history.tsx      # Progreso (stats, logros e historial)
 │   ├── exercise/[id].tsx    # Detalle de un ejercicio
+│   ├── wod/[id].tsx         # Detalle de un WOD
 │   ├── routine/new.tsx      # Crear rutina
 │   └── session/[id].tsx     # Entrenar y registrar una sesión
 ├── src/
-│   ├── components/ui.tsx    # Componentes de UI reutilizables
-│   ├── data/exercises.ts    # Catálogo base de ejercicios
+│   ├── components/
+│   │   ├── ui.tsx           # Componentes base (Card, Button, StatTile…)
+│   │   ├── ProgressRing.tsx # Anillo de progreso animado (SVG)
+│   │   └── PressableScale.tsx # Pulsación con escala + háptica
+│   ├── data/
+│   │   ├── exercises.ts     # Catálogo de ejercicios (gym + CrossFit)
+│   │   └── wods.ts          # WODs de CrossFit
 │   └── lib/
 │       ├── types.ts         # Tipos TypeScript
-│       ├── theme.ts         # Colores y espaciado
+│       ├── theme.ts         # Colores, sombras y gradientes
 │       ├── storage.ts       # Helpers de AsyncStorage
-│       └── store.tsx        # Estado global (Context) con persistencia
+│       ├── store.tsx        # Estado global (Context) con persistencia
+│       ├── coach.ts         # Sugerencia de peso y progresión
+│       ├── stats.ts         # Racha, progreso semanal y logros
+│       └── haptics.ts       # Envoltorios de háptica
 ├── app.json                 # Configuración de Expo
 ├── package.json
 └── tsconfig.json
@@ -76,12 +107,14 @@ exercise-app/
 
 - Expo SDK 51 · React Native 0.74 · React 18
 - expo-router (navegación basada en archivos)
+- react-native-svg (anillos de progreso) · expo-haptics (feedback táctil)
 - AsyncStorage (persistencia local)
 - TypeScript en modo estricto
 
 ## Próximas ideas
 
-- [ ] Gráficas de progreso por ejercicio
+- [ ] Gráficas de progreso por ejercicio (peso a lo largo del tiempo)
 - [ ] Editar rutinas existentes
+- [ ] Generador de rutina por objetivo (fuerza/hipertrofia/pérdida de grasa)
 - [ ] Recordatorios / notificaciones de entrenamiento
 - [ ] Imágenes o vídeos demostrativos de cada ejercicio
