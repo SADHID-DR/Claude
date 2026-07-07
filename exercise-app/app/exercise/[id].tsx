@@ -1,12 +1,17 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { getExerciseById } from '@/data/exercises';
+import { useStore } from '@/lib/store';
+import { weightProgressFor } from '@/lib/stats';
 import { Card, Tag } from '@/components/ui';
+import { LineChart } from '@/components/LineChart';
 import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { sessions } = useStore();
   const exercise = getExerciseById(id);
+  const progress = weightProgressFor(sessions, id);
 
   if (!exercise) {
     return (
@@ -34,6 +39,14 @@ export default function ExerciseDetailScreen() {
 
       <Text style={styles.equipment}>🏋️ {exercise.equipment}</Text>
       <Text style={styles.description}>{exercise.description}</Text>
+
+      {/* Progreso: evolución del peso máximo por sesión */}
+      {progress.length >= 2 ? (
+        <Card style={styles.progressCard}>
+          <Text style={styles.progressHeader}>📈 Tu progreso</Text>
+          <LineChart data={progress} unit=" kg" />
+        </Card>
+      ) : null}
 
       {/* Coach: cómo elegir el peso / ajustar la máquina */}
       <Card style={styles.coachCard}>
@@ -78,6 +91,14 @@ const styles = StyleSheet.create({
   pillTextMuted: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   equipment: { color: colors.textMuted, fontSize: 14 },
   description: { color: colors.text, fontSize: 16, lineHeight: 24 },
+  progressCard: { alignItems: 'center' },
+  progressHeader: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '800',
+    alignSelf: 'flex-start',
+    marginBottom: spacing.sm,
+  },
   coachCard: { backgroundColor: '#14251f', borderColor: colors.primaryDark },
   coachHeader: { color: colors.primary, fontSize: 15, fontWeight: '800', marginBottom: spacing.xs },
   coachText: { color: colors.text, fontSize: 15, lineHeight: 22 },

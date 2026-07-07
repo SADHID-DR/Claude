@@ -25,6 +25,10 @@ export default function RootLayout() {
             name="routine/new"
             options={{ title: 'Nueva rutina', presentation: 'modal' }}
           />
+          <Stack.Screen
+            name="routine/generate"
+            options={{ title: 'Generar rutina', presentation: 'modal' }}
+          />
           <Stack.Screen name="session/[id]" options={{ title: 'Entrenamiento' }} />
           <Stack.Screen name="wod/[id]" options={{ title: 'WOD' }} />
           <Stack.Screen name="timer" options={{ title: 'Temporizador' }} />

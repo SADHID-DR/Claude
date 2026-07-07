@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EXERCISES } from '@/data/exercises';
 import { useStore } from '@/lib/store';
 import { RoutineExercise } from '@/lib/types';
@@ -17,10 +17,21 @@ import { colors, radius, spacing } from '@/lib/theme';
 
 export default function NewRoutineScreen() {
   const router = useRouter();
-  const { addRoutine } = useStore();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { addRoutine, updateRoutine, routines } = useStore();
 
-  const [name, setName] = useState('');
-  const [selected, setSelected] = useState<Record<string, RoutineExercise>>({});
+  // Modo edición: si llega un id, precargamos esa rutina.
+  const editing = useMemo(() => routines.find((r) => r.id === id), [routines, id]);
+
+  const [name, setName] = useState(editing?.name ?? '');
+  const [selected, setSelected] = useState<Record<string, RoutineExercise>>(() => {
+    if (!editing) return {};
+    const map: Record<string, RoutineExercise> = {};
+    editing.exercises.forEach((re) => {
+      map[re.exerciseId] = re;
+    });
+    return map;
+  });
 
   const toggle = (exerciseId: string) => {
     setSelected((prev) => {
@@ -56,12 +67,17 @@ export default function NewRoutineScreen() {
       Alert.alert('Sin ejercicios', 'Selecciona al menos un ejercicio.');
       return;
     }
-    addRoutine({ name: name.trim(), exercises });
+    if (editing) {
+      updateRoutine({ ...editing, name: name.trim(), exercises });
+    } else {
+      addRoutine({ name: name.trim(), exercises });
+    }
     router.back();
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Stack.Screen options={{ title: editing ? 'Editar rutina' : 'Nueva rutina' }} />
       <TextInput
         placeholder="Nombre de la rutina (ej. Día de pierna)"
         placeholderTextColor={colors.textMuted}
@@ -107,7 +123,11 @@ export default function NewRoutineScreen() {
         );
       })}
 
-      <Button title="Guardar rutina" onPress={save} style={{ marginVertical: spacing.md }} />
+      <Button
+        title={editing ? 'Guardar cambios' : 'Guardar rutina'}
+        onPress={save}
+        style={{ marginVertical: spacing.md }}
+      />
     </ScrollView>
   );
 }

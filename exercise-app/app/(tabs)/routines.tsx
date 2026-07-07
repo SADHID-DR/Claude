@@ -1,11 +1,12 @@
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Link } from 'expo-router';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { Button, Card, EmptyState } from '@/components/ui';
 import { colors, spacing } from '@/lib/theme';
 
 export default function RoutinesScreen() {
+  const router = useRouter();
   const { routines, deleteRoutine } = useStore();
 
   const confirmDelete = (id: string, name: string) => {
@@ -22,9 +23,19 @@ export default function RoutinesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
         ListHeaderComponent={
-          <Link href="/routine/new" asChild>
-            <Button title="＋ Nueva rutina" onPress={() => {}} style={{ marginBottom: spacing.sm }} />
-          </Link>
+          <View style={styles.header}>
+            <Button
+              title="✨ Generar rutina"
+              onPress={() => router.push('/routine/generate')}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title="＋ Nueva"
+              variant="ghost"
+              onPress={() => router.push('/routine/new')}
+              style={{ flex: 1 }}
+            />
+          </View>
         }
         renderItem={({ item }) => (
           <Card>
@@ -43,11 +54,18 @@ export default function RoutinesScreen() {
               })}
             </View>
             <View style={styles.actions}>
-              <Link href={`/session/${item.id}`} asChild>
-                <Button title="▶ Entrenar" onPress={() => {}} style={{ flex: 1 }} />
-              </Link>
               <Button
-                title="Eliminar"
+                title="▶ Entrenar"
+                onPress={() => router.push(`/session/${item.id}`)}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="✎ Editar"
+                variant="ghost"
+                onPress={() => router.push(`/routine/new?id=${item.id}`)}
+              />
+              <Button
+                title="🗑"
                 variant="danger"
                 onPress={() => confirmDelete(item.id, item.name)}
               />
@@ -56,8 +74,9 @@ export default function RoutinesScreen() {
         )}
         ListEmptyComponent={
           <EmptyState
+            emoji="📋"
             title="Aún no tienes rutinas"
-            hint="Crea tu primera rutina combinando ejercicios del catálogo."
+            hint="Pulsa 'Generar rutina' para que tu coach te arme una, o crea la tuya."
           />
         }
       />
@@ -67,6 +86,7 @@ export default function RoutinesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  header: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   name: { color: colors.text, fontSize: 17, fontWeight: '800' },
   meta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   exerciseList: { marginTop: spacing.sm, gap: 2 },

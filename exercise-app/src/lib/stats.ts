@@ -87,6 +87,34 @@ export function weekVolumeByDay(sessions: WorkoutSession[]): number[] {
   return buckets;
 }
 
+export interface ProgressPoint {
+  value: number;
+  label: string;
+}
+
+/**
+ * Serie de peso máximo por sesión para un ejercicio, en orden cronológico
+ * (de más antigua a más reciente). Alimenta la gráfica de progreso.
+ */
+export function weightProgressFor(
+  sessions: WorkoutSession[],
+  exerciseId: string
+): ProgressPoint[] {
+  const points: ProgressPoint[] = [];
+  // sessions viene de más reciente a más antigua: la recorremos al revés.
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const s = sessions[i];
+    const weights = s.sets.filter((x) => x.exerciseId === exerciseId).map((x) => x.weight);
+    if (weights.length === 0) continue;
+    const d = new Date(s.date);
+    points.push({
+      value: Math.max(...weights),
+      label: `${d.getDate()}/${d.getMonth() + 1}`,
+    });
+  }
+  return points;
+}
+
 export interface Achievement {
   id: string;
   emoji: string;

@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, Vibration, View } from 'react-native';
 import { Button } from '@/components/ui';
 import { tapLight, notifySuccess } from '@/lib/haptics';
+import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
 import { colors, radius, spacing } from '@/lib/theme';
+
+/** Segundos finales en los que suena la cuenta atrás de aviso. */
+const COUNTDOWN_ALERT = 5;
 
 const PRESETS = [30, 45, 60, 90, 120, 180];
 
@@ -32,7 +36,14 @@ export default function TimerScreen() {
     }
   };
 
-  useEffect(() => clear, []);
+  // Precarga los sonidos al abrir la pantalla y los libera al salir.
+  useEffect(() => {
+    initSounds();
+    return () => {
+      clear();
+      unloadSounds();
+    };
+  }, []);
 
   useEffect(() => {
     if (!running) {
@@ -43,10 +54,17 @@ export default function TimerScreen() {
       if (mode === 'countdown') {
         setRemaining((prev) => {
           if (prev <= 1) {
-            Vibration.vibrate(600);
+            // Fin del descanso: beep final + vibración fuerte.
+            Vibration.vibrate([0, 200, 100, 400]);
+            playGo();
             notifySuccess();
             setRunning(false);
             return 0;
+          }
+          // Aviso en los últimos segundos para prepararte.
+          if (prev - 1 <= COUNTDOWN_ALERT) {
+            Vibration.vibrate(120);
+            playTick();
           }
           return prev - 1;
         });
@@ -73,6 +91,9 @@ export default function TimerScreen() {
   const display = mode === 'countdown' ? remaining : elapsed;
   const progress =
     mode === 'countdown' && target > 0 ? remaining / target : 0;
+  // En los últimos segundos, el número se pone naranja para avisar.
+  const alerting =
+    mode === 'countdown' && running && remaining > 0 && remaining <= COUNTDOWN_ALERT;
 
   return (
     <View style={styles.container}>
@@ -102,10 +123,17 @@ export default function TimerScreen() {
       </View>
 
       <View style={styles.display}>
-        <Text style={styles.time}>{fmt(display)}</Text>
+        <Text style={[styles.time, alerting && styles.timeAlert]}>{fmt(display)}</Text>
+        {alerting ? <Text style={styles.prepare}>¡Prepárate!</Text> : null}
         {mode === 'countdown' ? (
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${progress * 100}%` },
+                alerting && { backgroundColor: colors.streak },
+              ]}
+            />
           </View>
         ) : null}
       </View>
@@ -158,6 +186,13 @@ const styles = StyleSheet.create({
     fontSize: 84,
     fontWeight: '900',
     fontVariant: ['tabular-nums'],
+  },
+  timeAlert: { color: colors.streak },
+  prepare: {
+    color: colors.streak,
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: spacing.xs,
   },
   progressTrack: {
     width: '80%',
