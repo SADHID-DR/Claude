@@ -10,9 +10,17 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { EXERCISES } from '@/data/exercises';
-import { MuscleGroup } from '@/lib/types';
+import { Category, MuscleGroup } from '@/lib/types';
 import { Card, Tag } from '@/components/ui';
-import { colors, radius, spacing } from '@/lib/theme';
+import { colors, radius, spacing, categoryColors } from '@/lib/theme';
+
+const CATEGORIES: (Category | 'Todo')[] = [
+  'Todo',
+  'Máquina',
+  'Peso libre',
+  'Peso corporal',
+  'CrossFit',
+];
 
 const MUSCLES: (MuscleGroup | 'Todos')[] = [
   'Todos',
@@ -22,21 +30,24 @@ const MUSCLES: (MuscleGroup | 'Todos')[] = [
   'Hombros',
   'Brazos',
   'Core',
+  'Cuerpo completo',
   'Cardio',
 ];
 
 export default function ExercisesScreen() {
   const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<Category | 'Todo'>('Todo');
   const [muscle, setMuscle] = useState<MuscleGroup | 'Todos'>('Todos');
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return EXERCISES.filter((e) => {
+      const matchCategory = category === 'Todo' || e.category === category;
       const matchMuscle = muscle === 'Todos' || e.muscle === muscle;
       const matchQuery = q === '' || e.name.toLowerCase().includes(q);
-      return matchMuscle && matchQuery;
+      return matchCategory && matchMuscle && matchQuery;
     });
-  }, [query, muscle]);
+  }, [query, category, muscle]);
 
   return (
     <View style={styles.container}>
@@ -48,11 +59,39 @@ export default function ExercisesScreen() {
         style={styles.search}
       />
 
+      <Text style={styles.filterLabel}>Equipo</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.chips}
-        contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.md }}
+        contentContainerStyle={styles.chipsContent}
+      >
+        {CATEGORIES.map((c) => {
+          const active = category === c;
+          const tint = c !== 'Todo' ? categoryColors[c] : colors.primary;
+          return (
+            <Pressable
+              key={c}
+              onPress={() => setCategory(c)}
+              style={[
+                styles.chip,
+                active && { backgroundColor: tint, borderColor: tint },
+              ]}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                {c}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <Text style={styles.filterLabel}>Músculo</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chips}
+        contentContainerStyle={styles.chipsContent}
       >
         {MUSCLES.map((m) => (
           <Pressable
@@ -71,6 +110,11 @@ export default function ExercisesScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
+        ListHeaderComponent={
+          <Text style={styles.count}>
+            {filtered.length} ejercicio{filtered.length !== 1 ? 's' : ''}
+          </Text>
+        }
         renderItem={({ item }) => (
           <Link href={`/exercise/${item.id}`} asChild>
             <Pressable>
@@ -79,7 +123,12 @@ export default function ExercisesScreen() {
                   <Text style={styles.name}>{item.name}</Text>
                   <Tag label={item.muscle} />
                 </View>
-                <Text style={styles.equipment}>{item.equipment}</Text>
+                <View style={styles.metaRow}>
+                  <Text style={[styles.category, { color: categoryColors[item.category] }]}>
+                    {item.category}
+                  </Text>
+                  <Text style={styles.equipment}>· {item.equipment}</Text>
+                </View>
               </Card>
             </Pressable>
           </Link>
@@ -105,7 +154,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  filterLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+  },
   chips: { flexGrow: 0, marginBottom: spacing.sm },
+  chipsContent: { gap: spacing.sm, paddingHorizontal: spacing.md },
   chip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
@@ -117,6 +176,7 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
   chipTextActive: { color: '#0b1220' },
+  count: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -124,6 +184,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   name: { color: colors.text, fontSize: 16, fontWeight: '700', flex: 1 },
-  equipment: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs },
+  metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs, gap: 4 },
+  category: { fontSize: 13, fontWeight: '700' },
+  equipment: { color: colors.textMuted, fontSize: 13 },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
 });

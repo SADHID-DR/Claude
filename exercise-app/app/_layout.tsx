@@ -26,6 +26,7 @@ export default function RootLayout() {
             options={{ title: 'Nueva rutina', presentation: 'modal' }}
           />
           <Stack.Screen name="session/[id]" options={{ title: 'Entrenamiento' }} />
+          <Stack.Screen name="wod/[id]" options={{ title: 'WOD' }} />
         </Stack>
       </StoreProvider>
     </SafeAreaProvider>

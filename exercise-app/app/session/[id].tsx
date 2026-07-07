@@ -10,6 +10,7 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
+import { lastWeightFor, progressionHint } from '@/lib/coach';
 import { LoggedSet } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
@@ -24,7 +25,7 @@ function fmt(totalSeconds: number): string {
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { routines, addSession } = useStore();
+  const { routines, sessions, addSession } = useStore();
   const routine = routines.find((r) => r.id === id);
 
   const [elapsed, setElapsed] = useState(0);
@@ -39,15 +40,18 @@ export default function SessionScreen() {
   }, []);
 
   // Estado editable de cada serie: weight/reps por (ejercicio, serie).
+  // El peso se pre-rellena con lo que usaste la última vez (coach).
   const initialSets = useMemo<Record<string, { weight: string; reps: string }>>(() => {
     const map: Record<string, { weight: string; reps: string }> = {};
     routine?.exercises.forEach((re) => {
+      const last = lastWeightFor(sessions, re.exerciseId);
+      const prefill = last != null && last > 0 ? String(last) : '';
       for (let s = 0; s < re.sets; s++) {
-        map[`${re.exerciseId}-${s}`] = { weight: '', reps: String(re.reps) };
+        map[`${re.exerciseId}-${s}`] = { weight: prefill, reps: String(re.reps) };
       }
     });
     return map;
-  }, [routine]);
+  }, [routine, sessions]);
 
   const [sets, setSets] = useState(initialSets);
 
@@ -114,6 +118,9 @@ export default function SessionScreen() {
             <Text style={styles.exMeta}>
               Objetivo: {re.sets}×{re.reps} · descanso {re.restSeconds}s
             </Text>
+            <Text style={styles.coachHint}>
+              🎯 {progressionHint(lastWeightFor(sessions, re.exerciseId))}
+            </Text>
 
             <View style={styles.headerRow}>
               <Text style={[styles.colHead, styles.colSet]}>Serie</Text>
@@ -161,7 +168,14 @@ const styles = StyleSheet.create({
   timerLabel: { color: colors.textMuted, fontSize: 13 },
   timer: { color: colors.primary, fontSize: 40, fontWeight: '900', fontVariant: ['tabular-nums'] },
   exName: { color: colors.text, fontSize: 16, fontWeight: '800' },
-  exMeta: { color: colors.textMuted, fontSize: 13, marginTop: 2, marginBottom: spacing.sm },
+  exMeta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  coachHint: {
+    color: colors.primary,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
   headerRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },
   colHead: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   colSet: { width: 44, textAlign: 'center' },

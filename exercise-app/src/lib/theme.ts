@@ -35,4 +35,21 @@ export const muscleColors: Record<string, string> = {
   Brazos: '#a78bfa',
   Core: '#fb923c',
   Cardio: '#f472b6',
+  'Cuerpo completo': '#2dd4bf',
+};
+
+/** Color asociado a cada categoría de equipo. */
+export const categoryColors: Record<string, string> = {
+  Máquina: '#38bdf8',
+  'Peso libre': '#f59e0b',
+  'Peso corporal': '#a3e635',
+  CrossFit: '#fb7185',
+};
+
+/** Color asociado a cada formato de WOD. */
+export const wodFormatColors: Record<string, string> = {
+  AMRAP: '#38bdf8',
+  'For Time': '#fb7185',
+  EMOM: '#a78bfa',
+  Rounds: '#34d399',
 };

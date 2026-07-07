@@ -36,6 +36,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="wods"
+        options={{
+          title: 'WODs',
+          tabBarIcon: ({ color }) => <TabIcon emoji="🔥" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: 'Registro',
