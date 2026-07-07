@@ -32,7 +32,7 @@ function schemeLabel(re: RE): string {
 
 export default function GenerateRoutineScreen() {
   const router = useRouter();
-  const { addRoutine } = useStore();
+  const { addPlan } = useStore();
 
   const [days, setDays] = useState(4);
   const [goal, setGoal] = useState<Goal>('Hipertrofia');
@@ -55,8 +55,15 @@ export default function GenerateRoutineScreen() {
   };
 
   const save = () => {
-    plan.days.forEach((d) => {
-      addRoutine({ name: d.name, exercises: d.exercises });
+    addPlan({
+      name: plan.title,
+      goal: plan.goal,
+      days,
+      age: ageNum,
+      restDays: plan.restDays,
+      schedule: plan.schedule,
+      warmup: plan.warmup,
+      dayRoutines: plan.days.map((d) => ({ name: d.name, exercises: d.exercises })),
     });
     notifySuccess();
     router.replace('/(tabs)/routines');
@@ -130,6 +137,21 @@ export default function GenerateRoutineScreen() {
       <View style={styles.ageNote}>
         <Text style={styles.ageNoteText}>👨‍⚕️ {plan.ageNote}</Text>
       </View>
+
+      {/* Recomendación del coach: descanso y calentamiento */}
+      <Card style={styles.recCard}>
+        <Text style={styles.recHeader}>🗓️ Recomendación del coach</Text>
+        <Text style={styles.recLine}>
+          <Text style={styles.recBold}>Entrena:</Text> {plan.schedule.join(' · ')}
+        </Text>
+        <Text style={styles.recLine}>
+          <Text style={styles.recBold}>Descanso:</Text> {plan.restDays} día
+          {plan.restDays !== 1 ? 's' : ''}/semana (recuperación y crecimiento).
+        </Text>
+        <Text style={styles.recLine}>
+          <Text style={styles.recBold}>Calentamiento:</Text> {plan.warmup}
+        </Text>
+      </Card>
 
       {plan.days.map((day) => (
         <Card key={day.name} style={{ marginBottom: spacing.sm }}>
@@ -228,6 +250,10 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   ageNoteText: { color: colors.text, fontSize: 13, lineHeight: 19 },
+  recCard: { marginBottom: spacing.md, gap: 4 },
+  recHeader: { color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: spacing.xs },
+  recLine: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  recBold: { color: colors.text, fontWeight: '700' },
   dayName: { color: colors.text, fontSize: 16, fontWeight: '900' },
   dayFocus: { color: colors.primary, fontSize: 13, fontWeight: '700', marginTop: 2, marginBottom: spacing.sm },
   exList: { gap: 2 },

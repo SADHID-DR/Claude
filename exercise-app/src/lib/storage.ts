@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const StorageKeys = {
   routines: 'exercise-app/routines',
   sessions: 'exercise-app/sessions',
+  plans: 'exercise-app/plans',
 } as const;
 
 export async function loadJSON<T>(key: string, fallback: T): Promise<T> {

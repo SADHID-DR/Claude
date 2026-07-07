@@ -71,6 +71,23 @@ export interface Routine {
   name: string;
   exercises: RoutineExercise[];
   createdAt: number;
+  /** Id del plan al que pertenece, si se generó dentro de un plan semanal. */
+  planId?: string;
+}
+
+/** Plan semanal generado por el coach; agrupa varias rutinas (días). */
+export interface Plan {
+  id: string;
+  name: string;
+  goal: string;
+  days: number;
+  age: number;
+  createdAt: number;
+  routineIds: string[];
+  /** Recomendación del coach (descanso + calentamiento). */
+  restDays: number;
+  schedule: string[];
+  warmup: string;
 }
 
 /** Serie registrada dentro de una sesión de entrenamiento. */

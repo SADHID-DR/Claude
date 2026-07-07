@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  Vibration,
   View,
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -13,6 +14,7 @@ import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { lastWeightFor, progressionHint } from '@/lib/coach';
 import { notifySuccess, tapMedium } from '@/lib/haptics';
+import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
 import { LoggedSet } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
@@ -58,14 +60,55 @@ export default function SessionScreen() {
   const [sets, setSets] = useState(initialSets);
   const [done, setDone] = useState<Record<string, boolean>>({});
 
+  // Descanso automático entre series.
+  const [rest, setRest] = useState<{ remaining: number; total: number } | null>(null);
+
   const totalSets = routine
     ? routine.exercises.reduce((n, re) => n + re.sets, 0)
     : 0;
   const doneCount = Object.values(done).filter(Boolean).length;
 
-  const toggleDone = (key: string) => {
+  // Precarga los sonidos del descanso.
+  useEffect(() => {
+    initSounds();
+    return () => {
+      unloadSounds();
+    };
+  }, []);
+
+  // Cuenta atrás del descanso, con aviso sonoro en los últimos 5 s.
+  useEffect(() => {
+    if (!rest) return;
+    if (rest.remaining <= 0) {
+      Vibration.vibrate([0, 200, 100, 400]);
+      playGo();
+      const t = setTimeout(() => setRest(null), 900);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => {
+      setRest((prev) => {
+        if (!prev) return prev;
+        const next = prev.remaining - 1;
+        if (next > 0 && next <= 5) {
+          Vibration.vibrate(120);
+          playTick();
+        }
+        return { ...prev, remaining: next };
+      });
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [rest]);
+
+  const toggleDone = (key: string, restSeconds: number) => {
     tapMedium();
-    setDone((prev) => ({ ...prev, [key]: !prev[key] }));
+    setDone((prev) => {
+      const nowDone = !prev[key];
+      // Al completar una serie, arranca el descanso automáticamente.
+      if (nowDone && restSeconds > 0) {
+        setRest({ remaining: restSeconds, total: restSeconds });
+      }
+      return { ...prev, [key]: nowDone };
+    });
   };
 
   if (!routine) {
@@ -120,8 +163,9 @@ export default function SessionScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Stack.Screen options={{ title: routine.name }} />
+    <View style={styles.screen}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <Stack.Screen options={{ title: routine.name }} />
 
       <Card style={styles.timerCard}>
         <Text style={styles.timerLabel}>Tiempo de sesión</Text>
@@ -181,7 +225,7 @@ export default function SessionScreen() {
                     style={[styles.cellInput, styles.colInput]}
                   />
                   <Pressable
-                    onPress={() => toggleDone(key)}
+                    onPress={() => toggleDone(key, re.restSeconds)}
                     style={[styles.checkBox, isDone && styles.checkBoxDone, styles.colCheck]}
                   >
                     <Text style={[styles.checkMark, isDone && styles.checkMarkDone]}>✓</Text>
@@ -194,13 +238,83 @@ export default function SessionScreen() {
       })}
 
       <Button title="✔ Finalizar y guardar" onPress={finish} style={{ marginVertical: spacing.md }} />
-    </ScrollView>
+      </ScrollView>
+
+      {/* Descanso automático flotante */}
+      {rest ? (
+        <View style={styles.restBanner}>
+          <View style={styles.restRow}>
+            <View>
+              <Text style={styles.restLabel}>DESCANSO</Text>
+              <Text
+                style={[styles.restTime, rest.remaining <= 5 && styles.restTimeAlert]}
+              >
+                {fmt(Math.max(0, rest.remaining))}
+              </Text>
+            </View>
+            <View style={styles.restActions}>
+              <Button
+                title="+15s"
+                variant="ghost"
+                onPress={() =>
+                  setRest((p) => (p ? { remaining: p.remaining + 15, total: p.total + 15 } : p))
+                }
+              />
+              <Button title="Saltar" onPress={() => setRest(null)} />
+            </View>
+          </View>
+          <View style={styles.restBar}>
+            <View
+              style={[
+                styles.restBarFill,
+                { width: `${rest.total > 0 ? (Math.max(0, rest.remaining) / rest.total) * 100 : 0}%` },
+                rest.remaining <= 5 && { backgroundColor: colors.streak },
+              ]}
+            />
+          </View>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.md },
+  content: { padding: spacing.md, paddingBottom: 120 },
+  restBanner: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.primaryDark,
+    padding: spacing.md,
+  },
+  restRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  restLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+  restTime: {
+    color: colors.primary,
+    fontSize: 34,
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'],
+  },
+  restTimeAlert: { color: colors.streak },
+  restActions: { flexDirection: 'row', gap: spacing.sm },
+  restBar: {
+    height: 6,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 3,
+    marginTop: spacing.sm,
+    overflow: 'hidden',
+  },
+  restBarFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 3 },
   timerCard: { alignItems: 'center', marginBottom: spacing.md },
   timerLabel: { color: colors.textMuted, fontSize: 13 },
   timer: { color: colors.primary, fontSize: 40, fontWeight: '900', fontVariant: ['tabular-nums'] },

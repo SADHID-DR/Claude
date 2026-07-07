@@ -255,7 +255,32 @@ export interface WeeklyPlan {
   ageNote: string;
   goal: Goal;
   days: PlanDay[];
+  /** Días de descanso a la semana. */
+  restDays: number;
+  /** Reparto sugerido de días de entrenamiento (L, M, X...). */
+  schedule: string[];
+  /** Calentamiento recomendado según la edad. */
+  warmup: string;
 }
+
+const WARMUP_BY_BAND: Record<AgeBand, string> = {
+  joven: '5 min de cardio suave + movilidad de las articulaciones que vas a trabajar.',
+  adulto:
+    '8 min: cardio suave, movilidad y 1–2 series de aproximación antes de los básicos.',
+  maduro:
+    '10 min: cardio suave, movilidad articular y series ligeras de aproximación. Sin prisa.',
+  senior:
+    '12–15 min: cardio muy suave, movilidad completa y aproximaciones graduales; cuida hombros, cadera y rodillas.',
+};
+
+/** Reparto de días de entrenamiento a lo largo de la semana. */
+const SCHEDULE_BY_DAYS: Record<number, string[]> = {
+  2: ['Lun', 'Jue'],
+  3: ['Lun', 'Mié', 'Vie'],
+  4: ['Lun', 'Mar', 'Jue', 'Vie'],
+  5: ['Lun', 'Mar', 'Mié', 'Vie', 'Sáb'],
+  6: ['Lun', 'Mar', 'Mié', 'Vie', 'Sáb', 'Dom'],
+};
 
 function buildDay(
   tpl: DayTemplate,
@@ -342,5 +367,8 @@ export function generatePlan(input: PlanInput): WeeklyPlan {
     ageNote: AGE_ADJ[band].note,
     goal: input.goal,
     days,
+    restDays: 7 - input.days,
+    schedule: SCHEDULE_BY_DAYS[input.days] ?? [],
+    warmup: WARMUP_BY_BAND[band],
   };
 }
