@@ -732,7 +732,212 @@ export const EXERCISES: Exercise[] = [
     weightGuide:
       'Sin peso. En cinta, regula velocidad e inclinación para ajustar la intensidad.',
   },
+  {
+    id: 'ex-stair-climber',
+    name: 'Escaladora',
+    muscle: 'Cardio',
+    category: 'Máquina',
+    equipment: 'Escaladora (stepper)',
+    difficulty: 'Principiante',
+    lowImpact: true,
+    description: 'Cardio de bajo impacto que trabaja piernas y glúteos.',
+    instructions: [
+      'Sube a la máquina y agárrate ligeramente al pasamanos.',
+      'Mantén el torso erguido, no te cuelgues de los brazos.',
+      'Pisa con toda la planta a un ritmo constante.',
+      'Respira de forma controlada.',
+    ],
+    coachTips: [
+      'No te apoyes en las barras: resta trabajo a las piernas.',
+      'Ideal para quemar sin castigar las articulaciones.',
+    ],
+    weightGuide: 'Sin peso: ajusta el nivel/velocidad de la máquina.',
+  },
+  {
+    id: 'ex-jump-rope',
+    name: 'Saltar la cuerda (comba)',
+    muscle: 'Cardio',
+    category: 'Peso corporal',
+    equipment: 'Comba',
+    difficulty: 'Principiante',
+    description: 'Cardio ágil que mejora coordinación y resistencia.',
+    instructions: [
+      'Gira la cuerda con las muñecas, codos pegados.',
+      'Salta bajo, apenas despegando del suelo.',
+      'Cae sobre la punta de los pies.',
+      'Mantén un ritmo constante.',
+    ],
+    coachTips: [
+      'Empieza con intervalos de 30–60 s.',
+      'Mira al frente, no a los pies.',
+    ],
+    weightGuide: 'Sin peso. Ajusta la cuerda: pisada al centro, mangos a las axilas.',
+  },
+  {
+    id: 'ex-mountain-climber',
+    name: 'Mountain climbers',
+    muscle: 'Cardio',
+    category: 'Peso corporal',
+    equipment: 'Peso corporal',
+    difficulty: 'Principiante',
+    description: 'Cardio y core: rodillas al pecho en posición de plancha.',
+    instructions: [
+      'Colócate en posición de plancha alta.',
+      'Lleva una rodilla hacia el pecho.',
+      'Cambia de pierna rápidamente, como si corrieras.',
+      'Mantén la cadera baja y el core firme.',
+    ],
+    coachTips: [
+      'No subas la cadera al acelerar.',
+      'Controla la respiración para aguantar más.',
+    ],
+    weightGuide: 'Sin peso: regula la intensidad con la velocidad.',
+  },
+  {
+    id: 'ex-hammer-curl',
+    name: 'Curl martillo',
+    muscle: 'Brazos',
+    category: 'Peso libre',
+    equipment: 'Mancuernas',
+    difficulty: 'Principiante',
+    subgroup: 'Bíceps',
+    description: 'Variante de curl con agarre neutro; bíceps y antebrazo.',
+    instructions: [
+      'De pie con una mancuerna en cada mano, palmas enfrentadas.',
+      'Flexiona los codos manteniendo el agarre neutro.',
+      'Contrae arriba.',
+      'Baja controlando.',
+    ],
+    coachTips: [
+      'Codos quietos pegados al cuerpo.',
+      'Evita balancear el tronco.',
+    ],
+    weightGuide: 'Peso con el que hagas 10–12 reps limpias.',
+  },
+  {
+    id: 'ex-overhead-triceps',
+    name: 'Extensión de tríceps sobre la cabeza',
+    muscle: 'Brazos',
+    category: 'Peso libre',
+    equipment: 'Mancuerna',
+    difficulty: 'Principiante',
+    subgroup: 'Tríceps',
+    description: 'Aislamiento del tríceps con estiramiento completo.',
+    instructions: [
+      'Sujeta una mancuerna con ambas manos por encima de la cabeza.',
+      'Baja el peso por detrás de la nuca flexionando los codos.',
+      'Extiende los brazos hacia arriba.',
+      'Mantén los codos apuntando al frente.',
+    ],
+    coachTips: [
+      'Solo se mueven los antebrazos.',
+      'No abras los codos hacia los lados.',
+    ],
+    weightGuide: 'Empieza ligero: el hombro en flexión es una posición sensible.',
+  },
+  {
+    id: 'ex-rdl',
+    name: 'Peso muerto rumano',
+    muscle: 'Piernas',
+    category: 'Peso libre',
+    equipment: 'Barra o mancuernas',
+    difficulty: 'Intermedio',
+    subgroup: 'Posterior',
+    description: 'Enfoca femoral y glúteo con bisagra de cadera.',
+    instructions: [
+      'De pie con la barra a la altura de los muslos.',
+      'Lleva la cadera atrás bajando la barra pegada a las piernas.',
+      'Baja hasta sentir estiramiento en el femoral.',
+      'Vuelve extendiendo la cadera.',
+    ],
+    coachTips: [
+      'Rodillas casi fijas: el movimiento es de cadera.',
+      'Espalda recta en todo el recorrido.',
+    ],
+    weightGuide: 'Prioriza sentir el femoral sobre cargar mucho peso.',
+  },
+  {
+    id: 'ex-bulgarian-split',
+    name: 'Sentadilla búlgara',
+    muscle: 'Piernas',
+    category: 'Peso libre',
+    equipment: 'Mancuernas + banco',
+    difficulty: 'Intermedio',
+    subgroup: 'Cuádriceps',
+    description: 'Trabajo unilateral intenso de cuádriceps y glúteo.',
+    instructions: [
+      'Apoya el empeine de un pie en un banco detrás de ti.',
+      'Baja flexionando la pierna delantera.',
+      'La rodilla trasera va hacia el suelo.',
+      'Sube empujando con el talón delantero.',
+    ],
+    coachTips: [
+      'Mantén el torso ligeramente inclinado adelante.',
+      'Empieza sin peso para dominar el equilibrio.',
+    ],
+    weightGuide: 'Empieza con peso corporal, luego añade mancuernas ligeras.',
+  },
+  {
+    id: 'ex-hanging-leg-raise',
+    name: 'Elevación de piernas colgado',
+    muscle: 'Core',
+    category: 'Peso corporal',
+    equipment: 'Barra fija',
+    difficulty: 'Intermedio',
+    description: 'Trabajo intenso del abdomen inferior.',
+    instructions: [
+      'Cuélgate de una barra con los brazos extendidos.',
+      'Eleva las piernas rectas o las rodillas al pecho.',
+      'Contrae el abdomen arriba.',
+      'Baja controlando sin balancearte.',
+    ],
+    coachTips: [
+      'Evita el balanceo; el movimiento nace del abdomen.',
+      'Si cuesta, empieza con rodillas flexionadas.',
+    ],
+    weightGuide: 'Peso corporal. Progresa de rodillas a piernas rectas.',
+  },
+  {
+    id: 'ex-russian-twist',
+    name: 'Giro ruso (russian twist)',
+    muscle: 'Core',
+    category: 'Peso corporal',
+    equipment: 'Disco o balón (opcional)',
+    difficulty: 'Principiante',
+    description: 'Trabajo de los oblicuos con rotación del tronco.',
+    instructions: [
+      'Siéntate con las rodillas flexionadas y el torso inclinado atrás.',
+      'Junta las manos o sujeta un disco.',
+      'Gira el tronco tocando a un lado y al otro.',
+      'Mantén el abdomen contraído.',
+    ],
+    coachTips: [
+      'Gira desde el tronco, no solo con los brazos.',
+      'Para más reto, eleva los pies del suelo.',
+    ],
+    weightGuide: 'Empieza sin peso; añade un disco ligero cuando domines el giro.',
+  },
 ];
+
+// Subgrupos y cardio de bajo impacto (asignados de forma centralizada).
+const SUBGROUPS: Record<string, Exercise['subgroup']> = {
+  'ex-biceps-curl': 'Bíceps',
+  'ex-triceps-dip': 'Tríceps',
+  'ex-triceps-pushdown': 'Tríceps',
+  'ex-squat': 'Cuádriceps',
+  'ex-leg-press': 'Cuádriceps',
+  'ex-leg-extension': 'Cuádriceps',
+  'ex-lunge': 'Cuádriceps',
+  'ex-deadlift': 'Posterior',
+  'ex-hip-thrust': 'Posterior',
+  'ex-leg-curl': 'Posterior',
+  'ex-calf-raise': 'Gemelo',
+};
+const LOW_IMPACT = new Set(['ex-rowing']);
+for (const e of EXERCISES) {
+  if (SUBGROUPS[e.id]) e.subgroup = SUBGROUPS[e.id];
+  if (LOW_IMPACT.has(e.id)) e.lowImpact = true;
+}
 
 export function getExerciseById(id: string): Exercise | undefined {
   return EXERCISES.find((e) => e.id === id);

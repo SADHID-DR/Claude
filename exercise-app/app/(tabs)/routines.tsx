@@ -25,7 +25,7 @@ export default function RoutinesScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Button
-              title="✨ Generar rutina"
+              title="✨ Generar plan"
               onPress={() => router.push('/routine/generate')}
               style={{ flex: 1 }}
             />

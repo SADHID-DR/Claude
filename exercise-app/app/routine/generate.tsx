@@ -1,35 +1,63 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import {
   Goal,
-  Focus,
+  Priority,
   GOALS,
-  FOCUSES,
-  generateRoutine,
+  PRIORITIES,
+  DAY_OPTIONS,
+  generatePlan,
 } from '@/lib/generator';
+import { RoutineExercise as RE } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
 import { notifySuccess } from '@/lib/haptics';
 import { colors, radius, spacing } from '@/lib/theme';
+
+/** Muestra la prescripción (cardio por tiempo, fuerza por series×reps). */
+function schemeLabel(re: RE): string {
+  const ex = getExerciseById(re.exerciseId);
+  if (ex?.muscle === 'Cardio' && re.sets === 1) return `≈${re.reps} min`;
+  return `${re.sets}×${re.reps}`;
+}
 
 export default function GenerateRoutineScreen() {
   const router = useRouter();
   const { addRoutine } = useStore();
 
+  const [days, setDays] = useState(4);
   const [goal, setGoal] = useState<Goal>('Hipertrofia');
-  const [focus, setFocus] = useState<Focus>('Cuerpo completo');
-  const [seed, setSeed] = useState(0); // para regenerar
+  const [age, setAge] = useState('30');
+  const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [seed, setSeed] = useState(0);
 
-  const generated = useMemo(
-    () => generateRoutine(goal, focus),
+  const ageNum = Math.min(90, Math.max(14, parseInt(age, 10) || 30));
+
+  const plan = useMemo(
+    () => generatePlan({ days, goal, age: ageNum, priorities }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [goal, focus, seed]
+    [days, goal, ageNum, priorities, seed]
   );
 
+  const togglePriority = (p: Priority) => {
+    setPriorities((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+    );
+  };
+
   const save = () => {
-    addRoutine({ name: generated.name, exercises: generated.exercises });
+    plan.days.forEach((d) => {
+      addRoutine({ name: d.name, exercises: d.exercises });
+    });
     notifySuccess();
     router.replace('/(tabs)/routines');
   };
@@ -37,8 +65,21 @@ export default function GenerateRoutineScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.intro}>
-        Tu coach arma una rutina según tu objetivo. Ajusta y guárdala.
+        Tu coach premium arma un plan semanal según tus días, tu edad y tu objetivo.
       </Text>
+
+      <Text style={styles.label}>Días por semana</Text>
+      <View style={styles.optionRow}>
+        {DAY_OPTIONS.map((d) => (
+          <Pressable
+            key={d}
+            onPress={() => setDays(d)}
+            style={[styles.dayOption, days === d && styles.optionActive]}
+          >
+            <Text style={[styles.optionText, days === d && styles.optionTextActive]}>{d}</Text>
+          </Pressable>
+        ))}
+      </View>
 
       <Text style={styles.label}>Objetivo</Text>
       <View style={styles.optionRow}>
@@ -48,54 +89,75 @@ export default function GenerateRoutineScreen() {
             onPress={() => setGoal(g)}
             style={[styles.option, goal === g && styles.optionActive]}
           >
-            <Text style={[styles.optionText, goal === g && styles.optionTextActive]}>
-              {g}
-            </Text>
+            <Text style={[styles.optionText, goal === g && styles.optionTextActive]}>{g}</Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.label}>Enfoque</Text>
+      <Text style={styles.label}>Edad</Text>
+      <TextInput
+        value={age}
+        onChangeText={setAge}
+        keyboardType="number-pad"
+        maxLength={2}
+        style={styles.ageInput}
+      />
+
+      <Text style={styles.label}>Prioridades (opcional)</Text>
       <View style={styles.optionRow}>
-        {FOCUSES.map((f) => (
+        {PRIORITIES.map((p) => (
           <Pressable
-            key={f}
-            onPress={() => setFocus(f)}
-            style={[styles.option, focus === f && styles.optionActive]}
+            key={p}
+            onPress={() => togglePriority(p)}
+            style={[styles.option, priorities.includes(p) && styles.optionActive]}
           >
-            <Text style={[styles.optionText, focus === f && styles.optionTextActive]}>
-              {f}
+            <Text
+              style={[styles.optionText, priorities.includes(p) && styles.optionTextActive]}
+            >
+              {p}
             </Text>
           </Pressable>
         ))}
       </View>
 
       <View style={styles.previewHeader}>
-        <Text style={styles.previewTitle}>Vista previa</Text>
+        <Text style={styles.previewTitle}>{plan.title}</Text>
         <Pressable onPress={() => setSeed((s) => s + 1)} hitSlop={8}>
           <Text style={styles.regen}>🔄 Regenerar</Text>
         </Pressable>
       </View>
+      <Text style={styles.summary}>{plan.summary}</Text>
+      <View style={styles.ageNote}>
+        <Text style={styles.ageNoteText}>👨‍⚕️ {plan.ageNote}</Text>
+      </View>
 
-      <Card>
-        <Text style={styles.routineName}>{generated.name}</Text>
-        <Text style={styles.routineDesc}>{generated.description}</Text>
-        <View style={styles.exList}>
-          {generated.exercises.map((re, i) => {
-            const ex = getExerciseById(re.exerciseId);
-            return (
-              <View key={i} style={styles.exRow}>
-                <Text style={styles.exName}>{ex?.name ?? 'Ejercicio'}</Text>
-                <Text style={styles.exScheme}>
-                  {re.sets}×{re.reps} · {re.restSeconds}s
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      </Card>
+      {plan.days.map((day) => (
+        <Card key={day.name} style={{ marginBottom: spacing.sm }}>
+          <Text style={styles.dayName}>{day.name}</Text>
+          <Text style={styles.dayFocus}>{day.focus}</Text>
+          <View style={styles.exList}>
+            {day.exercises.map((re, i) => {
+              const ex = getExerciseById(re.exerciseId);
+              const isCardio = ex?.muscle === 'Cardio';
+              return (
+                <View key={i} style={styles.exRow}>
+                  <Text style={styles.exName}>
+                    {isCardio ? '🏃 ' : ''}
+                    {ex?.name ?? 'Ejercicio'}
+                  </Text>
+                  <Text style={styles.exScheme}>{schemeLabel(re)}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </Card>
+      ))}
 
-      <Button title="Guardar rutina" onPress={save} style={{ marginVertical: spacing.md }} />
+      <Button
+        title={`Guardar plan (${plan.days.length} días)`}
+        onPress={save}
+        style={{ marginVertical: spacing.md }}
+      />
     </ScrollView>
   );
 }
@@ -121,20 +183,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  dayOption: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   optionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  optionText: { color: colors.text, fontWeight: '700', fontSize: 14 },
+  optionText: { color: colors.text, fontWeight: '700', fontSize: 15 },
   optionTextActive: { color: '#08130c' },
+  ageInput: {
+    backgroundColor: colors.surface,
+    color: colors.text,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    fontSize: 18,
+    fontWeight: '700',
+    width: 90,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
   previewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
   },
-  previewTitle: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  previewTitle: { color: colors.text, fontSize: 20, fontWeight: '900', flex: 1 },
   regen: { color: colors.accent, fontSize: 14, fontWeight: '700' },
-  routineName: { color: colors.text, fontSize: 18, fontWeight: '900' },
-  routineDesc: { color: colors.textMuted, fontSize: 13, marginTop: 2, marginBottom: spacing.sm },
-  exList: { gap: spacing.xs },
+  summary: { color: colors.textMuted, fontSize: 14, marginTop: 2 },
+  ageNote: {
+    backgroundColor: colors.accentSoft,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    padding: spacing.sm,
+    marginVertical: spacing.md,
+  },
+  ageNoteText: { color: colors.text, fontSize: 13, lineHeight: 19 },
+  dayName: { color: colors.text, fontSize: 16, fontWeight: '900' },
+  dayFocus: { color: colors.primary, fontSize: 13, fontWeight: '700', marginTop: 2, marginBottom: spacing.sm },
+  exList: { gap: 2 },
   exRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

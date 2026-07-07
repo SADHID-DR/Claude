@@ -9,18 +9,25 @@ localmente en el dispositivo (AsyncStorage); no requiere servidor.
 - 🏠 **Pantalla "Hoy" (coach)** — dashboard con saludo, **anillo de progreso
   semanal** (estilo Apple Fitness), **racha** de días 🔥, KPIs (entrenos,
   volumen), entrenamiento del día, WOD del día, accesos rápidos y logros.
-- 💪 **Catálogo de ejercicios** — 34 ejercicios de gym y CrossFit con **filtro
+- 💪 **Catálogo de ejercicios** — 43 ejercicios de gym y CrossFit con **filtro
   por tipo de equipo** (Máquina / Peso libre / Peso corporal / CrossFit) y por
   músculo. Cada ejercicio incluye **guía de peso/máquina** y **consejos del
   entrenador**.
-- 📋 **Rutinas personalizadas** — crea rutinas combinando ejercicios y define
-  series, repeticiones y descanso para cada uno.
+- 🧠 **Coach premium: plan semanal** — genera un plan completo según tus **días
+  de entrenamiento**, tu **edad** y tu **objetivo**. Arma el split (empuje /
+  tirón / pierna / abdominales), mete **2 días de pierna** y **día de abs**
+  cuando corresponde, y añade **cardio** (remo, escaladora, comba, box jumps,
+  burpees) — de bajo impacto para edades mayores. Ajusta series/reps/descanso
+  por edad.
+- 📋 **Rutinas personalizadas** — crea, **genera** o **edita** rutinas; define
+  series, repeticiones y descanso para cada ejercicio.
 - 🔥 **WODs de CrossFit** — benchmarks (Fran, Cindy, Murph, Helen, Annie,
   Grace) y WODs para empezar, con formato (AMRAP/For Time/EMOM) y escalado.
 - 📈 **Progreso** — historial de entrenamientos con volumen total, más
   estadísticas y **sistema de logros/medallas** desbloqueables.
-- ⏱️ **Temporizador** — descanso con presets (30–180 s) y vibración al
-  terminar, más cronómetro para ejercicios por tiempo.
+- ⏱️ **Temporizador** — descanso con presets (30–180 s), **sonido de aviso en
+  los últimos 5 s** (“¡Prepárate!”) y beep final, más cronómetro.
+- 📊 **Gráficas de progreso** por ejercicio (peso máximo por sesión).
 
 ### Toques de "entrenador personal" e interactividad
 
@@ -113,8 +120,7 @@ exercise-app/
 
 ## Próximas ideas
 
-- [ ] Gráficas de progreso por ejercicio (peso a lo largo del tiempo)
-- [ ] Editar rutinas existentes
-- [ ] Generador de rutina por objetivo (fuerza/hipertrofia/pérdida de grasa)
-- [ ] Recordatorios / notificaciones de entrenamiento
+- [ ] Descanso automático al marcar una serie como completada
+- [ ] Recordatorios / notificaciones de entrenamiento (y aviso al reloj)
+- [ ] App para Samsung Galaxy Watch (Wear OS, proyecto nativo aparte)
 - [ ] Imágenes o vídeos demostrativos de cada ejercicio

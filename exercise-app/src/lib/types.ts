@@ -13,6 +13,14 @@ export type Category = 'Máquina' | 'Peso libre' | 'Peso corporal' | 'CrossFit';
 
 export type Difficulty = 'Principiante' | 'Intermedio' | 'Avanzado';
 
+/** Subgrupo fino para armar splits (empuje/tirón, cuádriceps/posterior). */
+export type SubGroup =
+  | 'Bíceps'
+  | 'Tríceps'
+  | 'Cuádriceps'
+  | 'Posterior'
+  | 'Gemelo';
+
 export interface Exercise {
   id: string;
   name: string;
@@ -26,6 +34,10 @@ export interface Exercise {
   coachTips: string[];
   /** Cómo elegir el peso o ajustar la máquina. */
   weightGuide: string;
+  /** Subgrupo fino (opcional) para el generador de rutinas. */
+  subgroup?: SubGroup;
+  /** Cardio de bajo impacto (apto para todas las edades). */
+  lowImpact?: boolean;
 }
 
 /** Formato de un WOD de CrossFit. */
