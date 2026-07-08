@@ -1,17 +1,22 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { getExerciseById } from '@/data/exercises';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { EXERCISES, getExerciseById } from '@/data/exercises';
 import { useStore } from '@/lib/store';
 import { weightProgressFor } from '@/lib/stats';
 import { Card, Tag } from '@/components/ui';
+import { PressableScale } from '@/components/PressableScale';
 import { LineChart } from '@/components/LineChart';
 import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { sessions } = useStore();
   const exercise = getExerciseById(id);
   const progress = weightProgressFor(sessions, id);
+  const related = exercise
+    ? EXERCISES.filter((e) => e.muscle === exercise.muscle && e.id !== exercise.id).slice(0, 8)
+    : [];
 
   if (!exercise) {
     return (
@@ -72,6 +77,23 @@ export default function ExerciseDetailScreen() {
           </View>
         ))}
       </Card>
+
+      {/* Variantes / otras opciones para el mismo músculo */}
+      {related.length > 0 ? (
+        <View>
+          <Text style={styles.sectionTitle}>Otras opciones para {exercise.muscle}</Text>
+          {related.map((r) => (
+            <PressableScale key={r.id} onPress={() => router.push(`/exercise/${r.id}`)}>
+              <Card style={styles.relCard}>
+                <Text style={styles.relName}>{r.name}</Text>
+                <Text style={styles.relEquip}>
+                  {r.category} · {r.equipment}
+                </Text>
+              </Card>
+            </PressableScale>
+          ))}
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
@@ -120,5 +142,8 @@ const styles = StyleSheet.create({
   tipRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },
   tipBullet: { color: colors.accent, fontSize: 15, fontWeight: '800' },
   tipText: { color: colors.text, fontSize: 15, flex: 1, lineHeight: 22 },
+  relCard: { marginBottom: spacing.sm },
+  relName: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  relEquip: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   notFound: { color: colors.textMuted, padding: spacing.xl, textAlign: 'center' },
 });

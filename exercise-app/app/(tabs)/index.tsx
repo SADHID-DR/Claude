@@ -27,17 +27,20 @@ export default function TodayScreen() {
   const router = useRouter();
   const { routines, sessions, plans, activePlanId } = useStore();
 
+  // Entrenamiento de hoy según el PLAN ACTIVO, el progreso y el calendario.
+  const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
+  // La meta semanal se adapta a los días de tu plan activo.
+  const weeklyGoal = activePlan?.days ?? WEEKLY_GOAL;
+
   const streak = currentStreak(sessions);
   const week = weekWorkoutCount(sessions);
-  const weekProgress = week / WEEKLY_GOAL;
+  const weekProgress = week / weeklyGoal;
   const volume = totalVolume(sessions);
   const byDay = useMemo(() => weekVolumeByDay(sessions), [sessions]);
   const maxDay = Math.max(1, ...byDay);
   const achievements = useMemo(() => computeAchievements(sessions), [sessions]);
   const unlocked = achievements.filter((a) => a.unlocked);
 
-  // Entrenamiento de hoy según el PLAN ACTIVO, el progreso y el calendario.
-  const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
   const today = activePlan ? planToday(activePlan, sessions) : null;
   const todayRoutine =
     today?.routineId != null
@@ -75,16 +78,16 @@ export default function TodayScreen() {
         <ProgressRing
           progress={weekProgress}
           size={150}
-          centerTop={`${week}/${WEEKLY_GOAL}`}
+          centerTop={`${week}/${weeklyGoal}`}
           centerBottom="esta semana"
         />
         <View style={styles.heroInfo}>
           <Text style={styles.heroTitle}>Meta semanal</Text>
           <Text style={styles.heroText}>
-            {week >= WEEKLY_GOAL
+            {week >= weeklyGoal
               ? '¡Meta cumplida! Sigue así 💪'
-              : `Te faltan ${WEEKLY_GOAL - week} entrenamiento${
-                  WEEKLY_GOAL - week !== 1 ? 's' : ''
+              : `Te faltan ${weeklyGoal - week} entrenamiento${
+                  weeklyGoal - week !== 1 ? 's' : ''
                 } para tu meta.`}
           </Text>
           {/* Mini-gráfico semanal */}
