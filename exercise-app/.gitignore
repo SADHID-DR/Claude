@@ -7,6 +7,10 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Native folders (generados por `expo prebuild`; flujo managed)
+/android/
+/ios/
+
 # Native
 *.orig.*
 *.jks
