@@ -32,7 +32,13 @@ localmente en el dispositivo (AsyncStorage); no requiere servidor.
   entrenamiento y el nombre sin regenerar), **duplica** o elimina; los planes
   se guardan agrupados por semana y día.
 - 📝 **Notas por entreno** — al terminar registras **cómo te sentiste**
-  (😫😕😐🙂💪) y una nota; se muestran en el historial.
+  (😫😕😐🙂💪) y una nota; se muestran en el historial, con una **gráfica de
+  ánimo** a lo largo del tiempo.
+- 🎨 **Ilustraciones** — cada ejercicio muestra un icono según el equipo
+  (barra, mancuerna, kettlebell, máquina, peso corporal, cardio) con el color
+  de su músculo.
+- 📤 **Compartir progreso** — comparte un resumen (racha, entrenos, volumen,
+  logros) por el menú de compartir del móvil.
 - 🔥 **WODs de CrossFit** — benchmarks (Fran, Cindy, Murph, Helen, Annie,
   Grace) y WODs para empezar, con formato (AMRAP/For Time/EMOM) y escalado.
 - 📈 **Progreso** — historial de entrenamientos con volumen total, más

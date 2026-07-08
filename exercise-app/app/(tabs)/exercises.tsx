@@ -13,6 +13,7 @@ import { EXERCISES } from '@/data/exercises';
 import { Exercise, MuscleGroup } from '@/lib/types';
 import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
+import { ExerciseIcon } from '@/components/ExerciseIcon';
 import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 
 // Filtro de equipo granular (barra, mancuernas, kettlebell…).
@@ -145,19 +146,24 @@ export default function ExercisesScreen() {
         renderItem={({ item }) => (
           <PressableScale onPress={() => router.push(`/exercise/${item.id}`)}>
             <Card>
-              <View style={styles.row}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Tag label={item.muscle} />
+              <View style={styles.cardRow}>
+                <ExerciseIcon exercise={item} />
+                <View style={{ flex: 1 }}>
+                  <View style={styles.row}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Tag label={item.muscle} />
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text style={[styles.category, { color: categoryColors[item.category] }]}>
+                      {item.category}
+                    </Text>
+                    <Text style={styles.equipment} numberOfLines={1}>
+                      · {item.equipment}
+                    </Text>
+                  </View>
+                  <Text style={styles.difficulty}>{item.difficulty}</Text>
+                </View>
               </View>
-              <View style={styles.metaRow}>
-                <Text style={[styles.category, { color: categoryColors[item.category] }]}>
-                  {item.category}
-                </Text>
-                <Text style={styles.equipment} numberOfLines={1}>
-                  · {item.equipment}
-                </Text>
-              </View>
-              <Text style={styles.difficulty}>{item.difficulty}</Text>
             </Card>
           </PressableScale>
         )}
@@ -211,6 +217,7 @@ const styles = StyleSheet.create({
   chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13, lineHeight: 18 },
   chipTextActive: { color: '#0b1220' },
   count: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

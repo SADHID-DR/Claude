@@ -5,6 +5,7 @@ import { useStore } from '@/lib/store';
 import { weightProgressFor } from '@/lib/stats';
 import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
+import { ExerciseIcon } from '@/components/ExerciseIcon';
 import { LineChart } from '@/components/LineChart';
 import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 
@@ -30,15 +31,18 @@ export default function ExerciseDetailScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Stack.Screen options={{ title: exercise.name }} />
 
-      <View style={styles.headerRow}>
-        <Tag label={exercise.muscle} />
-        <View style={[styles.pill, { borderColor: categoryColors[exercise.category] }]}>
-          <Text style={[styles.pillText, { color: categoryColors[exercise.category] }]}>
-            {exercise.category}
-          </Text>
-        </View>
-        <View style={styles.pill}>
-          <Text style={styles.pillTextMuted}>{exercise.difficulty}</Text>
+      <View style={styles.topRow}>
+        <ExerciseIcon exercise={exercise} size={72} />
+        <View style={styles.headerRow}>
+          <Tag label={exercise.muscle} />
+          <View style={[styles.pill, { borderColor: categoryColors[exercise.category] }]}>
+            <Text style={[styles.pillText, { color: categoryColors[exercise.category] }]}>
+              {exercise.category}
+            </Text>
+          </View>
+          <View style={styles.pill}>
+            <Text style={styles.pillTextMuted}>{exercise.difficulty}</Text>
+          </View>
         </View>
       </View>
 
@@ -101,7 +105,8 @@ export default function ExerciseDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.md, gap: spacing.md },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
+  topRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap', flex: 1 },
   pill: {
     borderWidth: 1,
     borderColor: colors.border,

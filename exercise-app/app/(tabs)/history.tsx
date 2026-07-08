@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { WorkoutSession } from '@/lib/types';
@@ -9,8 +9,9 @@ import {
   sessionVolume,
   computeAchievements,
 } from '@/lib/stats';
-import { Card, EmptyState, SectionHeader, StatTile } from '@/components/ui';
+import { Button, Card, EmptyState, SectionHeader, StatTile } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
+import { LineChart, ChartPoint } from '@/components/LineChart';
 import { colors, radius, spacing } from '@/lib/theme';
 
 const FEELING_EMOJI: Record<number, string> = {
@@ -40,12 +41,48 @@ export default function ProgressScreen() {
   const streak = currentStreak(sessions);
   const volume = totalVolume(sessions);
   const achievements = useMemo(() => computeAchievements(sessions), [sessions]);
+  const unlocked = achievements.filter((a) => a.unlocked).length;
+
+  // Serie de ánimo a lo largo del tiempo (sesiones con ánimo, cronológico).
+  const moodSeries = useMemo<ChartPoint[]>(() => {
+    const points: ChartPoint[] = [];
+    for (let i = sessions.length - 1; i >= 0; i--) {
+      const s = sessions[i];
+      if (typeof s.feeling === 'number') {
+        const d = new Date(s.date);
+        points.push({ value: s.feeling, label: `${d.getDate()}/${d.getMonth() + 1}` });
+      }
+    }
+    return points;
+  }, [sessions]);
 
   const confirmDelete = (id: string) => {
     Alert.alert('Eliminar registro', '¿Eliminar este entrenamiento?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: () => deleteSession(id) },
     ]);
+  };
+
+  const shareProgress = async () => {
+    const vol = volume >= 1000 ? `${(volume / 1000).toFixed(1)} t` : `${Math.round(volume)} kg`;
+    const lines = [
+      '💪 Mi progreso en Ejercicios',
+      `🔥 Racha: ${streak} día${streak !== 1 ? 's' : ''}`,
+      `🏋️ Entrenamientos: ${sessions.length}`,
+      `📊 Volumen total: ${vol}`,
+      `🏆 Logros: ${unlocked}/${achievements.length}`,
+    ];
+    if (sessions.length > 0) {
+      lines.push('', 'Últimos entrenos:');
+      sessions.slice(0, 3).forEach((s) => {
+        lines.push(`• ${s.routineName} — ${Math.round(sessionVolume(s))} kg`);
+      });
+    }
+    try {
+      await Share.share({ message: lines.join('\n') });
+    } catch {
+      // cancelado por el usuario
+    }
   };
 
   return (
@@ -65,6 +102,25 @@ export default function ProgressScreen() {
           tint={colors.primary}
         />
       </View>
+
+      {sessions.length > 0 ? (
+        <Button
+          title="📤 Compartir mi progreso"
+          variant="ghost"
+          onPress={shareProgress}
+          style={{ marginTop: spacing.md }}
+        />
+      ) : null}
+
+      {/* Ánimo a lo largo del tiempo */}
+      {moodSeries.length >= 2 ? (
+        <View style={{ marginTop: spacing.lg }}>
+          <SectionHeader title="Ánimo (😫 1 – 5 💪)" />
+          <Card style={{ alignItems: 'center' }}>
+            <LineChart data={moodSeries} color={colors.warn} />
+          </Card>
+        </View>
+      ) : null}
 
       {/* Logros */}
       <View style={{ marginTop: spacing.lg }}>
