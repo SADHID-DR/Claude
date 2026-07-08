@@ -117,3 +117,14 @@ export interface WorkoutSession {
   /** Nota libre del entrenamiento. */
   note?: string;
 }
+
+/** Registro de composición corporal (peso y medidas). */
+export interface BodyEntry {
+  id: string;
+  date: number;
+  weight: number;
+  /** Cintura en cm (opcional). */
+  waist?: number;
+  /** Brazo en cm (opcional). */
+  arm?: number;
+}

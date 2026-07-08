@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Alert, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { WorkoutSession } from '@/lib/types';
@@ -36,7 +36,45 @@ function fmtDuration(seconds: number): string {
 }
 
 export default function ProgressScreen() {
-  const { sessions, deleteSession } = useStore();
+  const { sessions, deleteSession, body, addBodyEntry } = useStore();
+
+  const [weightIn, setWeightIn] = useState('');
+  const [waistIn, setWaistIn] = useState('');
+  const [armIn, setArmIn] = useState('');
+
+  // Serie de peso corporal en orden cronológico.
+  const weightSeries = useMemo<ChartPoint[]>(() => {
+    return [...body]
+      .sort((a, b) => a.date - b.date)
+      .map((e) => {
+        const d = new Date(e.date);
+        return { value: e.weight, label: `${d.getDate()}/${d.getMonth() + 1}` };
+      });
+  }, [body]);
+
+  const latestBody = useMemo(
+    () => (body.length ? [...body].sort((a, b) => b.date - a.date)[0] : null),
+    [body]
+  );
+
+  const saveBody = () => {
+    const w = parseFloat(weightIn.replace(',', '.'));
+    if (isNaN(w) || w <= 0) {
+      Alert.alert('Peso no válido', 'Introduce tu peso en kg.');
+      return;
+    }
+    const waist = parseFloat(waistIn.replace(',', '.'));
+    const arm = parseFloat(armIn.replace(',', '.'));
+    addBodyEntry({
+      date: Date.now(),
+      weight: w,
+      waist: isNaN(waist) ? undefined : waist,
+      arm: isNaN(arm) ? undefined : arm,
+    });
+    setWeightIn('');
+    setWaistIn('');
+    setArmIn('');
+  };
 
   const streak = currentStreak(sessions);
   const volume = totalVolume(sessions);
@@ -111,6 +149,61 @@ export default function ProgressScreen() {
           style={{ marginTop: spacing.md }}
         />
       ) : null}
+
+      {/* Peso corporal y medidas */}
+      <View style={{ marginTop: spacing.lg }}>
+        <SectionHeader
+          title="Peso corporal"
+          action={latestBody ? `${latestBody.weight} kg` : undefined}
+        />
+        <Card>
+          {weightSeries.length >= 2 ? (
+            <View style={{ alignItems: 'center', marginBottom: spacing.md }}>
+              <LineChart data={weightSeries} unit=" kg" color={colors.accent} />
+            </View>
+          ) : (
+            <Text style={styles.bodyHint}>
+              Registra tu peso (y cintura/brazo si quieres) para ver tu evolución.
+            </Text>
+          )}
+          <View style={styles.bodyInputs}>
+            <View style={styles.bodyField}>
+              <Text style={styles.bodyLabel}>Peso (kg)</Text>
+              <TextInput
+                value={weightIn}
+                onChangeText={setWeightIn}
+                keyboardType="decimal-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textMuted}
+                style={styles.bodyInput}
+              />
+            </View>
+            <View style={styles.bodyField}>
+              <Text style={styles.bodyLabel}>Cintura (cm)</Text>
+              <TextInput
+                value={waistIn}
+                onChangeText={setWaistIn}
+                keyboardType="decimal-pad"
+                placeholder="–"
+                placeholderTextColor={colors.textMuted}
+                style={styles.bodyInput}
+              />
+            </View>
+            <View style={styles.bodyField}>
+              <Text style={styles.bodyLabel}>Brazo (cm)</Text>
+              <TextInput
+                value={armIn}
+                onChangeText={setArmIn}
+                keyboardType="decimal-pad"
+                placeholder="–"
+                placeholderTextColor={colors.textMuted}
+                style={styles.bodyInput}
+              />
+            </View>
+          </View>
+          <Button title="Registrar peso" onPress={saveBody} style={{ marginTop: spacing.md }} />
+        </Card>
+      </View>
 
       {/* Ánimo a lo largo del tiempo */}
       {moodSeries.length >= 2 ? (
@@ -198,6 +291,18 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   statsRow: { flexDirection: 'row', gap: spacing.sm },
+  bodyHint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.md, lineHeight: 19 },
+  bodyInputs: { flexDirection: 'row', gap: spacing.sm },
+  bodyField: { flex: 1 },
+  bodyLabel: { color: colors.textMuted, fontSize: 12, marginBottom: 4 },
+  bodyInput: {
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    textAlign: 'center',
+    fontSize: 16,
+  },
   achievements: { gap: spacing.sm },
   achCard: {
     flexDirection: 'row',

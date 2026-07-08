@@ -39,16 +39,18 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Set versionCode from run number
+        run: |
+          node -e "const fs=require('fs');const p='app.json';const j=JSON.parse(fs.readFileSync(p));j.expo.android=j.expo.android||{};j.expo.android.versionCode=${{ github.run_number }};fs.writeFileSync(p,JSON.stringify(j,null,2));console.log('versionCode ->', j.expo.android.versionCode);"
+
       - name: Generate native Android project (prebuild)
         run: npx expo prebuild --platform android --no-install
 
-      - name: Generate signing keystore
+      - name: Restore stable signing keystore
         run: |
-          keytool -genkeypair -v \
-            -keystore android/app/release.keystore \
-            -storepass ejercicios -keypass ejercicios \
-            -alias ejercicios -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Ejercicios, OU=App, O=Ejercicios, L=NA, S=NA, C=ES"
+          base64 -d ci/release.keystore.base64 > android/app/release.keystore
+          keytool -list -keystore android/app/release.keystore \
+            -storepass ejercicios -alias ejercicios | grep -i sha256 || true
 
       - name: Build release APK
         working-directory: exercise-app/android

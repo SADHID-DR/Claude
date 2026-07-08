@@ -15,11 +15,13 @@ import {
   Priority,
   Cycle,
   Equipment,
+  Duration,
   GOALS,
   PRIORITIES,
   DAY_OPTIONS,
   CYCLES,
   EQUIPMENT,
+  DURATIONS,
   generatePlan,
 } from '@/lib/generator';
 import { RoutineExercise as RE } from '@/lib/types';
@@ -42,6 +44,8 @@ export default function GenerateRoutineScreen() {
   const [goal, setGoal] = useState<Goal>('Hipertrofia');
   const [age, setAge] = useState('30');
   const [cycle, setCycle] = useState<Cycle>('Semanal');
+  const [duration, setDuration] = useState<Duration>(60);
+  const [fullBody, setFullBody] = useState(false);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [seed, setSeed] = useState(0);
@@ -49,9 +53,9 @@ export default function GenerateRoutineScreen() {
   const ageNum = Math.min(90, Math.max(14, parseInt(age, 10) || 30));
 
   const plan = useMemo(
-    () => generatePlan({ days, goal, age: ageNum, priorities, cycle, equipment }),
+    () => generatePlan({ days, goal, age: ageNum, priorities, cycle, equipment, duration, fullBody }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [days, goal, ageNum, priorities, cycle, equipment, seed]
+    [days, goal, ageNum, priorities, cycle, equipment, duration, fullBody, seed]
   );
 
   const togglePriority = (p: Priority) => {
@@ -138,6 +142,41 @@ export default function GenerateRoutineScreen() {
         ))}
       </View>
 
+      <Text style={styles.label}>Duración por sesión</Text>
+      <View style={styles.optionRow}>
+        {DURATIONS.map((d) => (
+          <Pressable
+            key={d}
+            onPress={() => setDuration(d)}
+            style={[styles.option, duration === d && styles.optionActive]}
+          >
+            <Text style={[styles.optionText, duration === d && styles.optionTextActive]}>
+              {d} min
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Estructura</Text>
+      <View style={styles.optionRow}>
+        <Pressable
+          onPress={() => setFullBody(false)}
+          style={[styles.option, !fullBody && styles.optionActive]}
+        >
+          <Text style={[styles.optionText, !fullBody && styles.optionTextActive]}>
+            Split (por grupos)
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setFullBody(true)}
+          style={[styles.option, fullBody && styles.optionActive]}
+        >
+          <Text style={[styles.optionText, fullBody && styles.optionTextActive]}>
+            Cuerpo completo
+          </Text>
+        </Pressable>
+      </View>
+
       <Text style={styles.label}>Edad</Text>
       <TextInput
         value={age}
@@ -182,13 +221,14 @@ export default function GenerateRoutineScreen() {
         ))}
       </View>
 
-      <View style={styles.previewHeader}>
-        <Text style={styles.previewTitle}>{plan.title}</Text>
-        <Pressable onPress={() => setSeed((s) => s + 1)} hitSlop={8}>
-          <Text style={styles.regen}>🔄 Regenerar</Text>
-        </Pressable>
-      </View>
+      <Text style={styles.previewTitle}>{plan.title}</Text>
       <Text style={styles.summary}>{plan.summary}</Text>
+      <Button
+        title="🔄 Regenerar ejercicios"
+        variant="ghost"
+        onPress={() => setSeed((s) => s + 1)}
+        style={{ marginTop: spacing.sm }}
+      />
       <View style={styles.ageNote}>
         <Text style={styles.ageNoteText}>👨‍⚕️ {plan.ageNote}</Text>
       </View>
@@ -209,7 +249,7 @@ export default function GenerateRoutineScreen() {
       </Card>
 
       {plan.weeks.map((wk) => (
-        <View key={wk.index}>
+        <View key={`${seed}-${wk.index}`}>
           {plan.weeks.length > 1 ? (
             <View style={styles.weekHeader}>
               <Text style={styles.weekLabel}>{wk.label}</Text>
@@ -217,7 +257,7 @@ export default function GenerateRoutineScreen() {
             </View>
           ) : null}
           {wk.days.map((day) => (
-            <Card key={`${wk.index}-${day.name}`} style={{ marginBottom: spacing.sm }}>
+            <Card key={`${seed}-${wk.index}-${day.name}`} style={{ marginBottom: spacing.sm }}>
               <Text style={styles.dayName}>{day.name}</Text>
               <Text style={styles.dayFocus}>{day.focus}</Text>
               <View style={styles.exList}>

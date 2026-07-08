@@ -254,8 +254,15 @@ const CORE_CARDIO: DayTemplate = {
   focus: 'Core · Cardio',
   slots: ['core', 'core', 'core', 'cardio', 'cardio'],
 };
+const FULLBODY: DayTemplate = {
+  key: 'full',
+  name: 'Cuerpo completo',
+  focus: 'Todo el cuerpo',
+  slots: ['quad', 'chest', 'back', 'shoulders', 'posterior', 'biceps', 'triceps', 'core'],
+};
 
-function splitFor(days: number): DayTemplate[] {
+function splitFor(days: number, fullBody: boolean): DayTemplate[] {
+  if (fullBody) return Array.from({ length: days }, () => FULLBODY);
   switch (days) {
     case 2:
       return [UPPER, LOWER];
@@ -271,6 +278,17 @@ function splitFor(days: number): DayTemplate[] {
       return [PUSH, PULL, LEGS];
   }
 }
+
+/** Duración objetivo del entrenamiento → nº de ejercicios por día. */
+export const DURATIONS = [30, 45, 60, 75, 90] as const;
+export type Duration = (typeof DURATIONS)[number];
+const PER_DAY_BY_DURATION: Record<number, number> = {
+  30: 3,
+  45: 4,
+  60: 5,
+  75: 6,
+  90: 7,
+};
 
 // ─────────────────────────────── Generación ──────────────────────────────────
 import { Cycle } from '@/lib/types';
@@ -291,6 +309,10 @@ export interface PlanInput {
   cycle: Cycle;
   /** Equipo disponible; vacío = usa todo. */
   equipment?: Equipment[];
+  /** Duración objetivo por sesión en minutos (ajusta nº de ejercicios). */
+  duration?: number;
+  /** Si es true, cada día es de cuerpo completo. */
+  fullBody?: boolean;
 }
 
 export interface PlanDay {
@@ -355,7 +377,8 @@ function buildDay(
   band: AgeBand,
   priorities: Priority[],
   prog: WeekProg = { repAdd: 0, restAdd: 0, setAdd: 0 },
-  avail: Equipment[] = []
+  avail: Equipment[] = [],
+  perDay?: number
 ): PlanDay {
   const gp = GOAL_PARAMS[goal];
   const adj = AGE_ADJ[band];
@@ -371,7 +394,8 @@ function buildDay(
   // Pool de un slot ya filtrado por el equipo disponible.
   const P = (key: PoolKey) => filterEquip(poolFor(key), avail);
 
-  const target = tpl.key === 'coreCardio' ? 5 : gp.exercisesPerDay;
+  const perDayCount = perDay ?? gp.exercisesPerDay;
+  const target = tpl.key === 'coreCardio' ? Math.max(4, perDayCount) : perDayCount;
 
   const add = (ex: Exercise, asCardio = false) => {
     used.add(ex.id);
@@ -471,14 +495,17 @@ function weekProgression(
  */
 export function generatePlan(input: PlanInput): WeeklyPlan {
   const band = ageBand(input.age);
-  const templates = splitFor(input.days);
+  const templates = splitFor(input.days, input.fullBody ?? false);
   const totalWeeks = CYCLE_WEEKS[input.cycle];
+  const perDay = input.duration
+    ? PER_DAY_BY_DURATION[input.duration]
+    : GOAL_PARAMS[input.goal].exercisesPerDay;
 
   const weeks: PlanWeek[] = [];
   for (let w = 0; w < totalWeeks; w++) {
     const { prog, note } = weekProgression(input.goal, w, totalWeeks);
     const days: PlanDay[] = templates.map((t, i) => {
-      const d = buildDay(t, input.goal, band, input.priorities, prog, input.equipment ?? []);
+      const d = buildDay(t, input.goal, band, input.priorities, prog, input.equipment ?? [], perDay);
       return { ...d, name: `Día ${i + 1} · ${d.name}` };
     });
     weeks.push({ index: w, label: `Semana ${w + 1}`, note, days });

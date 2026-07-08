@@ -1,3 +1,4 @@
+import React from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { Exercise } from '@/lib/types';
@@ -82,7 +83,7 @@ function Shape({ type, color }: { type: IconType; color: string }) {
   }
 }
 
-export function ExerciseIcon({ exercise, size = 46 }: { exercise: Exercise; size?: number }) {
+function ExerciseIconBase({ exercise, size = 46 }: { exercise: Exercise; size?: number }) {
   const color = muscleColors[exercise.muscle] ?? colors.primary;
   const type = iconType(exercise);
   return (
@@ -102,3 +103,9 @@ export function ExerciseIcon({ exercise, size = 46 }: { exercise: Exercise; size
     </View>
   );
 }
+
+/** Memoizado: solo se redibuja si cambian el ejercicio o el tamaño. */
+export const ExerciseIcon = React.memo(
+  ExerciseIconBase,
+  (a, b) => a.exercise.id === b.exercise.id && a.size === b.size
+);

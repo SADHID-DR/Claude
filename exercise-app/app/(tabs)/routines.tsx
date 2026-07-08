@@ -20,6 +20,7 @@ export default function RoutinesScreen() {
     deleteRoutine,
     deletePlan,
     duplicatePlan,
+    movePlanDay,
     setActivePlan,
     setRemindersEnabled,
     setReminderHour,
@@ -179,12 +180,38 @@ export default function RoutinesScreen() {
               return (
                 <View key={wn} style={styles.weekBlock}>
                   {plan.weeks > 1 ? <Text style={styles.weekTitle}>Semana {wn}</Text> : null}
-                  {weekRoutines.map((r) => (
+                  {weekRoutines.map((r, di) => (
                     <View key={r.id} style={styles.dayRow}>
+                      <View style={styles.reorderCol}>
+                        <Pressable
+                          onPress={() => movePlanDay(plan.id, r.id, -1)}
+                          disabled={di === 0}
+                          style={[styles.reorderBtn, di === 0 && styles.reorderOff]}
+                          hitSlop={6}
+                        >
+                          <Text style={styles.reorderText}>▲</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => movePlanDay(plan.id, r.id, 1)}
+                          disabled={di === weekRoutines.length - 1}
+                          style={[
+                            styles.reorderBtn,
+                            di === weekRoutines.length - 1 && styles.reorderOff,
+                          ]}
+                          hitSlop={6}
+                        >
+                          <Text style={styles.reorderText}>▼</Text>
+                        </Pressable>
+                      </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.dayName}>{r.name}</Text>
                         <Text style={styles.dayMeta}>{r.exercises.length} ejercicios</Text>
                       </View>
+                      <Button
+                        title="✎"
+                        variant="ghost"
+                        onPress={() => router.push(`/routine/new?id=${r.id}`)}
+                      />
                       <Button title="▶" onPress={() => router.push(`/session/${r.id}`)} />
                     </View>
                   ))}
@@ -311,6 +338,19 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.sm,
   },
+  reorderCol: { justifyContent: 'center', gap: 2 },
+  reorderBtn: {
+    width: 26,
+    height: 22,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reorderOff: { opacity: 0.3 },
+  reorderText: { color: colors.text, fontSize: 12, fontWeight: '900', lineHeight: 14 },
   dayName: { color: colors.text, fontSize: 15, fontWeight: '700' },
   dayMeta: { color: colors.textMuted, fontSize: 12, marginTop: 1 },
   planActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, alignItems: 'center' },
