@@ -29,6 +29,7 @@ interface StoreValue {
   plans: Plan[];
   activePlanId: string | null;
   remindersEnabled: boolean;
+  reminderHour: number;
   addRoutine: (input: Omit<Routine, 'id' | 'createdAt'>) => Routine;
   updateRoutine: (routine: Routine) => void;
   deleteRoutine: (id: string) => void;
@@ -38,6 +39,7 @@ interface StoreValue {
   duplicatePlan: (id: string) => void;
   setActivePlan: (id: string | null) => void;
   setRemindersEnabled: (v: boolean) => void;
+  setReminderHour: (h: number) => void;
   addSession: (input: Omit<WorkoutSession, 'id'>) => WorkoutSession;
   deleteSession: (id: string) => void;
 }
@@ -51,22 +53,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [remindersEnabled, setRemindersEnabledState] = useState(false);
+  const [reminderHour, setReminderHourState] = useState(18);
 
   // Carga inicial desde almacenamiento local.
   useEffect(() => {
     (async () => {
-      const [r, s, p, active, rem] = await Promise.all([
+      const [r, s, p, active, rem, hour] = await Promise.all([
         loadJSON<Routine[]>(StorageKeys.routines, []),
         loadJSON<WorkoutSession[]>(StorageKeys.sessions, []),
         loadJSON<Plan[]>(StorageKeys.plans, []),
         loadJSON<string | null>(StorageKeys.activePlan, null),
         loadJSON<boolean>(StorageKeys.reminders, false),
+        loadJSON<number>(StorageKeys.reminderHour, 18),
       ]);
       setRoutines(r);
       setSessions(s);
       setPlans(p);
       setActivePlanId(active);
       setRemindersEnabledState(rem);
+      setReminderHourState(hour);
       setReady(true);
     })();
   }, []);
@@ -87,6 +92,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.reminders, remindersEnabled);
   }, [remindersEnabled, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.reminderHour, reminderHour);
+  }, [reminderHour, ready]);
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -96,6 +104,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       plans,
       activePlanId,
       remindersEnabled,
+      reminderHour,
       addRoutine: (input) => {
         const routine: Routine = { ...input, id: makeId(), createdAt: Date.now() };
         setRoutines((prev) => [routine, ...prev]);
@@ -175,6 +184,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
       setActivePlan: (id) => setActivePlanId(id),
       setRemindersEnabled: (v) => setRemindersEnabledState(v),
+      setReminderHour: (h) => setReminderHourState(h),
       addSession: (input) => {
         const session: WorkoutSession = { ...input, id: makeId() };
         setSessions((prev) => [session, ...prev]);
@@ -184,7 +194,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSessions((prev) => prev.filter((s) => s.id !== id));
       },
     }),
-    [ready, routines, sessions, plans, activePlanId, remindersEnabled]
+    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

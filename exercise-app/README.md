@@ -21,8 +21,11 @@ localmente en el dispositivo (AsyncStorage); no requiere servidor.
   mayores. Aplica **progresión entre semanas** (y semana de **descarga** en el
   ciclo mensual) y da una **recomendación** de días y calentamiento por edad.
 - 🗓️ **Plan activo + "Hoy"** — marca un plan como activo y la pantalla Hoy te
-  dice **qué toca hoy** (semana y día del ciclo) según el calendario, o si
-  toca descanso. **Recordatorios** semanales opcionales (notificaciones).
+  dice **qué toca hoy** (semana y día del ciclo), avanzando de **semana
+  automáticamente** a medida que completas entrenos. **Calendario visual** del
+  plan (vista mensual con los días marcados). **Recordatorios** semanales a la
+  **hora que elijas**, con **aviso de prueba** que llega a un Samsung Galaxy
+  Watch emparejado (reflejo de notificaciones).
 - 📋 **Rutinas y planes** — crea, **genera**, **edita**, **duplica** o
   **renombra**; los planes se guardan agrupados por semana y día.
 - 🔥 **WODs de CrossFit** — benchmarks (Fran, Cindy, Murph, Helen, Annie,

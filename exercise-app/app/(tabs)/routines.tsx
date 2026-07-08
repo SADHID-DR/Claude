@@ -12,9 +12,11 @@ import { useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { Plan, Routine } from '@/lib/types';
-import { scheduleReminders, cancelReminders } from '@/lib/notifications';
+import { scheduleReminders, cancelReminders, sendTestNotification } from '@/lib/notifications';
 import { Button, Card, EmptyState, SectionHeader } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
+
+const HOUR_OPTIONS = [6, 7, 8, 12, 17, 18, 19, 20, 21];
 
 export default function RoutinesScreen() {
   const router = useRouter();
@@ -23,12 +25,14 @@ export default function RoutinesScreen() {
     plans,
     activePlanId,
     remindersEnabled,
+    reminderHour,
     deleteRoutine,
     deletePlan,
     renamePlan,
     duplicatePlan,
     setActivePlan,
     setRemindersEnabled,
+    setReminderHour,
   } = useStore();
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,22 +70,39 @@ export default function RoutinesScreen() {
     setEditingId(null);
   };
 
+  const hhmm = (h: number) => `${String(h).padStart(2, '0')}:00`;
+
   const toggleReminders = async (plan: Plan) => {
     if (remindersEnabled) {
       await cancelReminders();
       setRemindersEnabled(false);
       return;
     }
-    const ok = await scheduleReminders(plan);
+    const ok = await scheduleReminders(plan, reminderHour);
     if (ok) {
       setRemindersEnabled(true);
-      Alert.alert('Recordatorios activados 🔔', 'Te avisaré a las 18:00 tus días de entreno.');
+      Alert.alert('Recordatorios activados 🔔', `Te avisaré a las ${hhmm(reminderHour)} tus días de entreno.`);
     } else {
       Alert.alert(
         'No se pudo activar',
         'Concede permiso de notificaciones para recibir recordatorios.'
       );
     }
+  };
+
+  const changeHour = async (plan: Plan, h: number) => {
+    setReminderHour(h);
+    if (remindersEnabled) await scheduleReminders(plan, h);
+  };
+
+  const testNotification = async () => {
+    const ok = await sendTestNotification();
+    Alert.alert(
+      ok ? 'Aviso de prueba enviado ⌚' : 'No se pudo enviar',
+      ok
+        ? 'Llegará en unos segundos. Si tienes un Galaxy Watch emparejado, también lo verás en el reloj.'
+        : 'Concede permiso de notificaciones para probarlo.'
+    );
   };
 
   return (
@@ -142,11 +163,44 @@ export default function RoutinesScreen() {
             </Text>
 
             {active ? (
-              <Pressable onPress={() => toggleReminders(plan)} style={styles.remindersBtn}>
-                <Text style={styles.remindersText}>
-                  {remindersEnabled ? '🔔 Recordatorios: ON' : '🔕 Recordatorios: OFF'}
-                </Text>
-              </Pressable>
+              <View style={styles.remindersBox}>
+                <Pressable onPress={() => toggleReminders(plan)} style={styles.remindersBtn}>
+                  <Text style={styles.remindersText}>
+                    {remindersEnabled
+                      ? `🔔 Recordatorios ON · ${hhmm(reminderHour)}`
+                      : '🔕 Recordatorios OFF'}
+                  </Text>
+                </Pressable>
+                {remindersEnabled ? (
+                  <>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: spacing.xs, paddingVertical: spacing.xs }}
+                    >
+                      {HOUR_OPTIONS.map((h) => (
+                        <Pressable
+                          key={h}
+                          onPress={() => changeHour(plan, h)}
+                          style={[styles.hourChip, reminderHour === h && styles.hourChipActive]}
+                        >
+                          <Text
+                            style={[
+                              styles.hourChipText,
+                              reminderHour === h && styles.hourChipTextActive,
+                            ]}
+                          >
+                            {hhmm(h)}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                    <Pressable onPress={testNotification} style={styles.testBtn}>
+                      <Text style={styles.testText}>⌚ Probar aviso (llega al reloj)</Text>
+                    </Pressable>
+                  </>
+                ) : null}
+              </View>
             ) : null}
 
             {weekNumbers.map((wn) => {
@@ -169,6 +223,13 @@ export default function RoutinesScreen() {
                 </View>
               );
             })}
+
+            <Button
+              title="📅 Ver calendario"
+              variant="ghost"
+              onPress={() => router.push(`/plan/${plan.id}`)}
+              style={{ marginTop: spacing.md }}
+            />
 
             <View style={styles.planActions}>
               {editingId === plan.id ? (
@@ -253,8 +314,8 @@ const styles = StyleSheet.create({
   },
   activeBadgeText: { color: '#08130c', fontSize: 11, fontWeight: '900' },
   planMeta: { color: colors.accent, fontSize: 12, fontWeight: '600', marginTop: 4 },
+  remindersBox: { marginTop: spacing.sm },
   remindersBtn: {
-    marginTop: spacing.sm,
     alignSelf: 'flex-start',
     backgroundColor: colors.bgElevated,
     borderRadius: radius.md,
@@ -264,6 +325,23 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   remindersText: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  hourChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.bgElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  hourChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  hourChipText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
+  hourChipTextActive: { color: '#08130c' },
+  testBtn: {
+    marginTop: spacing.xs,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+  },
+  testText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
   weekBlock: { marginTop: spacing.sm, gap: spacing.xs },
   weekTitle: {
     color: colors.streak,

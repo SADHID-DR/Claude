@@ -36,9 +36,9 @@ export default function TodayScreen() {
   const achievements = useMemo(() => computeAchievements(sessions), [sessions]);
   const unlocked = achievements.filter((a) => a.unlocked);
 
-  // Entrenamiento de hoy según el PLAN ACTIVO y el calendario.
+  // Entrenamiento de hoy según el PLAN ACTIVO, el progreso y el calendario.
   const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
-  const today = activePlan ? planToday(activePlan) : null;
+  const today = activePlan ? planToday(activePlan, sessions) : null;
   const todayRoutine =
     today?.routineId != null
       ? routines.find((r) => r.id === today.routineId) ?? null
@@ -126,7 +126,9 @@ export default function TodayScreen() {
             <View style={[styles.todayCard, shadow]}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.todayLabel}>
-                  HOY{activePlan && activePlan.weeks > 1 ? ` · SEMANA ${(today?.weekIndex ?? 0) + 1}` : ''}
+                  {today?.doneToday ? '✅ HOY (hecho)' : 'HOY'}
+                  {activePlan && activePlan.weeks > 1 ? ` · SEMANA ${(today?.weekIndex ?? 0) + 1}` : ''}
+                  {today ? ` · ${today.completedInCycle}/${today.cycleTotal}` : ''}
                 </Text>
                 <Text style={styles.todayTitle}>{todayRoutine.name}</Text>
                 <Text style={styles.todayMeta}>

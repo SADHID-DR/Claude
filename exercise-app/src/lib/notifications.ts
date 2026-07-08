@@ -63,3 +63,24 @@ export async function cancelReminders(): Promise<void> {
     // ignorar
   }
 }
+
+/**
+ * Envía una notificación de prueba en unos segundos. Si tienes un Galaxy Watch
+ * emparejado, el aviso aparece también en el reloj (reflejo de notificaciones).
+ */
+export async function sendTestNotification(): Promise<boolean> {
+  try {
+    const ok = await ensurePermission();
+    if (!ok) return false;
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Prueba de aviso ⌚',
+        body: 'Si ves esto en tu reloj, ¡los recordatorios llegarán a tu muñeca!',
+      },
+      trigger: { seconds: 3 } as Notifications.NotificationTriggerInput,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
