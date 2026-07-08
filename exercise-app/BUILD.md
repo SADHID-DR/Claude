@@ -25,6 +25,7 @@ eas init
 
 # 4) Compila el APK en la nube
 eas build -p android --profile preview
+# (atajo equivalente: npm run build:apk)
 ```
 
 Al terminar (unos minutos), la terminal te da un **enlace**. Ábrelo en el móvil
@@ -64,8 +65,10 @@ npx expo start --tunnel
 - **Nueva arquitectura**: el proyecto usa `newArchEnabled: true`. Si una
   compilación fallara por una librería, ponlo en `false` en `app.json` y
   vuelve a compilar.
-- **Iconos**: usa los iconos por defecto de Expo. Para un icono propio, añade
-  `assets/icon.png` (1024×1024) y `assets/adaptive-icon.png`, y refiéncialos
-  en `app.json` (`expo.icon`, `expo.android.adaptiveIcon.foregroundImage`).
+- **Iconos**: la app ya trae icono propio (una mancuerna verde) en
+  `assets/icon.png`, `assets/adaptive-icon.png` y `assets/splash.png`, ya
+  referenciados en `app.json`. Para cambiarlo, sustituye esos PNG.
+- **Atajos npm**: `npm run build:apk` (APK, perfil preview) y
+  `npm run build:aab` (AAB para Google Play, perfil production).
 - **Versión**: `app.json` → `expo.version` (nombre visible) y el `versionCode`
   de Android lo gestiona EAS automáticamente (`appVersionSource: remote`).
