@@ -87,6 +87,35 @@ export function weekVolumeByDay(sessions: WorkoutSession[]): number[] {
   return buckets;
 }
 
+export interface MuscleLoad {
+  muscle: string;
+  sets: number;
+}
+
+/**
+ * Series efectivas por grupo muscular en la semana actual. Es el "balance
+ * de entrenamiento" tipo Fitbod/Home Workout: revela qué músculos has
+ * trabajado y cuáles tienes olvidados esta semana. Recibe un resolutor
+ * ejercicio→músculo para no acoplar stats con el catálogo.
+ */
+export function weekMuscleBalance(
+  sessions: WorkoutSession[],
+  muscleOf: (exerciseId: string) => string | undefined
+): Record<string, number> {
+  const start = startOfWeek();
+  const counts: Record<string, number> = {};
+  sessions
+    .filter((s) => s.date >= start)
+    .forEach((s) => {
+      s.sets.forEach((set) => {
+        const m = muscleOf(set.exerciseId);
+        if (!m || m === 'Cardio') return;
+        counts[m] = (counts[m] ?? 0) + 1;
+      });
+    });
+  return counts;
+}
+
 export interface ProgressPoint {
   value: number;
   label: string;

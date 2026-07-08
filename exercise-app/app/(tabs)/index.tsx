@@ -10,6 +10,7 @@ import {
   currentStreak,
   weekWorkoutCount,
   weekVolumeByDay,
+  weekMuscleBalance,
   totalVolume,
   computeAchievements,
   WEEKLY_GOAL,
@@ -18,9 +19,11 @@ import { planToday } from '@/lib/planToday';
 import { ProgressRing } from '@/components/ProgressRing';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, SectionHeader, StatTile } from '@/components/ui';
-import { colors, gradients, radius, spacing, shadow } from '@/lib/theme';
+import { colors, gradients, muscleColors, radius, spacing, shadow } from '@/lib/theme';
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+// Grupos que mostramos siempre en el balance (aunque estén a 0 esta semana).
+const BALANCE_MUSCLES = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core'];
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
@@ -40,6 +43,14 @@ export default function TodayScreen() {
   const maxDay = Math.max(1, ...byDay);
   const achievements = useMemo(() => computeAchievements(sessions), [sessions]);
   const unlocked = achievements.filter((a) => a.unlocked);
+
+  // Balance muscular de la semana: series por grupo (revela músculos olvidados).
+  const muscleBalance = useMemo(
+    () => weekMuscleBalance(sessions, (id) => getExerciseById(id)?.muscle),
+    [sessions]
+  );
+  const maxMuscleSets = Math.max(1, ...BALANCE_MUSCLES.map((m) => muscleBalance[m] ?? 0));
+  const hasBalanceData = BALANCE_MUSCLES.some((m) => (muscleBalance[m] ?? 0) > 0);
 
   const today = activePlan ? planToday(activePlan, sessions) : null;
   const todayRoutine =
@@ -119,6 +130,47 @@ export default function TodayScreen() {
           label={volume >= 1000 ? 'Volumen' : 'Volumen kg'}
           tint={colors.primary}
         />
+      </View>
+
+      {/* Balance muscular semanal */}
+      <View style={{ marginTop: spacing.lg }}>
+        <SectionHeader title="Balance muscular · semana" />
+        <Card>
+          {hasBalanceData ? (
+            <View style={{ gap: spacing.sm }}>
+              {BALANCE_MUSCLES.map((m) => {
+                const sets = muscleBalance[m] ?? 0;
+                const tint = muscleColors[m] ?? colors.primary;
+                return (
+                  <View key={m} style={styles.balanceRow}>
+                    <Text style={styles.balanceName}>{m}</Text>
+                    <View style={styles.balanceTrack}>
+                      <View
+                        style={[
+                          styles.balanceFill,
+                          {
+                            width: `${Math.max(sets > 0 ? 8 : 0, (sets / maxMuscleSets) * 100)}%`,
+                            backgroundColor: sets > 0 ? tint : 'transparent',
+                          },
+                        ]}
+                      />
+                    </View>
+                    <Text style={[styles.balanceSets, sets === 0 && styles.balanceZero]}>
+                      {sets}
+                    </Text>
+                  </View>
+                );
+              })}
+              <Text style={styles.balanceHint}>
+                Series por grupo esta semana. Equilibra los que van por detrás 💡
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.balanceEmpty}>
+              Registra un entrenamiento y verás aquí qué músculos trabajas y cuáles te faltan.
+            </Text>
+          )}
+        </Card>
       </View>
 
       {/* Entrenamiento de hoy */}
@@ -271,6 +323,20 @@ const styles = StyleSheet.create({
   chartBar: { width: '100%', backgroundColor: colors.primary, borderRadius: 3 },
   chartLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '700' },
   statsRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  balanceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  balanceName: { color: colors.text, fontSize: 13, fontWeight: '700', width: 62 },
+  balanceTrack: {
+    flex: 1,
+    height: 12,
+    borderRadius: radius.pill,
+    backgroundColor: colors.bgElevated,
+    overflow: 'hidden',
+  },
+  balanceFill: { height: '100%', borderRadius: radius.pill, minWidth: 2 },
+  balanceSets: { color: colors.textMuted, fontSize: 13, fontWeight: '800', width: 22, textAlign: 'right' },
+  balanceZero: { color: colors.surfaceAlt },
+  balanceHint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, lineHeight: 17 },
+  balanceEmpty: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
   todayCard: {
     flexDirection: 'row',
     alignItems: 'center',
