@@ -17,6 +17,7 @@ import { notifySuccess, tapMedium } from '@/lib/haptics';
 import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
 import { LoggedSet } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
+import { ExerciseDemo } from '@/components/ExerciseDemo';
 import { colors, radius, spacing } from '@/lib/theme';
 
 /** Formatea segundos como mm:ss. */
@@ -66,6 +67,9 @@ export default function SessionScreen() {
 
   // Descanso automático entre series.
   const [rest, setRest] = useState<{ remaining: number; total: number } | null>(null);
+
+  // Demostración de técnica desplegada (solo una a la vez, por rendimiento).
+  const [demoFor, setDemoFor] = useState<string | null>(null);
 
   const totalSets = routine
     ? routine.exercises.reduce((n, re) => n + re.sets, 0)
@@ -193,7 +197,30 @@ export default function SessionScreen() {
         const ex = getExerciseById(re.exerciseId);
         return (
           <Card key={re.exerciseId} style={{ marginBottom: spacing.sm }}>
-            <Text style={styles.exName}>{ex?.name ?? 'Ejercicio'}</Text>
+            <View style={styles.exHeader}>
+              <Text style={[styles.exName, { flex: 1 }]}>{ex?.name ?? 'Ejercicio'}</Text>
+              {ex ? (
+                <Pressable
+                  onPress={() =>
+                    setDemoFor((prev) => (prev === re.exerciseId ? null : re.exerciseId))
+                  }
+                  style={[styles.demoBtn, demoFor === re.exerciseId && styles.demoBtnOn]}
+                  hitSlop={6}
+                >
+                  <Text
+                    style={[
+                      styles.demoBtnText,
+                      demoFor === re.exerciseId && styles.demoBtnTextOn,
+                    ]}
+                  >
+                    👁 Técnica
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {ex && demoFor === re.exerciseId ? (
+              <ExerciseDemo exercise={ex} size={140} />
+            ) : null}
             <Text style={styles.exMeta}>
               Objetivo: {re.sets}×{re.reps} · descanso {re.restSeconds}s
             </Text>
@@ -361,7 +388,18 @@ const styles = StyleSheet.create({
   },
   progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
   progressText: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, fontWeight: '700' },
+  exHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   exName: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  demoBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  demoBtnOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
+  demoBtnText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
+  demoBtnTextOn: { color: colors.accent },
   exMeta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   coachHint: {
     color: colors.primary,

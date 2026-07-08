@@ -6,6 +6,7 @@ import { weightProgressFor } from '@/lib/stats';
 import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
 import { ExerciseIcon } from '@/components/ExerciseIcon';
+import { ExerciseDemo } from '@/components/ExerciseDemo';
 import { LineChart } from '@/components/LineChart';
 import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 
@@ -47,6 +48,14 @@ export default function ExerciseDetailScreen() {
       </View>
 
       <Text style={styles.equipment}>🏋️ {exercise.equipment}</Text>
+
+      {/* Demostración animada del movimiento */}
+      <Card style={styles.demoCard}>
+        <Text style={styles.demoHeader}>🎬 Cómo se hace</Text>
+        <ExerciseDemo exercise={exercise} size={215} />
+        <Text style={styles.demoHint}>Animación orientativa · vista lateral</Text>
+      </Card>
+
       <Text style={styles.description}>{exercise.description}</Text>
 
       {/* Progreso: evolución del peso máximo por sesión */}
@@ -118,6 +127,14 @@ const styles = StyleSheet.create({
   pillTextMuted: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   equipment: { color: colors.textMuted, fontSize: 14 },
   description: { color: colors.text, fontSize: 16, lineHeight: 24 },
+  demoCard: { alignItems: 'center', paddingVertical: spacing.sm },
+  demoHeader: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '800',
+    alignSelf: 'flex-start',
+  },
+  demoHint: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
   progressCard: { alignItems: 'center' },
   progressHeader: {
     color: colors.text,

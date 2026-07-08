@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '@/lib/store';
@@ -16,6 +16,7 @@ import {
   WEEKLY_GOAL,
 } from '@/lib/stats';
 import { planToday } from '@/lib/planToday';
+import { checkForUpdate, versionLabel, UpdateInfo } from '@/lib/updates';
 import { ProgressRing } from '@/components/ProgressRing';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, SectionHeader, StatTile } from '@/components/ui';
@@ -49,6 +50,34 @@ export default function TodayScreen() {
     () => weekMuscleBalance(sessions, (id) => getExerciseById(id)?.muscle),
     [sessions]
   );
+
+  // Actualización disponible: chequeo silencioso al abrir la app.
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    checkForUpdate().then((u) => {
+      if (alive) setUpdate(u);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const manualCheck = async () => {
+    setChecking(true);
+    const u = await checkForUpdate();
+    setChecking(false);
+    setUpdate(u);
+    if (u) {
+      Alert.alert('Actualización disponible ⬇️', `Hay un build más nuevo (${u.build}).`, [
+        { text: 'Ahora no', style: 'cancel' },
+        { text: 'Descargar', onPress: () => Linking.openURL(u.url) },
+      ]);
+    } else {
+      Alert.alert('Todo al día ✅', 'Ya tienes la última versión instalada.');
+    }
+  };
   const maxMuscleSets = Math.max(1, ...BALANCE_MUSCLES.map((m) => muscleBalance[m] ?? 0));
   const hasBalanceData = BALANCE_MUSCLES.some((m) => (muscleBalance[m] ?? 0) > 0);
 
@@ -83,6 +112,21 @@ export default function TodayScreen() {
           <Text style={styles.streakLabel}>días</Text>
         </View>
       </View>
+
+      {/* Aviso de actualización disponible */}
+      {update ? (
+        <PressableScale onPress={() => Linking.openURL(update.url)}>
+          <View style={styles.updateBanner}>
+            <Text style={styles.updateEmoji}>⬇️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.updateTitle}>Nueva versión disponible</Text>
+              <Text style={styles.updateHint}>
+                Toca para descargar el build {update.build}. Se instala encima sin perder tus datos.
+              </Text>
+            </View>
+          </View>
+        </PressableScale>
+      ) : null}
 
       {/* Anillo de progreso semanal (héroe) */}
       <Card elevated style={styles.hero}>
@@ -268,6 +312,16 @@ export default function TodayScreen() {
           ))}
         </ScrollView>
       </View>
+
+      {/* Versión + buscar actualización */}
+      <View style={styles.versionRow}>
+        <Text style={styles.versionText}>{versionLabel()}</Text>
+        <Pressable onPress={manualCheck} disabled={checking} hitSlop={8}>
+          <Text style={styles.versionCheck}>
+            {checking ? 'Comprobando…' : 'Buscar actualización'}
+          </Text>
+        </Pressable>
+      </View>
     </ScrollView>
   );
 }
@@ -402,4 +456,29 @@ const styles = StyleSheet.create({
   badgeEmoji: { fontSize: 28 },
   badgeEmojiLocked: { fontSize: 24 },
   badgeTitle: { color: colors.text, fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  updateBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  updateEmoji: { fontSize: 22 },
+  updateTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
+  updateHint: { color: colors.textMuted, fontSize: 12, marginTop: 2, lineHeight: 17 },
+  versionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  versionText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  versionCheck: { color: colors.accent, fontSize: 12, fontWeight: '800' },
 });

@@ -41,7 +41,7 @@ jobs:
 
       - name: Set versionCode from run number
         run: |
-          node -e "const fs=require('fs');const p='app.json';const j=JSON.parse(fs.readFileSync(p));j.expo.android=j.expo.android||{};j.expo.android.versionCode=${{ github.run_number }};fs.writeFileSync(p,JSON.stringify(j,null,2));console.log('versionCode ->', j.expo.android.versionCode);"
+          node -e "const fs=require('fs');const p='app.json';const j=JSON.parse(fs.readFileSync(p));j.expo.android=j.expo.android||{};j.expo.android.versionCode=${{ github.run_number }};j.expo.extra=j.expo.extra||{};j.expo.extra.buildNumber=${{ github.run_number }};fs.writeFileSync(p,JSON.stringify(j,null,2));console.log('versionCode/buildNumber ->', j.expo.android.versionCode);"
 
       - name: Generate native Android project (prebuild)
         run: npx expo prebuild --platform android --no-install

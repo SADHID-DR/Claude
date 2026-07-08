@@ -35,6 +35,9 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "buildNumber": 0
     }
   }
 }
