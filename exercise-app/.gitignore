@@ -32,3 +32,4 @@ yarn-error.*
 
 # local env
 .env*.local
+graphify-out/
