@@ -9,16 +9,18 @@ localmente en el dispositivo (AsyncStorage); no requiere servidor.
 - 🏠 **Pantalla "Hoy" (coach)** — dashboard con saludo, **anillo de progreso
   semanal** (estilo Apple Fitness), **racha** de días 🔥, KPIs (entrenos,
   volumen), entrenamiento del día, WOD del día, accesos rápidos y logros.
-- 💪 **Catálogo de ejercicios** — 43 ejercicios de gym y CrossFit con **filtro
-  por tipo de equipo** (Máquina / Peso libre / Peso corporal / CrossFit) y por
-  músculo. Cada ejercicio incluye **guía de peso/máquina** y **consejos del
-  entrenador**.
+- 💪 **Catálogo de ejercicios** — 73 ejercicios de gym y CrossFit, con muchas
+  variantes de **barra, mancuernas y kettlebell**, **filtro por tipo de
+  equipo** y por músculo, y **búsqueda** (por nombre o equipo). Cada ejercicio
+  incluye **guía de peso/máquina** y **consejos del entrenador**.
 - 🧠 **Coach premium: plan semanal / bisemanal / mensual** — genera un plan
   completo según tus **días de entrenamiento**, tu **edad** y tu **objetivo**.
   Arma el split (empuje / tirón / pierna / abdominales), mete **2 días de
   pierna** y **día de abs** cuando corresponde, y añade **cardio** (remo,
   escaladora, comba, box jumps, burpees) — de bajo impacto para edades
-  mayores. Aplica **progresión entre semanas** (y semana de **descarga** en el
+  mayores. Puedes indicar el **equipo disponible** (barra / mancuernas /
+  kettlebell / máquina / peso corporal) y el coach solo usa esos ejercicios.
+  Aplica **progresión entre semanas** (y semana de **descarga** en el
   ciclo mensual) y da una **recomendación** de días y calentamiento por edad.
 - 🗓️ **Plan activo + "Hoy"** — marca un plan como activo y la pantalla Hoy te
   dice **qué toca hoy** (semana y día del ciclo), avanzando de **semana

@@ -11,9 +11,21 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EXERCISES } from '@/data/exercises';
 import { useStore } from '@/lib/store';
-import { RoutineExercise } from '@/lib/types';
+import { MuscleGroup, RoutineExercise } from '@/lib/types';
 import { Button, Card, Tag } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
+
+const MUSCLES: (MuscleGroup | 'Todos')[] = [
+  'Todos',
+  'Pecho',
+  'Espalda',
+  'Piernas',
+  'Hombros',
+  'Brazos',
+  'Core',
+  'Cuerpo completo',
+  'Cardio',
+];
 
 export default function NewRoutineScreen() {
   const router = useRouter();
@@ -32,6 +44,22 @@ export default function NewRoutineScreen() {
     });
     return map;
   });
+
+  const [query, setQuery] = useState('');
+  const [muscle, setMuscle] = useState<MuscleGroup | 'Todos'>('Todos');
+  const selectedCount = Object.keys(selected).length;
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return EXERCISES.filter((e) => {
+      const matchMuscle = muscle === 'Todos' || e.muscle === muscle;
+      const matchQuery =
+        q === '' ||
+        e.name.toLowerCase().includes(q) ||
+        e.equipment.toLowerCase().includes(q);
+      return matchMuscle && matchQuery;
+    });
+  }, [query, muscle]);
 
   const toggle = (exerciseId: string) => {
     setSelected((prev) => {
@@ -86,17 +114,55 @@ export default function NewRoutineScreen() {
         style={styles.input}
       />
 
-      <Text style={styles.hint}>Toca para añadir ejercicios y ajusta series/reps:</Text>
+      <TextInput
+        placeholder="Buscar ejercicio o equipo (barra, mancuerna, kettlebell…)"
+        placeholderTextColor={colors.textMuted}
+        value={query}
+        onChangeText={setQuery}
+        style={styles.search}
+      />
 
-      {EXERCISES.map((ex) => {
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chips}
+        contentContainerStyle={styles.chipsContent}
+      >
+        {MUSCLES.map((m) => (
+          <Pressable
+            key={m}
+            onPress={() => setMuscle(m)}
+            style={[styles.chip, muscle === m && styles.chipActive]}
+          >
+            <Text style={[styles.chipText, muscle === m && styles.chipTextActive]}>{m}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      <Text style={styles.hint}>
+        {selectedCount > 0
+          ? `${selectedCount} seleccionado${selectedCount !== 1 ? 's' : ''} · toca para añadir/quitar`
+          : 'Toca un ejercicio para añadirlo y ajusta series/reps.'}
+      </Text>
+
+      {filtered.map((ex) => {
         const chosen = selected[ex.id];
         return (
-          <Card key={ex.id} style={{ marginBottom: spacing.sm }}>
+          <Card
+            key={ex.id}
+            style={{
+              marginBottom: spacing.sm,
+              borderColor: chosen ? colors.primary : colors.border,
+            }}
+          >
             <Pressable onPress={() => toggle(ex.id)} style={styles.exRow}>
-              <View style={styles.checkbox}>
+              <View style={[styles.checkbox, chosen && styles.checkboxOn]}>
                 {chosen ? <Text style={styles.check}>✓</Text> : null}
               </View>
-              <Text style={styles.exName}>{ex.name}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.exName}>{ex.name}</Text>
+                <Text style={styles.exEquip}>{ex.equipment}</Text>
+              </View>
               <Tag label={ex.muscle} />
             </Pressable>
 
@@ -123,8 +189,16 @@ export default function NewRoutineScreen() {
         );
       })}
 
+      {filtered.length === 0 ? (
+        <Text style={styles.empty}>No hay ejercicios que coincidan.</Text>
+      ) : null}
+
       <Button
-        title={editing ? 'Guardar cambios' : 'Guardar rutina'}
+        title={
+          editing
+            ? `Guardar cambios (${selectedCount})`
+            : `Guardar rutina (${selectedCount})`
+        }
         onPress={save}
         style={{ marginVertical: spacing.md }}
       />
@@ -168,19 +242,47 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     fontSize: 16,
   },
+  search: {
+    backgroundColor: colors.surface,
+    color: colors.text,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.sm,
+    fontSize: 15,
+  },
+  chips: { flexGrow: 0, minHeight: 46, marginBottom: spacing.sm },
+  chipsContent: { gap: spacing.sm, alignItems: 'center', paddingVertical: 3 },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 9,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+  },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13, lineHeight: 18 },
+  chipTextActive: { color: '#08130c' },
   hint: { color: colors.textMuted, marginBottom: spacing.sm },
+  empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
   exRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   checkbox: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     borderRadius: radius.sm,
     borderWidth: 2,
     borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  check: { color: colors.primary, fontWeight: '900' },
-  exName: { color: colors.text, fontSize: 15, fontWeight: '700', flex: 1 },
+  checkboxOn: { backgroundColor: colors.primary },
+  check: { color: '#08130c', fontWeight: '900' },
+  exName: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  exEquip: { color: colors.textMuted, fontSize: 12, marginTop: 1 },
   fields: {
     flexDirection: 'row',
     gap: spacing.sm,

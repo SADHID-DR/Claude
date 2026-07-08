@@ -14,10 +14,12 @@ import {
   Goal,
   Priority,
   Cycle,
+  Equipment,
   GOALS,
   PRIORITIES,
   DAY_OPTIONS,
   CYCLES,
+  EQUIPMENT,
   generatePlan,
 } from '@/lib/generator';
 import { RoutineExercise as RE } from '@/lib/types';
@@ -41,19 +43,26 @@ export default function GenerateRoutineScreen() {
   const [age, setAge] = useState('30');
   const [cycle, setCycle] = useState<Cycle>('Semanal');
   const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [seed, setSeed] = useState(0);
 
   const ageNum = Math.min(90, Math.max(14, parseInt(age, 10) || 30));
 
   const plan = useMemo(
-    () => generatePlan({ days, goal, age: ageNum, priorities, cycle }),
+    () => generatePlan({ days, goal, age: ageNum, priorities, cycle, equipment }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [days, goal, ageNum, priorities, cycle, seed]
+    [days, goal, ageNum, priorities, cycle, equipment, seed]
   );
 
   const togglePriority = (p: Priority) => {
     setPriorities((prev) =>
       prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+    );
+  };
+
+  const toggleEquipment = (e: Equipment) => {
+    setEquipment((prev) =>
+      prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]
     );
   };
 
@@ -155,6 +164,24 @@ export default function GenerateRoutineScreen() {
         ))}
       </View>
 
+      <Text style={styles.label}>Equipo disponible (opcional)</Text>
+      <Text style={styles.equipHint}>
+        Marca lo que tienes y el coach solo usará esos ejercicios. Sin marcar = usa todo.
+      </Text>
+      <View style={styles.optionRow}>
+        {EQUIPMENT.map((e) => (
+          <Pressable
+            key={e}
+            onPress={() => toggleEquipment(e)}
+            style={[styles.option, equipment.includes(e) && styles.optionActive]}
+          >
+            <Text style={[styles.optionText, equipment.includes(e) && styles.optionTextActive]}>
+              {e}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
       <View style={styles.previewHeader}>
         <Text style={styles.previewTitle}>{plan.title}</Text>
         <Pressable onPress={() => setSeed((s) => s + 1)} hitSlop={8}>
@@ -235,6 +262,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+  equipHint: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.sm, marginTop: -spacing.xs, lineHeight: 17 },
   option: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

@@ -83,18 +83,24 @@ export default function WodsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  chips: { flexGrow: 0, height: 40, marginTop: spacing.md },
-  chipsContent: { gap: spacing.sm, paddingHorizontal: spacing.md, alignItems: 'center' },
+  chips: { flexGrow: 0, minHeight: 46, marginTop: spacing.md },
+  chipsContent: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    paddingVertical: 3,
+  },
   chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
+    paddingVertical: 9,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+    justifyContent: 'center',
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
+  chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13, lineHeight: 18 },
   chipTextActive: { color: '#0b1220' },
   row: {
     flexDirection: 'row',

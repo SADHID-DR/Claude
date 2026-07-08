@@ -135,6 +135,44 @@ const CARDIO_ALL = [
   'ex-mountain-climber',
 ];
 
+export const EQUIPMENT = [
+  'Barra',
+  'Mancuernas',
+  'Kettlebell',
+  'Máquina',
+  'Peso corporal',
+] as const;
+export type Equipment = (typeof EQUIPMENT)[number];
+
+/** Etiquetas de equipo que cubre un ejercicio (para filtrar por disponibilidad). */
+function equipTags(ex: Exercise): Equipment[] {
+  const eq = ex.equipment.toLowerCase();
+  const tags: Equipment[] = [];
+  if (eq.includes('barra') && !eq.includes('fija')) tags.push('Barra');
+  if (eq.includes('mancuerna')) tags.push('Mancuernas');
+  if (eq.includes('kettlebell')) tags.push('Kettlebell');
+  if (ex.category === 'Máquina') tags.push('Máquina');
+  if (
+    ex.category === 'Peso corporal' ||
+    eq.includes('peso corporal') ||
+    eq.includes('ninguno') ||
+    eq.includes('fija') ||
+    eq.includes('comba') ||
+    eq.includes('cajón') ||
+    eq.includes('balón')
+  ) {
+    tags.push('Peso corporal');
+  }
+  return tags;
+}
+
+/** Filtra un pool por el equipo disponible; si queda vacío, no filtra (fallback). */
+function filterEquip(pool: Exercise[], avail: Equipment[]): Exercise[] {
+  if (!avail || avail.length === 0) return pool;
+  const r = pool.filter((e) => equipTags(e).some((t) => avail.includes(t)));
+  return r.length > 0 ? r : pool;
+}
+
 function pick(pool: Exercise[], prefer: Category[], used: Set<string>): Exercise | null {
   const avail = pool.filter((e) => !used.has(e.id));
   const from = avail.length > 0 ? avail : pool;
@@ -146,10 +184,10 @@ function pick(pool: Exercise[], prefer: Category[], used: Set<string>): Exercise
   return from[Math.floor(Math.random() * from.length)];
 }
 
-function pickCardio(band: AgeBand, used: Set<string>): Exercise | null {
+function pickCardio(band: AgeBand, used: Set<string>, avail: Equipment[]): Exercise | null {
   const ids = band === 'maduro' || band === 'senior' ? CARDIO_LOW : CARDIO_ALL;
   const pool = ids.map(getExerciseById).filter(Boolean) as Exercise[];
-  return pick(pool, ['Máquina', 'Peso corporal', 'CrossFit'], used);
+  return pick(filterEquip(pool, avail), ['Máquina', 'Peso corporal', 'CrossFit'], used);
 }
 
 /** Prescripción para cardio: máquinas por tiempo, explosivos por reps. */
@@ -251,6 +289,8 @@ export interface PlanInput {
   age: number;
   priorities: Priority[];
   cycle: Cycle;
+  /** Equipo disponible; vacío = usa todo. */
+  equipment?: Equipment[];
 }
 
 export interface PlanDay {
@@ -314,7 +354,8 @@ function buildDay(
   goal: Goal,
   band: AgeBand,
   priorities: Priority[],
-  prog: WeekProg = { repAdd: 0, restAdd: 0, setAdd: 0 }
+  prog: WeekProg = { repAdd: 0, restAdd: 0, setAdd: 0 },
+  avail: Equipment[] = []
 ): PlanDay {
   const gp = GOAL_PARAMS[goal];
   const adj = AGE_ADJ[band];
@@ -326,6 +367,9 @@ function buildDay(
   const sets = Math.max(2, gp.sets + prog.setAdd);
   const used = new Set<string>();
   const exercises: RoutineExercise[] = [];
+
+  // Pool de un slot ya filtrado por el equipo disponible.
+  const P = (key: PoolKey) => filterEquip(poolFor(key), avail);
 
   const target = tpl.key === 'coreCardio' ? 5 : gp.exercisesPerDay;
 
@@ -341,7 +385,7 @@ function buildDay(
 
   for (const slot of tpl.slots) {
     if (exercises.length >= target) break;
-    const ex = pick(poolFor(slot), prefer, used);
+    const ex = pick(P(slot), prefer, used);
     if (ex) add(ex, slot === 'cardio');
   }
 
@@ -352,7 +396,7 @@ function buildDay(
 
   // Prioridad: más abdominales.
   if (priorities.includes('Más abdominales') && tpl.key !== 'coreCardio' && !hasCore()) {
-    const ex = pick(poolFor('core'), prefer, used);
+    const ex = pick(P('core'), prefer, used);
     if (ex) add(ex);
   }
 
@@ -361,7 +405,7 @@ function buildDay(
     priorities.includes('Más pierna') &&
     (tpl.key.startsWith('legs') || tpl.key === 'coreCardio' || tpl.key === 'lower')
   ) {
-    const ex = pick([...poolFor('quad'), ...poolFor('posterior')], prefer, used);
+    const ex = pick([...P('quad'), ...P('posterior')], prefer, used);
     if (ex) add(ex);
   }
 
@@ -371,7 +415,7 @@ function buildDay(
       ? tpl.key !== 'coreCardio'
       : priorities.includes('Más cardio');
   if (wantCardio && !hasCardio()) {
-    const cardio = pickCardio(band, used);
+    const cardio = pickCardio(band, used, avail);
     if (cardio) add(cardio, true);
   }
 
@@ -434,7 +478,7 @@ export function generatePlan(input: PlanInput): WeeklyPlan {
   for (let w = 0; w < totalWeeks; w++) {
     const { prog, note } = weekProgression(input.goal, w, totalWeeks);
     const days: PlanDay[] = templates.map((t, i) => {
-      const d = buildDay(t, input.goal, band, input.priorities, prog);
+      const d = buildDay(t, input.goal, band, input.priorities, prog, input.equipment ?? []);
       return { ...d, name: `Día ${i + 1} · ${d.name}` };
     });
     weeks.push({ index: w, label: `Semana ${w + 1}`, note, days });

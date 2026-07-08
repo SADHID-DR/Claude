@@ -46,7 +46,11 @@ export default function ExercisesScreen() {
     return EXERCISES.filter((e) => {
       const matchCategory = category === 'Todo' || e.category === category;
       const matchMuscle = muscle === 'Todos' || e.muscle === muscle;
-      const matchQuery = q === '' || e.name.toLowerCase().includes(q);
+      const matchQuery =
+        q === '' ||
+        e.name.toLowerCase().includes(q) ||
+        e.equipment.toLowerCase().includes(q) ||
+        e.muscle.toLowerCase().includes(q);
       return matchCategory && matchMuscle && matchQuery;
     });
   }, [query, category, muscle]);
@@ -163,18 +167,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginBottom: spacing.xs,
   },
-  chips: { flexGrow: 0, height: 40, marginBottom: spacing.sm },
-  chipsContent: { gap: spacing.sm, paddingHorizontal: spacing.md, alignItems: 'center' },
+  chips: { flexGrow: 0, minHeight: 46, marginBottom: spacing.sm },
+  chipsContent: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    paddingVertical: 3,
+  },
   chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
+    paddingVertical: 9,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+    justifyContent: 'center',
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
+  chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13, lineHeight: 18 },
   chipTextActive: { color: '#0b1220' },
   count: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
   row: {
