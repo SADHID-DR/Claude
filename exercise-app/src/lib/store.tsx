@@ -36,6 +36,7 @@ interface StoreValue {
   addPlan: (input: NewPlanInput) => Plan;
   deletePlan: (id: string) => void;
   renamePlan: (id: string, name: string) => void;
+  updatePlan: (plan: Plan) => void;
   duplicatePlan: (id: string) => void;
   setActivePlan: (id: string | null) => void;
   setRemindersEnabled: (v: boolean) => void;
@@ -153,6 +154,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
       renamePlan: (id, name) => {
         setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
+      },
+      updatePlan: (plan) => {
+        setPlans((prev) => prev.map((p) => (p.id === plan.id ? plan : p)));
       },
       duplicatePlan: (id) => {
         setPlans((prevPlans) => {

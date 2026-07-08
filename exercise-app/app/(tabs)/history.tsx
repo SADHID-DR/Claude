@@ -13,6 +13,14 @@ import { Card, EmptyState, SectionHeader, StatTile } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
 import { colors, radius, spacing } from '@/lib/theme';
 
+const FEELING_EMOJI: Record<number, string> = {
+  1: '😫',
+  2: '😕',
+  3: '😐',
+  4: '🙂',
+  5: '💪',
+};
+
 function fmtDate(ts: number): string {
   return new Date(ts).toLocaleDateString('es', {
     weekday: 'short',
@@ -94,7 +102,10 @@ export default function ProgressScreen() {
                 <PressableScale key={item.id} onLongPress={() => confirmDelete(item.id)} haptic={false}>
                   <Card>
                     <View style={styles.row}>
-                      <Text style={styles.name}>{item.routineName}</Text>
+                      <Text style={styles.name}>
+                        {item.feeling ? `${FEELING_EMOJI[item.feeling]} ` : ''}
+                        {item.routineName}
+                      </Text>
                       <Text style={styles.date}>{fmtDate(item.date)}</Text>
                     </View>
                     <Text style={styles.meta}>
@@ -102,6 +113,7 @@ export default function ProgressScreen() {
                       {exerciseCount !== 1 ? 's' : ''} · {item.sets.length} series ·{' '}
                       {Math.round(sessionVolume(item))} kg
                     </Text>
+                    {item.note ? <Text style={styles.noteText}>“{item.note}”</Text> : null}
                     <View style={styles.sets}>
                       {item.sets.slice(0, 5).map((s, i) => {
                         const ex = getExerciseById(s.exerciseId);
@@ -151,5 +163,12 @@ const styles = StyleSheet.create({
   meta: { color: colors.accent, fontSize: 13, marginTop: 2 },
   sets: { marginTop: spacing.sm, gap: 2 },
   setLine: { color: colors.textMuted, fontSize: 13 },
+  noteText: {
+    color: colors.text,
+    fontSize: 13,
+    fontStyle: 'italic',
+    marginTop: spacing.xs,
+    lineHeight: 18,
+  },
   hintDelete: { color: colors.surfaceAlt, fontSize: 11, marginTop: spacing.sm },
 });

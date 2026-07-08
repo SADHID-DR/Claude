@@ -112,4 +112,8 @@ export interface WorkoutSession {
   date: number;
   durationSeconds: number;
   sets: LoggedSet[];
+  /** Cómo te sentiste (1 = fatal … 5 = genial). */
+  feeling?: number;
+  /** Nota libre del entrenamiento. */
+  note?: string;
 }

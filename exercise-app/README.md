@@ -26,8 +26,11 @@ localmente en el dispositivo (AsyncStorage); no requiere servidor.
   plan (vista mensual con los días marcados). **Recordatorios** semanales a la
   **hora que elijas**, con **aviso de prueba** que llega a un Samsung Galaxy
   Watch emparejado (reflejo de notificaciones).
-- 📋 **Rutinas y planes** — crea, **genera**, **edita**, **duplica** o
-  **renombra**; los planes se guardan agrupados por semana y día.
+- 📋 **Rutinas y planes** — crea, **genera**, **edita** (cambia los días de
+  entrenamiento y el nombre sin regenerar), **duplica** o elimina; los planes
+  se guardan agrupados por semana y día.
+- 📝 **Notas por entreno** — al terminar registras **cómo te sentiste**
+  (😫😕😐🙂💪) y una nota; se muestran en el historial.
 - 🔥 **WODs de CrossFit** — benchmarks (Fran, Cindy, Murph, Helen, Annie,
   Grace) y WODs para empezar, con formato (AMRAP/For Time/EMOM) y escalado.
 - 📈 **Progreso** — historial de entrenamientos con volumen total, más

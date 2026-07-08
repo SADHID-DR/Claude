@@ -60,6 +60,10 @@ export default function SessionScreen() {
   const [sets, setSets] = useState(initialSets);
   const [done, setDone] = useState<Record<string, boolean>>({});
 
+  // Cómo te sentiste + nota del entreno.
+  const [feeling, setFeeling] = useState<number | null>(null);
+  const [note, setNote] = useState('');
+
   // Descanso automático entre series.
   const [rest, setRest] = useState<{ remaining: number; total: number } | null>(null);
 
@@ -151,6 +155,8 @@ export default function SessionScreen() {
       date: Date.now(),
       durationSeconds: elapsed,
       sets: logged,
+      feeling: feeling ?? undefined,
+      note: note.trim() || undefined,
     });
     notifySuccess();
     const vol = Math.round(logged.reduce((sum, s) => sum + s.weight * s.reps, 0));
@@ -236,6 +242,33 @@ export default function SessionScreen() {
           </Card>
         );
       })}
+
+      <Card style={styles.feelingCard}>
+        <Text style={styles.feelingTitle}>¿Cómo fue el entreno?</Text>
+        <View style={styles.feelingRow}>
+          {['😫', '😕', '😐', '🙂', '💪'].map((emoji, i) => {
+            const val = i + 1;
+            const on = feeling === val;
+            return (
+              <Pressable
+                key={val}
+                onPress={() => setFeeling(on ? null : val)}
+                style={[styles.feelingBtn, on && styles.feelingBtnOn]}
+              >
+                <Text style={styles.feelingEmoji}>{emoji}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <TextInput
+          value={note}
+          onChangeText={setNote}
+          placeholder="Notas: cómo te sentiste, pesos, molestias…"
+          placeholderTextColor={colors.textMuted}
+          multiline
+          style={styles.noteInput}
+        />
+      </Card>
 
       <Button title="✔ Finalizar y guardar" onPress={finish} style={{ marginVertical: spacing.md }} />
       </ScrollView>
@@ -370,5 +403,29 @@ const styles = StyleSheet.create({
   checkBoxDone: { backgroundColor: colors.primary, borderColor: colors.primary },
   checkMark: { color: colors.surfaceAlt, fontSize: 16, fontWeight: '900' },
   checkMarkDone: { color: '#08130c' },
+  feelingCard: { marginTop: spacing.sm },
+  feelingTitle: { color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: spacing.sm },
+  feelingRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  feelingBtn: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  feelingBtnOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  feelingEmoji: { fontSize: 24 },
+  noteInput: {
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    fontSize: 15,
+    minHeight: 70,
+    textAlignVertical: 'top',
+  },
   notFound: { color: colors.textMuted, padding: spacing.xl, textAlign: 'center' },
 });

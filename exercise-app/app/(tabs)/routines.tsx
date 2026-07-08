@@ -1,16 +1,7 @@
-import { useMemo, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useMemo } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
-import { getExerciseById } from '@/data/exercises';
 import { Plan, Routine } from '@/lib/types';
 import { scheduleReminders, cancelReminders, sendTestNotification } from '@/lib/notifications';
 import { Button, Card, EmptyState, SectionHeader } from '@/components/ui';
@@ -28,15 +19,11 @@ export default function RoutinesScreen() {
     reminderHour,
     deleteRoutine,
     deletePlan,
-    renamePlan,
     duplicatePlan,
     setActivePlan,
     setRemindersEnabled,
     setReminderHour,
   } = useStore();
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
 
   const routinesById = useMemo(() => {
     const map: Record<string, Routine> = {};
@@ -59,15 +46,6 @@ export default function RoutinesScreen() {
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: () => deletePlan(plan.id) },
     ]);
-  };
-
-  const startRename = (plan: Plan) => {
-    setEditingId(plan.id);
-    setEditName(plan.name);
-  };
-  const saveRename = () => {
-    if (editingId && editName.trim()) renamePlan(editingId, editName.trim());
-    setEditingId(null);
   };
 
   const hhmm = (h: number) => `${String(h).padStart(2, '0')}:00`;
@@ -139,17 +117,7 @@ export default function RoutinesScreen() {
         return (
           <Card key={plan.id} style={[styles.planCard, active && styles.planCardActive]}>
             <View style={styles.planTop}>
-              {editingId === plan.id ? (
-                <TextInput
-                  value={editName}
-                  onChangeText={setEditName}
-                  autoFocus
-                  onSubmitEditing={saveRename}
-                  style={styles.renameInput}
-                />
-              ) : (
-                <Text style={styles.planName}>{plan.name}</Text>
-              )}
+              <Text style={styles.planName}>{plan.name}</Text>
               {active ? (
                 <View style={styles.activeBadge}>
                   <Text style={styles.activeBadgeText}>ACTIVO</Text>
@@ -232,22 +200,20 @@ export default function RoutinesScreen() {
             />
 
             <View style={styles.planActions}>
-              {editingId === plan.id ? (
-                <Button title="Guardar nombre" onPress={saveRename} style={{ flex: 1 }} />
-              ) : (
-                <>
-                  {!active ? (
-                    <Button
-                      title="✓ Activar"
-                      onPress={() => setActivePlan(plan.id)}
-                      style={{ flex: 1 }}
-                    />
-                  ) : null}
-                  <Button title="✎" variant="ghost" onPress={() => startRename(plan)} />
-                  <Button title="⧉" variant="ghost" onPress={() => duplicatePlan(plan.id)} />
-                  <Button title="🗑" variant="danger" onPress={() => confirmDeletePlan(plan)} />
-                </>
-              )}
+              {!active ? (
+                <Button
+                  title="✓ Activar"
+                  onPress={() => setActivePlan(plan.id)}
+                  style={{ flex: 1 }}
+                />
+              ) : null}
+              <Button
+                title="✎"
+                variant="ghost"
+                onPress={() => router.push(`/plan/edit/${plan.id}`)}
+              />
+              <Button title="⧉" variant="ghost" onPress={() => duplicatePlan(plan.id)} />
+              <Button title="🗑" variant="danger" onPress={() => confirmDeletePlan(plan)} />
             </View>
           </Card>
         );
@@ -294,18 +260,6 @@ const styles = StyleSheet.create({
   planCardActive: { borderColor: colors.primary },
   planTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   planName: { color: colors.text, fontSize: 18, fontWeight: '900', flex: 1 },
-  renameInput: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 17,
-    fontWeight: '800',
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
   activeBadge: {
     backgroundColor: colors.primary,
     borderRadius: radius.sm,
