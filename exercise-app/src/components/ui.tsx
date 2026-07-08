@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
   Pressable,
+  StyleProp,
   TextStyle,
   ViewStyle,
 } from 'react-native';
@@ -17,7 +18,7 @@ export function Card({
   elevated,
 }: {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   elevated?: boolean;
 }) {
   return <View style={[styles.card, elevated && shadow, style]}>{children}</View>;

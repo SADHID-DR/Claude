@@ -71,11 +71,16 @@ export interface Routine {
   name: string;
   exercises: RoutineExercise[];
   createdAt: number;
-  /** Id del plan al que pertenece, si se generó dentro de un plan semanal. */
+  /** Id del plan al que pertenece, si se generó dentro de un plan. */
   planId?: string;
+  /** Semana del plan (1..N) a la que pertenece esta rutina. */
+  week?: number;
 }
 
-/** Plan semanal generado por el coach; agrupa varias rutinas (días). */
+/** Ciclo del plan generado por el coach. */
+export type Cycle = 'Semanal' | 'Bisemanal' | 'Mensual';
+
+/** Plan generado por el coach; agrupa rutinas por semana y día. */
 export interface Plan {
   id: string;
   name: string;
@@ -88,6 +93,9 @@ export interface Plan {
   restDays: number;
   schedule: string[];
   warmup: string;
+  /** Ciclo (semanal/bisemanal/mensual) y nº de semanas. */
+  cycle: Cycle;
+  weeks: number;
 }
 
 /** Serie registrada dentro de una sesión de entrenamiento. */

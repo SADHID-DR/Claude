@@ -14,6 +14,7 @@ import {
   computeAchievements,
   WEEKLY_GOAL,
 } from '@/lib/stats';
+import { planToday } from '@/lib/planToday';
 import { ProgressRing } from '@/components/ProgressRing';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, SectionHeader, StatTile } from '@/components/ui';
@@ -24,7 +25,7 @@ const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { routines, sessions } = useStore();
+  const { routines, sessions, plans, activePlanId } = useStore();
 
   const streak = currentStreak(sessions);
   const week = weekWorkoutCount(sessions);
@@ -35,9 +36,14 @@ export default function TodayScreen() {
   const achievements = useMemo(() => computeAchievements(sessions), [sessions]);
   const unlocked = achievements.filter((a) => a.unlocked);
 
-  // Entrenamiento del día: rota entre tus rutinas según el día.
+  // Entrenamiento de hoy según el PLAN ACTIVO y el calendario.
+  const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
+  const today = activePlan ? planToday(activePlan) : null;
   const todayRoutine =
-    routines.length > 0 ? routines[new Date().getDate() % routines.length] : null;
+    today?.routineId != null
+      ? routines.find((r) => r.id === today.routineId) ?? null
+      : null;
+  const isRestDay = activePlan != null && today != null && !today.isTrainingDay;
 
   // WOD del día: determinista según el día del año.
   const dayOfYear = Math.floor(
@@ -119,7 +125,9 @@ export default function TodayScreen() {
           <PressableScale onPress={() => router.push(`/session/${todayRoutine.id}`)}>
             <View style={[styles.todayCard, shadow]}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.todayLabel}>RUTINA SUGERIDA</Text>
+                <Text style={styles.todayLabel}>
+                  HOY{activePlan && activePlan.weeks > 1 ? ` · SEMANA ${(today?.weekIndex ?? 0) + 1}` : ''}
+                </Text>
                 <Text style={styles.todayTitle}>{todayRoutine.name}</Text>
                 <Text style={styles.todayMeta}>
                   {todayRoutine.exercises.length} ejercicios ·{' '}
@@ -136,12 +144,19 @@ export default function TodayScreen() {
               </View>
             </View>
           </PressableScale>
+        ) : isRestDay ? (
+          <Card style={styles.restToday}>
+            <Text style={styles.restTodayTitle}>😌 Hoy toca descanso</Text>
+            <Text style={styles.restTodayHint}>
+              Recupera para crecer. Un poco de movilidad o una caminata suave vienen bien.
+            </Text>
+          </Card>
         ) : (
-          <PressableScale onPress={() => router.push('/routine/new')}>
+          <PressableScale onPress={() => router.push('/routine/generate')}>
             <Card style={styles.emptyToday}>
-              <Text style={styles.emptyTodayTitle}>Crea tu primera rutina</Text>
+              <Text style={styles.emptyTodayTitle}>Genera tu plan con el coach</Text>
               <Text style={styles.emptyTodayHint}>
-                Combina ejercicios del catálogo y empieza a entrenar con tu coach.
+                Elige días, objetivo y edad, y activa un plan para ver aquí qué toca cada día.
               </Text>
             </Card>
           </PressableScale>
@@ -276,6 +291,9 @@ const styles = StyleSheet.create({
   emptyToday: { borderStyle: 'dashed' },
   emptyTodayTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
   emptyTodayHint: { color: colors.textMuted, fontSize: 13, marginTop: 4, lineHeight: 19 },
+  restToday: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+  restTodayTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  restTodayHint: { color: colors.textMuted, fontSize: 13, marginTop: 4, lineHeight: 19 },
   wodCard: {
     backgroundColor: colors.accentSoft,
     borderRadius: radius.lg,

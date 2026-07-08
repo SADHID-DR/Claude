@@ -5,6 +5,8 @@ export const StorageKeys = {
   routines: 'exercise-app/routines',
   sessions: 'exercise-app/sessions',
   plans: 'exercise-app/plans',
+  activePlan: 'exercise-app/activePlan',
+  reminders: 'exercise-app/reminders',
 } as const;
 
 export async function loadJSON<T>(key: string, fallback: T): Promise<T> {

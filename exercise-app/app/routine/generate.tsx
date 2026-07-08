@@ -13,9 +13,11 @@ import { getExerciseById } from '@/data/exercises';
 import {
   Goal,
   Priority,
+  Cycle,
   GOALS,
   PRIORITIES,
   DAY_OPTIONS,
+  CYCLES,
   generatePlan,
 } from '@/lib/generator';
 import { RoutineExercise as RE } from '@/lib/types';
@@ -37,15 +39,16 @@ export default function GenerateRoutineScreen() {
   const [days, setDays] = useState(4);
   const [goal, setGoal] = useState<Goal>('Hipertrofia');
   const [age, setAge] = useState('30');
+  const [cycle, setCycle] = useState<Cycle>('Semanal');
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [seed, setSeed] = useState(0);
 
   const ageNum = Math.min(90, Math.max(14, parseInt(age, 10) || 30));
 
   const plan = useMemo(
-    () => generatePlan({ days, goal, age: ageNum, priorities }),
+    () => generatePlan({ days, goal, age: ageNum, priorities, cycle }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [days, goal, ageNum, priorities, seed]
+    [days, goal, ageNum, priorities, cycle, seed]
   );
 
   const togglePriority = (p: Priority) => {
@@ -54,16 +57,27 @@ export default function GenerateRoutineScreen() {
     );
   };
 
+  const totalRoutines = plan.weeks.length * days;
+
   const save = () => {
+    const dayRoutines = plan.weeks.flatMap((wk) =>
+      wk.days.map((d) => ({
+        name: plan.weeks.length > 1 ? `Sem ${wk.index + 1} · ${d.name}` : d.name,
+        exercises: d.exercises,
+        week: wk.index + 1,
+      }))
+    );
     addPlan({
-      name: plan.title,
+      name: `${plan.title} · ${plan.cycle}`,
       goal: plan.goal,
       days,
       age: ageNum,
       restDays: plan.restDays,
       schedule: plan.schedule,
       warmup: plan.warmup,
-      dayRoutines: plan.days.map((d) => ({ name: d.name, exercises: d.exercises })),
+      cycle: plan.cycle,
+      weeks: plan.weeks.length,
+      dayRoutines,
     });
     notifySuccess();
     router.replace('/(tabs)/routines');
@@ -72,7 +86,8 @@ export default function GenerateRoutineScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.intro}>
-        Tu coach premium arma un plan semanal según tus días, tu edad y tu objetivo.
+        Tu coach premium arma un plan (semanal, bisemanal o mensual) según tus días,
+        tu edad y tu objetivo, con progresión entre semanas.
       </Text>
 
       <Text style={styles.label}>Días por semana</Text>
@@ -97,6 +112,19 @@ export default function GenerateRoutineScreen() {
             style={[styles.option, goal === g && styles.optionActive]}
           >
             <Text style={[styles.optionText, goal === g && styles.optionTextActive]}>{g}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Ciclo del plan</Text>
+      <View style={styles.optionRow}>
+        {CYCLES.map((c) => (
+          <Pressable
+            key={c}
+            onPress={() => setCycle(c)}
+            style={[styles.option, cycle === c && styles.optionActive]}
+          >
+            <Text style={[styles.optionText, cycle === c && styles.optionTextActive]}>{c}</Text>
           </Pressable>
         ))}
       </View>
@@ -153,30 +181,40 @@ export default function GenerateRoutineScreen() {
         </Text>
       </Card>
 
-      {plan.days.map((day) => (
-        <Card key={day.name} style={{ marginBottom: spacing.sm }}>
-          <Text style={styles.dayName}>{day.name}</Text>
-          <Text style={styles.dayFocus}>{day.focus}</Text>
-          <View style={styles.exList}>
-            {day.exercises.map((re, i) => {
-              const ex = getExerciseById(re.exerciseId);
-              const isCardio = ex?.muscle === 'Cardio';
-              return (
-                <View key={i} style={styles.exRow}>
-                  <Text style={styles.exName}>
-                    {isCardio ? '🏃 ' : ''}
-                    {ex?.name ?? 'Ejercicio'}
-                  </Text>
-                  <Text style={styles.exScheme}>{schemeLabel(re)}</Text>
-                </View>
-              );
-            })}
-          </View>
-        </Card>
+      {plan.weeks.map((wk) => (
+        <View key={wk.index}>
+          {plan.weeks.length > 1 ? (
+            <View style={styles.weekHeader}>
+              <Text style={styles.weekLabel}>{wk.label}</Text>
+              <Text style={styles.weekNote}>{wk.note}</Text>
+            </View>
+          ) : null}
+          {wk.days.map((day) => (
+            <Card key={`${wk.index}-${day.name}`} style={{ marginBottom: spacing.sm }}>
+              <Text style={styles.dayName}>{day.name}</Text>
+              <Text style={styles.dayFocus}>{day.focus}</Text>
+              <View style={styles.exList}>
+                {day.exercises.map((re, i) => {
+                  const ex = getExerciseById(re.exerciseId);
+                  const isCardio = ex?.muscle === 'Cardio';
+                  return (
+                    <View key={i} style={styles.exRow}>
+                      <Text style={styles.exName}>
+                        {isCardio ? '🏃 ' : ''}
+                        {ex?.name ?? 'Ejercicio'}
+                      </Text>
+                      <Text style={styles.exScheme}>{schemeLabel(re)}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </Card>
+          ))}
+        </View>
       ))}
 
       <Button
-        title={`Guardar plan (${plan.days.length} días)`}
+        title={`Guardar plan (${totalRoutines} entrenos)`}
         onPress={save}
         style={{ marginVertical: spacing.md }}
       />
@@ -254,6 +292,9 @@ const styles = StyleSheet.create({
   recHeader: { color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: spacing.xs },
   recLine: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
   recBold: { color: colors.text, fontWeight: '700' },
+  weekHeader: { marginTop: spacing.sm, marginBottom: spacing.sm },
+  weekLabel: { color: colors.text, fontSize: 17, fontWeight: '900' },
+  weekNote: { color: colors.streak, fontSize: 13, fontWeight: '600', marginTop: 1 },
   dayName: { color: colors.text, fontSize: 16, fontWeight: '900' },
   dayFocus: { color: colors.primary, fontSize: 13, fontWeight: '700', marginTop: 2, marginBottom: spacing.sm },
   exList: { gap: 2 },

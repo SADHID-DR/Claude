@@ -5,10 +5,10 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Plan, Routine, RoutineExercise, WorkoutSession } from '@/lib/types';
+import { Cycle, Plan, Routine, RoutineExercise, WorkoutSession } from '@/lib/types';
 import { StorageKeys, loadJSON, saveJSON, makeId } from '@/lib/storage';
 
-/** Datos para guardar un plan semanal como bloque. */
+/** Datos para guardar un plan (semanal/bisemanal/mensual) como bloque. */
 export interface NewPlanInput {
   name: string;
   goal: string;
@@ -17,7 +17,9 @@ export interface NewPlanInput {
   restDays: number;
   schedule: string[];
   warmup: string;
-  dayRoutines: { name: string; exercises: RoutineExercise[] }[];
+  cycle: Cycle;
+  weeks: number;
+  dayRoutines: { name: string; exercises: RoutineExercise[]; week: number }[];
 }
 
 interface StoreValue {
@@ -25,11 +27,17 @@ interface StoreValue {
   routines: Routine[];
   sessions: WorkoutSession[];
   plans: Plan[];
+  activePlanId: string | null;
+  remindersEnabled: boolean;
   addRoutine: (input: Omit<Routine, 'id' | 'createdAt'>) => Routine;
   updateRoutine: (routine: Routine) => void;
   deleteRoutine: (id: string) => void;
-  addPlan: (input: NewPlanInput) => void;
+  addPlan: (input: NewPlanInput) => Plan;
   deletePlan: (id: string) => void;
+  renamePlan: (id: string, name: string) => void;
+  duplicatePlan: (id: string) => void;
+  setActivePlan: (id: string | null) => void;
+  setRemindersEnabled: (v: boolean) => void;
   addSession: (input: Omit<WorkoutSession, 'id'>) => WorkoutSession;
   deleteSession: (id: string) => void;
 }
@@ -41,34 +49,44 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [activePlanId, setActivePlanId] = useState<string | null>(null);
+  const [remindersEnabled, setRemindersEnabledState] = useState(false);
 
   // Carga inicial desde almacenamiento local.
   useEffect(() => {
     (async () => {
-      const [r, s, p] = await Promise.all([
+      const [r, s, p, active, rem] = await Promise.all([
         loadJSON<Routine[]>(StorageKeys.routines, []),
         loadJSON<WorkoutSession[]>(StorageKeys.sessions, []),
         loadJSON<Plan[]>(StorageKeys.plans, []),
+        loadJSON<string | null>(StorageKeys.activePlan, null),
+        loadJSON<boolean>(StorageKeys.reminders, false),
       ]);
       setRoutines(r);
       setSessions(s);
       setPlans(p);
+      setActivePlanId(active);
+      setRemindersEnabledState(rem);
       setReady(true);
     })();
   }, []);
 
-  // Persiste automáticamente cada cambio (tras la carga inicial).
+  // Persistencia automática (tras la carga inicial).
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.routines, routines);
   }, [routines, ready]);
-
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.sessions, sessions);
   }, [sessions, ready]);
-
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.plans, plans);
   }, [plans, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.activePlan, activePlanId);
+  }, [activePlanId, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.reminders, remindersEnabled);
+  }, [remindersEnabled, ready]);
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -76,6 +94,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       routines,
       sessions,
       plans,
+      activePlanId,
+      remindersEnabled,
       addRoutine: (input) => {
         const routine: Routine = { ...input, id: makeId(), createdAt: Date.now() };
         setRoutines((prev) => [routine, ...prev]);
@@ -96,6 +116,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           exercises: d.exercises,
           createdAt: now,
           planId,
+          week: d.week,
         }));
         setRoutines((prev) => [...created, ...prev]);
         const plan: Plan = {
@@ -109,13 +130,51 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           restDays: input.restDays,
           schedule: input.schedule,
           warmup: input.warmup,
+          cycle: input.cycle,
+          weeks: input.weeks,
         };
         setPlans((prev) => [plan, ...prev]);
+        setActivePlanId(plan.id);
+        return plan;
       },
       deletePlan: (id) => {
         setPlans((prev) => prev.filter((p) => p.id !== id));
         setRoutines((prev) => prev.filter((r) => r.planId !== id));
+        setActivePlanId((prev) => (prev === id ? null : prev));
       },
+      renamePlan: (id, name) => {
+        setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
+      },
+      duplicatePlan: (id) => {
+        setPlans((prevPlans) => {
+          const src = prevPlans.find((p) => p.id === id);
+          if (!src) return prevPlans;
+          const newId = makeId();
+          const now = Date.now();
+          setRoutines((prevRoutines) => {
+            const srcRoutines = src.routineIds
+              .map((rid) => prevRoutines.find((r) => r.id === rid))
+              .filter(Boolean) as Routine[];
+            const copies = srcRoutines.map((r, i) => ({
+              ...r,
+              id: `${newId}-${i}`,
+              planId: newId,
+              createdAt: now,
+            }));
+            return [...copies, ...prevRoutines];
+          });
+          const copy: Plan = {
+            ...src,
+            id: newId,
+            name: `${src.name} (copia)`,
+            createdAt: now,
+            routineIds: src.routineIds.map((_, i) => `${newId}-${i}`),
+          };
+          return [copy, ...prevPlans];
+        });
+      },
+      setActivePlan: (id) => setActivePlanId(id),
+      setRemindersEnabled: (v) => setRemindersEnabledState(v),
       addSession: (input) => {
         const session: WorkoutSession = { ...input, id: makeId() };
         setSessions((prev) => [session, ...prev]);
@@ -125,7 +184,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSessions((prev) => prev.filter((s) => s.id !== id));
       },
     }),
-    [ready, routines, sessions, plans]
+    [ready, routines, sessions, plans, activePlanId, remindersEnabled]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

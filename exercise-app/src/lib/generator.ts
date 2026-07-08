@@ -235,11 +235,22 @@ function splitFor(days: number): DayTemplate[] {
 }
 
 // ─────────────────────────────── Generación ──────────────────────────────────
+import { Cycle } from '@/lib/types';
+
+export type { Cycle } from '@/lib/types';
+export const CYCLES: Cycle[] = ['Semanal', 'Bisemanal', 'Mensual'];
+export const CYCLE_WEEKS: Record<Cycle, number> = {
+  Semanal: 1,
+  Bisemanal: 2,
+  Mensual: 4,
+};
+
 export interface PlanInput {
   days: number;
   goal: Goal;
   age: number;
   priorities: Priority[];
+  cycle: Cycle;
 }
 
 export interface PlanDay {
@@ -249,12 +260,21 @@ export interface PlanDay {
   exercises: RoutineExercise[];
 }
 
+export interface PlanWeek {
+  index: number;
+  label: string;
+  /** Nota de progresión de la semana (o descarga). */
+  note: string;
+  days: PlanDay[];
+}
+
 export interface WeeklyPlan {
   title: string;
   summary: string;
   ageNote: string;
   goal: Goal;
-  days: PlanDay[];
+  cycle: Cycle;
+  weeks: PlanWeek[];
   /** Días de descanso a la semana. */
   restDays: number;
   /** Reparto sugerido de días de entrenamiento (L, M, X...). */
@@ -282,20 +302,28 @@ const SCHEDULE_BY_DAYS: Record<number, string[]> = {
   6: ['Lun', 'Mar', 'Mié', 'Vie', 'Sáb', 'Dom'],
 };
 
+/** Ajuste de progresión aplicado a una semana concreta. */
+interface WeekProg {
+  repAdd: number;
+  restAdd: number;
+  setAdd: number;
+}
+
 function buildDay(
   tpl: DayTemplate,
   goal: Goal,
   band: AgeBand,
-  priorities: Priority[]
+  priorities: Priority[],
+  prog: WeekProg = { repAdd: 0, restAdd: 0, setAdd: 0 }
 ): PlanDay {
   const gp = GOAL_PARAMS[goal];
   const adj = AGE_ADJ[band];
   const prefer: Category[] = adj.preferSafe
     ? ['Máquina', 'Peso corporal', 'Peso libre', 'CrossFit']
     : gp.prefer;
-  const reps = gp.reps + adj.repAdd;
-  const rest = Math.round((gp.rest * adj.restMult) / 5) * 5;
-  const sets = gp.sets;
+  const reps = gp.reps + adj.repAdd + prog.repAdd;
+  const rest = Math.max(30, Math.round((gp.rest * adj.restMult) / 5) * 5 + prog.restAdd);
+  const sets = Math.max(2, gp.sets + prog.setAdd);
   const used = new Set<string>();
   const exercises: RoutineExercise[] = [];
 
@@ -350,23 +378,75 @@ function buildDay(
   return { key: tpl.key, name: tpl.name, focus: tpl.focus, exercises };
 }
 
+/** Progresión de una semana según el objetivo y su posición en el ciclo. */
+function weekProgression(
+  goal: Goal,
+  weekIdx: number,
+  totalWeeks: number
+): { prog: WeekProg; note: string } {
+  const none = { repAdd: 0, restAdd: 0, setAdd: 0 };
+  if (totalWeeks === 1) {
+    return {
+      prog: none,
+      note: 'Plan de una semana. Sube peso cuando completes todas las series con buena técnica.',
+    };
+  }
+  // Última semana del plan mensual: descarga (deload).
+  if (totalWeeks === 4 && weekIdx === 3) {
+    return {
+      prog: { repAdd: 0, restAdd: 20, setAdd: -1 },
+      note: 'Descarga: baja el volumen y prioriza recuperar para la siguiente etapa.',
+    };
+  }
+  if (weekIdx === 0) {
+    return { prog: none, note: 'Semana base: fija tu técnica y tus pesos de partida.' };
+  }
+  switch (goal) {
+    case 'Hipertrofia':
+      return {
+        prog: { repAdd: weekIdx, restAdd: 0, setAdd: 0 },
+        note: `Progresión: +${weekIdx} rep por serie sobre la base.`,
+      };
+    case 'Fuerza':
+      return {
+        prog: none,
+        note: 'Progresión: sube ~2,5–5 % el peso respecto a la semana anterior.',
+      };
+    case 'Pérdida de grasa':
+      return {
+        prog: { repAdd: 0, restAdd: -5 * weekIdx, setAdd: 0 },
+        note: `Progresión: −${5 * weekIdx} s de descanso para más densidad.`,
+      };
+  }
+}
+
 /**
- * Genera un plan semanal completo: el coach elige el split según los días,
- * ajusta series/reps/descanso por edad y objetivo, y añade cardio y accesorios.
+ * Genera un plan completo (semanal / bisemanal / mensual): el coach elige el
+ * split según los días, ajusta series/reps/descanso por edad y objetivo, añade
+ * cardio y accesorios, y aplica progresión (y descarga) entre semanas.
  */
 export function generatePlan(input: PlanInput): WeeklyPlan {
   const band = ageBand(input.age);
   const templates = splitFor(input.days);
-  const days: PlanDay[] = templates.map((t, i) => {
-    const d = buildDay(t, input.goal, band, input.priorities);
-    return { ...d, name: `Día ${i + 1} · ${d.name}` };
-  });
+  const totalWeeks = CYCLE_WEEKS[input.cycle];
+
+  const weeks: PlanWeek[] = [];
+  for (let w = 0; w < totalWeeks; w++) {
+    const { prog, note } = weekProgression(input.goal, w, totalWeeks);
+    const days: PlanDay[] = templates.map((t, i) => {
+      const d = buildDay(t, input.goal, band, input.priorities, prog);
+      return { ...d, name: `Día ${i + 1} · ${d.name}` };
+    });
+    weeks.push({ index: w, label: `Semana ${w + 1}`, note, days });
+  }
+
   return {
     title: `${input.goal} · ${input.days} días/sem`,
     summary: GOAL_PARAMS[input.goal].summary,
     ageNote: AGE_ADJ[band].note,
     goal: input.goal,
-    days,
+    cycle: input.cycle,
+    weeks,
     restDays: 7 - input.days,
     schedule: SCHEDULE_BY_DAYS[input.days] ?? [],
     warmup: WARMUP_BY_BAND[band],

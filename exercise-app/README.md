@@ -13,14 +13,18 @@ localmente en el dispositivo (AsyncStorage); no requiere servidor.
   por tipo de equipo** (Máquina / Peso libre / Peso corporal / CrossFit) y por
   músculo. Cada ejercicio incluye **guía de peso/máquina** y **consejos del
   entrenador**.
-- 🧠 **Coach premium: plan semanal** — genera un plan completo según tus **días
-  de entrenamiento**, tu **edad** y tu **objetivo**. Arma el split (empuje /
-  tirón / pierna / abdominales), mete **2 días de pierna** y **día de abs**
-  cuando corresponde, y añade **cardio** (remo, escaladora, comba, box jumps,
-  burpees) — de bajo impacto para edades mayores. Ajusta series/reps/descanso
-  por edad.
-- 📋 **Rutinas personalizadas** — crea, **genera** o **edita** rutinas; define
-  series, repeticiones y descanso para cada ejercicio.
+- 🧠 **Coach premium: plan semanal / bisemanal / mensual** — genera un plan
+  completo según tus **días de entrenamiento**, tu **edad** y tu **objetivo**.
+  Arma el split (empuje / tirón / pierna / abdominales), mete **2 días de
+  pierna** y **día de abs** cuando corresponde, y añade **cardio** (remo,
+  escaladora, comba, box jumps, burpees) — de bajo impacto para edades
+  mayores. Aplica **progresión entre semanas** (y semana de **descarga** en el
+  ciclo mensual) y da una **recomendación** de días y calentamiento por edad.
+- 🗓️ **Plan activo + "Hoy"** — marca un plan como activo y la pantalla Hoy te
+  dice **qué toca hoy** (semana y día del ciclo) según el calendario, o si
+  toca descanso. **Recordatorios** semanales opcionales (notificaciones).
+- 📋 **Rutinas y planes** — crea, **genera**, **edita**, **duplica** o
+  **renombra**; los planes se guardan agrupados por semana y día.
 - 🔥 **WODs de CrossFit** — benchmarks (Fran, Cindy, Murph, Helen, Annie,
   Grace) y WODs para empezar, con formato (AMRAP/For Time/EMOM) y escalado.
 - 📈 **Progreso** — historial de entrenamientos con volumen total, más

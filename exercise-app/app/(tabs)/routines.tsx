@@ -1,15 +1,38 @@
-import { useMemo } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { Plan, Routine } from '@/lib/types';
+import { scheduleReminders, cancelReminders } from '@/lib/notifications';
 import { Button, Card, EmptyState, SectionHeader } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
 
 export default function RoutinesScreen() {
   const router = useRouter();
-  const { routines, plans, deleteRoutine, deletePlan } = useStore();
+  const {
+    routines,
+    plans,
+    activePlanId,
+    remindersEnabled,
+    deleteRoutine,
+    deletePlan,
+    renamePlan,
+    duplicatePlan,
+    setActivePlan,
+    setRemindersEnabled,
+  } = useStore();
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
 
   const routinesById = useMemo(() => {
     const map: Record<string, Routine> = {};
@@ -17,8 +40,8 @@ export default function RoutinesScreen() {
     return map;
   }, [routines]);
 
-  // Rutinas sueltas: las que no pertenecen a ningún plan.
   const standalone = routines.filter((r) => !r.planId);
+  const isEmpty = plans.length === 0 && standalone.length === 0;
 
   const confirmDeleteRoutine = (id: string, name: string) => {
     Alert.alert('Eliminar rutina', `¿Eliminar "${name}"?`, [
@@ -28,13 +51,38 @@ export default function RoutinesScreen() {
   };
 
   const confirmDeletePlan = (plan: Plan) => {
-    Alert.alert('Eliminar plan', `¿Eliminar "${plan.name}" y sus ${plan.days} días?`, [
+    Alert.alert('Eliminar plan', `¿Eliminar "${plan.name}" y todos sus días?`, [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: () => deletePlan(plan.id) },
     ]);
   };
 
-  const isEmpty = plans.length === 0 && standalone.length === 0;
+  const startRename = (plan: Plan) => {
+    setEditingId(plan.id);
+    setEditName(plan.name);
+  };
+  const saveRename = () => {
+    if (editingId && editName.trim()) renamePlan(editingId, editName.trim());
+    setEditingId(null);
+  };
+
+  const toggleReminders = async (plan: Plan) => {
+    if (remindersEnabled) {
+      await cancelReminders();
+      setRemindersEnabled(false);
+      return;
+    }
+    const ok = await scheduleReminders(plan);
+    if (ok) {
+      setRemindersEnabled(true);
+      Alert.alert('Recordatorios activados 🔔', 'Te avisaré a las 18:00 tus días de entreno.');
+    } else {
+      Alert.alert(
+        'No se pudo activar',
+        'Concede permiso de notificaciones para recibir recordatorios.'
+      );
+    }
+  };
 
   return (
     <ScrollView
@@ -59,55 +107,94 @@ export default function RoutinesScreen() {
         <EmptyState
           emoji="📋"
           title="Aún no tienes rutinas"
-          hint="Pulsa 'Generar plan' para que tu coach te arme un plan semanal completo."
+          hint="Pulsa 'Generar plan' para que tu coach te arme un plan semanal, bisemanal o mensual."
         />
       ) : null}
 
-      {/* Planes semanales (bloques) */}
-      {plans.length > 0 ? <SectionHeader title="Planes semanales" /> : null}
-      {plans.map((plan) => (
-        <Card key={plan.id} style={styles.planCard}>
-          <View style={styles.planTop}>
-            <Text style={styles.planName}>{plan.name}</Text>
-            <View style={styles.planBadge}>
-              <Text style={styles.planBadgeText}>{plan.days} días</Text>
+      {plans.length > 0 ? <SectionHeader title="Planes" /> : null}
+      {plans.map((plan) => {
+        const active = plan.id === activePlanId;
+        const weekNumbers = Array.from({ length: plan.weeks }, (_, i) => i + 1);
+        return (
+          <Card key={plan.id} style={[styles.planCard, active && styles.planCardActive]}>
+            <View style={styles.planTop}>
+              {editingId === plan.id ? (
+                <TextInput
+                  value={editName}
+                  onChangeText={setEditName}
+                  autoFocus
+                  onSubmitEditing={saveRename}
+                  style={styles.renameInput}
+                />
+              ) : (
+                <Text style={styles.planName}>{plan.name}</Text>
+              )}
+              {active ? (
+                <View style={styles.activeBadge}>
+                  <Text style={styles.activeBadgeText}>ACTIVO</Text>
+                </View>
+              ) : null}
             </View>
-          </View>
-          <Text style={styles.planMeta}>
-            🗓️ {plan.schedule.join(' · ')} · descanso {plan.restDays} día
-            {plan.restDays !== 1 ? 's' : ''}
-          </Text>
-          <Text style={styles.planWarmup}>🔥 {plan.warmup}</Text>
 
-          <View style={styles.dayList}>
-            {plan.routineIds.map((rid) => {
-              const r = routinesById[rid];
-              if (!r) return null;
+            <Text style={styles.planMeta}>
+              {plan.cycle} · {plan.days} días/sem · 🗓️ {plan.schedule.join(' · ')} · descanso{' '}
+              {plan.restDays}
+            </Text>
+
+            {active ? (
+              <Pressable onPress={() => toggleReminders(plan)} style={styles.remindersBtn}>
+                <Text style={styles.remindersText}>
+                  {remindersEnabled ? '🔔 Recordatorios: ON' : '🔕 Recordatorios: OFF'}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {weekNumbers.map((wn) => {
+              const weekRoutines = plan.routineIds
+                .map((rid) => routinesById[rid])
+                .filter((r): r is Routine => !!r && (r.week ?? 1) === wn);
+              if (weekRoutines.length === 0) return null;
               return (
-                <View key={rid} style={styles.dayRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.dayName}>{r.name}</Text>
-                    <Text style={styles.dayMeta}>{r.exercises.length} ejercicios</Text>
-                  </View>
-                  <Button title="▶" onPress={() => router.push(`/session/${r.id}`)} />
+                <View key={wn} style={styles.weekBlock}>
+                  {plan.weeks > 1 ? <Text style={styles.weekTitle}>Semana {wn}</Text> : null}
+                  {weekRoutines.map((r) => (
+                    <View key={r.id} style={styles.dayRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.dayName}>{r.name}</Text>
+                        <Text style={styles.dayMeta}>{r.exercises.length} ejercicios</Text>
+                      </View>
+                      <Button title="▶" onPress={() => router.push(`/session/${r.id}`)} />
+                    </View>
+                  ))}
                 </View>
               );
             })}
-          </View>
 
-          <Button
-            title="🗑 Eliminar plan"
-            variant="danger"
-            onPress={() => confirmDeletePlan(plan)}
-            style={{ marginTop: spacing.sm }}
-          />
-        </Card>
-      ))}
+            <View style={styles.planActions}>
+              {editingId === plan.id ? (
+                <Button title="Guardar nombre" onPress={saveRename} style={{ flex: 1 }} />
+              ) : (
+                <>
+                  {!active ? (
+                    <Button
+                      title="✓ Activar"
+                      onPress={() => setActivePlan(plan.id)}
+                      style={{ flex: 1 }}
+                    />
+                  ) : null}
+                  <Button title="✎" variant="ghost" onPress={() => startRename(plan)} />
+                  <Button title="⧉" variant="ghost" onPress={() => duplicatePlan(plan.id)} />
+                  <Button title="🗑" variant="danger" onPress={() => confirmDeletePlan(plan)} />
+                </>
+              )}
+            </View>
+          </Card>
+        );
+      })}
 
-      {/* Rutinas sueltas */}
       {standalone.length > 0 ? (
         <View style={{ marginTop: plans.length > 0 ? spacing.lg : 0 }}>
-          <SectionHeader title="Rutinas" />
+          <SectionHeader title="Rutinas sueltas" />
         </View>
       ) : null}
       {standalone.map((item) => (
@@ -116,16 +203,6 @@ export default function RoutinesScreen() {
           <Text style={styles.meta}>
             {item.exercises.length} ejercicio{item.exercises.length !== 1 ? 's' : ''}
           </Text>
-          <View style={styles.exerciseList}>
-            {item.exercises.map((re, i) => {
-              const ex = getExerciseById(re.exerciseId);
-              return (
-                <Text key={i} style={styles.exerciseLine}>
-                  • {ex?.name ?? 'Ejercicio'} — {re.sets}×{re.reps}
-                </Text>
-              );
-            })}
-          </View>
           <View style={styles.actions}>
             <Button
               title="▶ Entrenar"
@@ -152,19 +229,48 @@ export default function RoutinesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  planCard: { marginBottom: spacing.md, borderColor: colors.primaryDark },
+  planCard: { marginBottom: spacing.md, borderColor: colors.border },
+  planCardActive: { borderColor: colors.primary },
   planTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   planName: { color: colors.text, fontSize: 18, fontWeight: '900', flex: 1 },
-  planBadge: {
+  renameInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '800',
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  activeBadge: {
     backgroundColor: colors.primary,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
-  planBadgeText: { color: '#08130c', fontSize: 12, fontWeight: '800' },
-  planMeta: { color: colors.accent, fontSize: 13, fontWeight: '600', marginTop: 4 },
-  planWarmup: { color: colors.textMuted, fontSize: 12, marginTop: 2, lineHeight: 17 },
-  dayList: { marginTop: spacing.sm, gap: spacing.xs },
+  activeBadgeText: { color: '#08130c', fontSize: 11, fontWeight: '900' },
+  planMeta: { color: colors.accent, fontSize: 12, fontWeight: '600', marginTop: 4 },
+  remindersBtn: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  remindersText: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  weekBlock: { marginTop: spacing.sm, gap: spacing.xs },
+  weekTitle: {
+    color: colors.streak,
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: spacing.xs,
+  },
   dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -175,9 +281,8 @@ const styles = StyleSheet.create({
   },
   dayName: { color: colors.text, fontSize: 15, fontWeight: '700' },
   dayMeta: { color: colors.textMuted, fontSize: 12, marginTop: 1 },
+  planActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, alignItems: 'center' },
   name: { color: colors.text, fontSize: 17, fontWeight: '800' },
   meta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
-  exerciseList: { marginTop: spacing.sm, gap: 2 },
-  exerciseLine: { color: colors.textMuted, fontSize: 14 },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
 });
