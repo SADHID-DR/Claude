@@ -17,9 +17,9 @@ export type Injury = 'Rodilla' | 'Hombro' | 'Zona lumbar';
 export const INJURIES: Injury[] = ['Rodilla', 'Hombro', 'Zona lumbar'];
 
 const INJURY_BLOCK: Record<Injury, RegExp> = {
-  Rodilla: /sentadilla|zancada|búlgara|prensa|salto|box jump|extensión de cuádriceps|thruster|wall ball|subida/i,
-  Hombro: /militar|press de hombro|arnold|push press|arrancada|snatch|fondos|elevaciones|mentón/i,
-  'Zona lumbar': /peso muerto|buenos días|pendlay|remo con barra|swing|leñador|cargada|clean|rack pull|remo en t/i,
+  Rodilla: /sentadilla|zancada|búlgara|prensa|salto|box jump|extensión de cuádriceps|thruster|wall ball|subida|hack|pistol|trineo/i,
+  Hombro: /militar|press de hombro|arnold|push press|arrancada|snatch|fondos|elevaciones|mentón|pino|muscle|sobre cabeza/i,
+  'Zona lumbar': /peso muerto|buenos días|pendlay|remo con barra|swing|leñador|cargada|clean|rack pull|remo en t|molino|slam/i,
 };
 
 /** Quita del pool los ejercicios contraindicados y los que exceden el nivel. */
