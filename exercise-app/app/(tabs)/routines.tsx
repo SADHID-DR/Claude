@@ -1,14 +1,11 @@
-import { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { Plan, Routine } from '@/lib/types';
 import { scheduleReminders, cancelReminders, sendTestNotification } from '@/lib/notifications';
 import { Button, Card, EmptyState, SectionHeader } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
-
-const HOUR_OPTIONS = [5, 6, 7, 8, 9, 12, 16, 17, 18, 19, 20, 21, 22];
-const MINUTE_OPTIONS = [0, 15, 30, 45];
 
 export default function RoutinesScreen() {
   const router = useRouter();
@@ -53,6 +50,21 @@ export default function RoutinesScreen() {
   };
 
   const hhmm = (h: number, m: number) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  const [timeIn, setTimeIn] = useState('');
+
+  const saveTime = async (plan: Plan) => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(timeIn.trim());
+    const h = m ? parseInt(m[1], 10) : NaN;
+    const mi = m ? parseInt(m[2], 10) : NaN;
+    if (!m || h > 23 || mi > 59) {
+      Alert.alert('Hora no válida', 'Escríbela en formato 24 h, por ejemplo 19:30.');
+      return;
+    }
+    setReminderHour(h);
+    setReminderMinute(mi);
+    if (remindersEnabled) await scheduleReminders(plan, h, mi);
+    Alert.alert('Hora guardada ⏰', `Te avisaré a las ${hhmm(h, mi)} tus días de entreno.`);
+  };
 
   const toggleReminders = async (plan: Plan) => {
     if (remindersEnabled) {
@@ -87,7 +99,7 @@ export default function RoutinesScreen() {
     Alert.alert(
       ok ? 'Aviso de prueba enviado ⌚' : 'No se pudo enviar',
       ok
-        ? 'Llegará en unos segundos. Si tienes un Galaxy Watch emparejado, también lo verás en el reloj.'
+        ? 'Llegará en 10 segundos: BLOQUEA el teléfono ya para que el aviso salte en el reloj (el reloj solo muestra avisos con el teléfono bloqueado).'
         : 'Concede permiso de notificaciones para probarlo.'
     );
   };
@@ -150,47 +162,24 @@ export default function RoutinesScreen() {
                 </Pressable>
                 {remindersEnabled ? (
                   <>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: spacing.xs, paddingVertical: spacing.xs }}
-                    >
-                      {HOUR_OPTIONS.map((h) => (
-                        <Pressable
-                          key={h}
-                          onPress={() => changeHour(plan, h)}
-                          style={[styles.hourChip, reminderHour === h && styles.hourChipActive]}
-                        >
-                          <Text
-                            style={[
-                              styles.hourChipText,
-                              reminderHour === h && styles.hourChipTextActive,
-                            ]}
-                          >
-                            {String(h).padStart(2, '0')}h
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                    <View style={styles.minuteRow}>
-                      <Text style={styles.minuteLabel}>Minutos:</Text>
-                      {MINUTE_OPTIONS.map((m) => (
-                        <Pressable
-                          key={m}
-                          onPress={() => changeMinute(plan, m)}
-                          style={[styles.hourChip, reminderMinute === m && styles.hourChipActive]}
-                        >
-                          <Text
-                            style={[
-                              styles.hourChipText,
-                              reminderMinute === m && styles.hourChipTextActive,
-                            ]}
-                          >
-                            :{String(m).padStart(2, '0')}
-                          </Text>
-                        </Pressable>
-                      ))}
+                    <View style={styles.timeRow}>
+                      <TextInput
+                        value={timeIn}
+                        onChangeText={setTimeIn}
+                        placeholder={hhmm(reminderHour, reminderMinute)}
+                        placeholderTextColor={colors.textMuted}
+                        keyboardType="numbers-and-punctuation"
+                        maxLength={5}
+                        style={styles.timeInput}
+                      />
+                      <Button title="Guardar hora" onPress={() => saveTime(plan)} />
                     </View>
+                    <Text style={styles.watchHint}>
+                      ⌚ ¿No llega al reloj? En tu teléfono abre Galaxy Wearable →
+                      Ajustes del reloj → Notificaciones → Notificaciones de aplicaciones
+                      y activa "Ejercicios" (aparece tras enviar el aviso de prueba).
+                      Ojo: el reloj solo muestra avisos si el teléfono está bloqueado.
+                    </Text>
                     <Pressable onPress={testNotification} style={styles.testBtn}>
                       <Text style={styles.testText}>⌚ Probar aviso (llega al reloj)</Text>
                     </Pressable>
@@ -333,24 +322,31 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   remindersText: { color: colors.text, fontSize: 13, fontWeight: '700' },
-  hourChip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-    backgroundColor: colors.bgElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  hourChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  hourChipText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
-  hourChipTextActive: { color: '#08130c' },
-  minuteRow: {
+  timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
-  minuteLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
+  timeInput: {
+    backgroundColor: colors.bgElevated,
+    color: colors.text,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 18,
+    fontWeight: '700',
+    width: 110,
+    textAlign: 'center',
+  },
+  watchHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: spacing.sm,
+  },
   testBtn: {
     marginTop: spacing.xs,
     alignSelf: 'flex-start',

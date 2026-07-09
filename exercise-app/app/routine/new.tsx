@@ -44,6 +44,21 @@ export default function NewRoutineScreen() {
     });
     return map;
   });
+  // Orden de los ejercicios en la rutina (editable a discreción).
+  const [order, setOrder] = useState<string[]>(() =>
+    editing ? editing.exercises.map((re) => re.exerciseId) : []
+  );
+
+  const moveExercise = (id: string, dir: -1 | 1) => {
+    setOrder((prev) => {
+      const i = prev.indexOf(id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
 
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | 'Todos'>('Todos');
@@ -66,8 +81,10 @@ export default function NewRoutineScreen() {
       const next = { ...prev };
       if (next[exerciseId]) {
         delete next[exerciseId];
+        setOrder((prev) => prev.filter((x) => x !== exerciseId));
       } else {
         next[exerciseId] = { exerciseId, sets: 3, reps: 10, restSeconds: 60 };
+        setOrder((prev) => [...prev, exerciseId]);
       }
       return next;
     });
@@ -86,7 +103,7 @@ export default function NewRoutineScreen() {
   };
 
   const save = () => {
-    const exercises = Object.values(selected);
+    const exercises = order.map((id) => selected[id]).filter(Boolean);
     if (name.trim() === '') {
       Alert.alert('Falta el nombre', 'Ponle un nombre a tu rutina.');
       return;
@@ -144,6 +161,39 @@ export default function NewRoutineScreen() {
           ? `${selectedCount} seleccionado${selectedCount !== 1 ? 's' : ''} · toca para añadir/quitar`
           : 'Toca un ejercicio para añadirlo y ajusta series/reps.'}
       </Text>
+
+      {selectedCount > 1 ? (
+        <Card style={{ marginBottom: spacing.md }}>
+          <Text style={styles.orderTitle}>↕ Orden de la rutina</Text>
+          {order.map((id, i) => {
+            const info = EXERCISES.find((e) => e.id === id);
+            return (
+              <View key={id} style={styles.orderRow}>
+                <Text style={styles.orderIndex}>{i + 1}</Text>
+                <Text style={styles.orderName} numberOfLines={1}>
+                  {info?.name ?? id}
+                </Text>
+                <Pressable
+                  onPress={() => moveExercise(id, -1)}
+                  disabled={i === 0}
+                  style={[styles.orderBtn, i === 0 && styles.orderBtnOff]}
+                  hitSlop={6}
+                >
+                  <Text style={styles.orderBtnText}>▲</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => moveExercise(id, 1)}
+                  disabled={i === order.length - 1}
+                  style={[styles.orderBtn, i === order.length - 1 && styles.orderBtnOff]}
+                  hitSlop={6}
+                >
+                  <Text style={styles.orderBtnText}>▼</Text>
+                </Pressable>
+              </View>
+            );
+          })}
+        </Card>
+      ) : null}
 
       {filtered.map((ex) => {
         const chosen = selected[ex.id];
@@ -268,6 +318,30 @@ const styles = StyleSheet.create({
   chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13, lineHeight: 18 },
   chipTextActive: { color: '#08130c' },
   hint: { color: colors.textMuted, marginBottom: spacing.sm },
+  orderTitle: { color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: spacing.sm },
+  orderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 5 },
+  orderIndex: {
+    color: '#08130c',
+    backgroundColor: colors.accent,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    textAlign: 'center',
+    lineHeight: 22,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  orderName: { color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 },
+  orderBtn: {
+    width: 34,
+    height: 30,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orderBtnOff: { opacity: 0.3 },
+  orderBtnText: { color: colors.text, fontSize: 13, fontWeight: '900' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
   exRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   checkbox: {

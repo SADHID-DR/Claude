@@ -478,7 +478,27 @@ function buildDay(
     if (cardio) add(cardio, true);
   }
 
-  return { key: tpl.key, name: tpl.name, focus: tpl.focus, exercises };
+  // Orden de coach: músculos grandes primero, pequeños después, core/cardio al final.
+  const MUSCLE_ORDER: Record<string, number> = {
+    'Cuerpo completo': 0,
+    Piernas: 1,
+    Espalda: 2,
+    Pecho: 3,
+    Hombros: 4,
+    Brazos: 5,
+    Core: 6,
+    Cardio: 7,
+  };
+  const ordered = exercises
+    .map((e, i) => ({ e, i }))
+    .sort((x, y) => {
+      const mx = MUSCLE_ORDER[getExerciseById(x.e.exerciseId)?.muscle ?? ''] ?? 5;
+      const my = MUSCLE_ORDER[getExerciseById(y.e.exerciseId)?.muscle ?? ''] ?? 5;
+      return mx - my || x.i - y.i;
+    })
+    .map((x) => x.e);
+
+  return { key: tpl.key, name: tpl.name, focus: tpl.focus, exercises: ordered };
 }
 
 /** Progresión de una semana según el objetivo y su posición en el ciclo. */

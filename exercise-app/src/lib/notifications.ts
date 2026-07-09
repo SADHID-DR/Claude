@@ -126,7 +126,7 @@ export async function sendTestNotification(): Promise<boolean> {
       },
       trigger: {
         channelId: CHANNEL_ID,
-        seconds: 3,
+        seconds: 10,
       } as Notifications.NotificationTriggerInput,
     });
     return true;
