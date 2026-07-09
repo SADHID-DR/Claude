@@ -359,6 +359,38 @@ const PATTERNS: Record<string, Pattern> = {
     noWeight: true,
     ms: 450,
   },
+  upright: {
+    a: { ...STAND, e: [52, 44], w: [53, 57] },
+    b: { ...STAND, e: [60, 36], w: [54, 32] },
+    ms: 800,
+  },
+  backext: {
+    a: {
+      hd: [28, 84], s: [34, 76], h: [50, 68],
+      k1: [62, 70], a1: [74, 72], k2: [63, 71], a2: [75, 73],
+      e: [30, 82], w: [26, 86],
+    },
+    b: {
+      hd: [18, 60], s: [26, 64], h: [50, 68],
+      k1: [62, 70], a1: [74, 72], k2: [63, 71], a2: [75, 73],
+      e: [24, 70], w: [20, 74],
+    },
+    bench: { x: 42, y: 70, w: 26 },
+    noWeight: true,
+  },
+  carry: {
+    a: {
+      hd: [50, 19], s: [50, 29], h: [49, 55],
+      k1: [58, 66], a1: [56, 80], k2: [42, 69], a2: [36, 82],
+      e: [51, 42], w: [52, 55],
+    },
+    b: {
+      hd: [50, 19], s: [50, 29], h: [49, 55],
+      k1: [43, 67], a1: [37, 81], k2: [57, 67], a2: [58, 81],
+      e: [51, 42], w: [52, 55],
+    },
+    ms: 500,
+  },
   burpee: {
     a: PUSHUP_TOP,
     b: {
@@ -384,11 +416,13 @@ const RULES: [RegExp, string][] = [
   [/flexiones|push.?up/, 'pushup'],
   [/fondos/, 'dip'],
   [/pullover/, 'pullover'],
-  [/press de banca|press inclinado|press declinado|floor press|press de pecho|aperturas|cruce/, 'bench'],
+  [/press de banca|press banca|press inclinado|press declinado|floor press|press de pecho|aperturas|cruce/, 'bench'],
   [/press militar|press de hombro|arnold|push press/, 'ohp'],
   [/elevaciones? lateral|elevaciones? frontal/, 'lateral'],
   [/pájaro/, 'kickback'],
   [/encogimiento/, 'shrug'],
+  [/face pull/, 'seatedrow'],
+  [/remo al mentón/, 'upright'],
   [/remo en ergómetro|remo sentado/, 'seatedrow'],
   [/remo/, 'row'],
   [/jalón/, 'pulldown'],
@@ -404,6 +438,11 @@ const RULES: [RegExp, string][] = [
   [/burpee/, 'burpee'],
   [/thruster|wall ball|cargada|clean|snatch|arrancada|turkish/, 'thruster'],
   [/leñador/, 'chop'],
+  [/hiperextensi/, 'backext'],
+  [/granjero|farmer/, 'carry'],
+  [/rueda abdominal|ab wheel/, 'plank'],
+  [/abducción/, 'legext'],
+  [/elíptica/, 'run'],
   [/carrera|correr|escaladora|cuerda|comba|double under|box jump|salto|bici|remo \(cardio\)/, 'run'],
 ];
 
