@@ -303,6 +303,35 @@ const WOD: DayTemplate = {
   slots: ['wod', 'wod', 'wod', 'wod', 'wod', 'wod', 'wod', 'wod'],
 };
 
+/**
+ * Entreno rápido de UN día (para el "+" del calendario): el coach arma
+ * un aislado aleatorio (empuje/tirón/pierna), un cuerpo completo o un WOD.
+ */
+export function quickDay(
+  type: DayType,
+  goal: Goal = 'Hipertrofia',
+  level: Level = 'Intermedio',
+  equipment: Equipment[] = []
+): PlanDay {
+  const tpl =
+    type === 'Completo'
+      ? FULLBODY
+      : type === 'CrossFit'
+        ? WOD
+        : [PUSH, PULL, LEGS][Math.floor(Math.random() * 3)];
+  return buildDay(
+    tpl,
+    goal,
+    'adulto',
+    [],
+    { repAdd: 0, restAdd: 0, setAdd: 0 },
+    equipment,
+    undefined,
+    level,
+    []
+  );
+}
+
 function splitFor(days: number, fullBody: boolean): DayTemplate[] {
   if (fullBody) return Array.from({ length: days }, () => FULLBODY);
   switch (days) {

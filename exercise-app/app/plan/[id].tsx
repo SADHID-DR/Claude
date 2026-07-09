@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,6 +11,8 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { Routine } from '@/lib/types';
+import { quickDay, DayType, Goal, GOALS } from '@/lib/generator';
+import { Button } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
 
 const DOW_LABEL = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -31,7 +34,11 @@ function startOfWeekMon(ts: number): number {
 export default function PlanCalendarScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { plans, routines } = useStore();
+  const { plans, routines, updatePlan, addRoutine } = useStore();
+  // Mover un día: mantén pulsado el día verde (origen) y toca el destino.
+  const [moving, setMoving] = useState<number | null>(null);
+  // Día libre elegido para añadir un entreno extra (etiqueta Lun/Mar/...).
+  const [quickFor, setQuickFor] = useState<string | null>(null);
   const plan = plans.find((p) => p.id === id);
 
   const routinesById = useMemo(() => {
@@ -80,6 +87,7 @@ export default function PlanCalendarScreen() {
       routineId,
       weekIdx,
       dayNum: pos + 1,
+      pos,
       isToday: `${year}-${month}-${dayNum}` === todayKey,
     };
   };
@@ -136,21 +144,118 @@ export default function PlanCalendarScreen() {
               ) : null}
             </View>
           );
-          return training && info?.routine ? (
+          const date = new Date(year, month, dayNum);
+          const label = DOW_LABEL[date.getDay()];
+          if (training && info) {
+            const isMoving = moving === info.pos;
+            return (
+              <Pressable
+                key={dayNum}
+                style={[styles.cell, { width: cellSize, height: cellSize }]}
+                onLongPress={() => setMoving(info.pos)}
+                delayLongPress={350}
+                onPress={() => {
+                  if (moving != null) {
+                    setMoving(moving === info.pos ? null : info.pos);
+                  } else if (info.routine) {
+                    router.push(`/session/${info.routineId}`);
+                  }
+                }}
+              >
+                <View
+                  style={[
+                    styles.cell,
+                    styles.cellInner,
+                    styles.cellTraining,
+                    info.isToday && styles.cellToday,
+                    isMoving && styles.cellMoving,
+                  ]}
+                >
+                  <Text style={[styles.cellDay, styles.cellDayTraining]}>{dayNum}</Text>
+                  <Text style={styles.cellTag}>
+                    {isMoving ? '✋' : `${plan.weeks > 1 ? `S${info.weekIdx + 1}·` : ''}D${info.dayNum}`}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          }
+          return (
             <Pressable
               key={dayNum}
               style={[styles.cell, { width: cellSize, height: cellSize }]}
-              onPress={() => router.push(`/session/${info.routineId}`)}
+              onPress={() => {
+                if (moving != null) {
+                  // Mueve el día seleccionado a este día de la semana (misma rutina).
+                  const next = [...plan.schedule];
+                  next[moving] = label;
+                  updatePlan({ ...plan, schedule: next });
+                  setMoving(null);
+                } else {
+                  setQuickFor(label);
+                }
+              }}
             >
-              {cell}
+              <View style={[styles.cell, styles.cellInner, moving != null && styles.cellTarget]}>
+                <Text style={styles.cellDay}>{dayNum}</Text>
+                <Text style={styles.cellPlus}>{moving != null ? '⬇' : '＋'}</Text>
+              </View>
             </Pressable>
-          ) : (
-            <View key={dayNum} style={[styles.cell, { width: cellSize, height: cellSize }]}>
-              {cell}
-            </View>
           );
         })}
       </View>
+
+      {moving != null ? (
+        <Pressable onPress={() => setMoving(null)} style={styles.movingBanner}>
+          <Text style={styles.movingText}>
+            ✋ Moviendo D{moving + 1} ({plan.schedule[moving]}): toca el día destino.
+            Toca aquí para cancelar.
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {quickFor ? (
+        <View style={styles.quickSheet}>
+          <Text style={styles.quickTitle}>Entreno extra · {quickFor}</Text>
+          <Text style={styles.quickHint}>El coach lo arma al momento:</Text>
+          {(['Aislado', 'Completo', 'CrossFit'] as DayType[]).map((t) => (
+            <Button
+              key={t}
+              title={t === 'Aislado' ? '🎯 Aislado (sorpresa del coach)' : t === 'Completo' ? '🏋️ Cuerpo completo' : '🔥 CrossFit (WOD)'}
+              variant="ghost"
+              onPress={() => {
+                const goal = (GOALS as string[]).includes(plan.goal)
+                  ? (plan.goal as Goal)
+                  : 'Hipertrofia';
+                const day = quickDay(t, goal);
+                const routine = addRoutine({
+                  name: `Extra ${quickFor} · ${day.name}`,
+                  exercises: day.exercises,
+                });
+                setQuickFor(null);
+                Alert.alert(
+                  'Entreno extra creado 💪',
+                  `"${routine.name}" (${day.exercises.length} ejercicios). Lo tienes en Rutinas.`,
+                  [
+                    { text: 'Luego', style: 'cancel' },
+                    { text: '▶ Empezar ahora', onPress: () => router.push(`/session/${routine.id}`) },
+                  ]
+                );
+              }}
+              style={{ marginTop: spacing.xs }}
+            />
+          ))}
+          <Button
+            title="✎ Elegir ejercicios yo mismo"
+            variant="ghost"
+            onPress={() => {
+              setQuickFor(null);
+              router.push('/routine/new');
+            }}
+            style={{ marginTop: spacing.xs }}
+          />
+          <Button title="Cancelar" onPress={() => setQuickFor(null)} style={{ marginTop: spacing.sm }} />
+        </View>
+      ) : null}
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
@@ -159,8 +264,11 @@ export default function PlanCalendarScreen() {
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.surfaceAlt }]} />
-          <Text style={styles.legendText}>Descanso</Text>
+          <Text style={styles.legendText}>Descanso · ＋ añade un entreno extra</Text>
         </View>
+        <Text style={styles.legendText}>
+          ✋ Mantén pulsado un día verde y toca el destino para moverlo (p. ej. de Lun a Mié).
+        </Text>
       </View>
     </ScrollView>
   );
@@ -205,6 +313,28 @@ const styles = StyleSheet.create({
   cellDay: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
   cellDayTraining: { color: colors.text },
   cellTag: { color: colors.primary, fontSize: 9, fontWeight: '800' },
+  cellMoving: { borderColor: colors.warn, borderWidth: 2, backgroundColor: '#2b2413' },
+  cellTarget: { borderStyle: 'dashed', borderColor: colors.warn },
+  cellPlus: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
+  movingBanner: {
+    marginTop: spacing.md,
+    backgroundColor: '#2b2413',
+    borderColor: colors.warn,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  movingText: { color: colors.warn, fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  quickSheet: {
+    marginTop: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    padding: spacing.md,
+  },
+  quickTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
+  quickHint: { color: colors.textMuted, fontSize: 12, marginTop: 2, marginBottom: spacing.xs },
   legend: { marginTop: spacing.lg, gap: spacing.sm },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   legendDot: { width: 14, height: 14, borderRadius: 4 },
