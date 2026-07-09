@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { BodyEntry, Cycle, Plan, Routine, RoutineExercise, WorkoutSession } from '@/lib/types';
 import { StorageKeys, loadJSON, saveJSON, makeId } from '@/lib/storage';
+import { WeightUnit } from '@/lib/units';
 
 /** Datos para guardar un plan (semanal/bisemanal/mensual) como bloque. */
 export interface NewPlanInput {
@@ -31,6 +32,8 @@ interface StoreValue {
   remindersEnabled: boolean;
   reminderHour: number;
   body: BodyEntry[];
+  unit: WeightUnit;
+  setUnit: (u: WeightUnit) => void;
   addBodyEntry: (input: Omit<BodyEntry, 'id'>) => void;
   deleteBodyEntry: (id: string) => void;
   addRoutine: (input: Omit<Routine, 'id' | 'createdAt'>) => Routine;
@@ -61,11 +64,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [remindersEnabled, setRemindersEnabledState] = useState(false);
   const [reminderHour, setReminderHourState] = useState(18);
   const [body, setBody] = useState<BodyEntry[]>([]);
+  const [unit, setUnitState] = useState<WeightUnit>('kg');
 
   // Carga inicial desde almacenamiento local.
   useEffect(() => {
     (async () => {
-      const [r, s, p, active, rem, hour, bodyData] = await Promise.all([
+      const [r, s, p, active, rem, hour, bodyData, unitData] = await Promise.all([
         loadJSON<Routine[]>(StorageKeys.routines, []),
         loadJSON<WorkoutSession[]>(StorageKeys.sessions, []),
         loadJSON<Plan[]>(StorageKeys.plans, []),
@@ -73,6 +77,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         loadJSON<boolean>(StorageKeys.reminders, false),
         loadJSON<number>(StorageKeys.reminderHour, 18),
         loadJSON<BodyEntry[]>(StorageKeys.body, []),
+        loadJSON<WeightUnit>(StorageKeys.unit, 'kg'),
       ]);
       setRoutines(r);
       setSessions(s);
@@ -81,6 +86,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setRemindersEnabledState(rem);
       setReminderHourState(hour);
       setBody(bodyData);
+      setUnitState(unitData === 'lb' ? 'lb' : 'kg');
       setReady(true);
     })();
   }, []);
@@ -107,6 +113,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.body, body);
   }, [body, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.unit, unit);
+  }, [unit, ready]);
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -118,6 +127,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       remindersEnabled,
       reminderHour,
       body,
+      unit,
+      setUnit: (u) => setUnitState(u),
       addBodyEntry: (input) => {
         const entry: BodyEntry = { ...input, id: makeId() };
         setBody((prev) => [entry, ...prev]);
@@ -240,7 +251,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSessions((prev) => prev.filter((s) => s.id !== id));
       },
     }),
-    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, body]
+    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, body, unit]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

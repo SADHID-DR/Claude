@@ -1,4 +1,5 @@
 import { WorkoutSession } from '@/lib/types';
+import { WeightUnit, fmtWeight, roundLoad, toDisplay } from '@/lib/units';
 
 /**
  * Devuelve el mayor peso registrado para un ejercicio en la sesión más
@@ -25,13 +26,16 @@ export function lastWeightFor(
  * Consejo del coach sobre la progresión: si ya entrenaste este ejercicio,
  * sugiere mantener o subir ligeramente el peso.
  */
-export function progressionHint(lastWeight: number | null): string {
+export function progressionHint(
+  lastWeight: number | null,
+  unit: WeightUnit = 'kg'
+): string {
   if (lastWeight == null) {
     return 'Primera vez: elige un peso con el que completes las reps con buena técnica.';
   }
   if (lastWeight === 0) {
     return 'La última vez fue a peso corporal. Si lo dominas, añade algo de carga.';
   }
-  const next = Math.round((lastWeight + lastWeight * 0.025) * 2) / 2;
-  return `La última vez usaste ${lastWeight} kg. Si completaste todas las series, prueba ${next} kg.`;
+  const nextDisplay = roundLoad(toDisplay(lastWeight * 1.025, unit), unit);
+  return `La última vez usaste ${fmtWeight(lastWeight, unit)}. Si completaste todas las series, prueba ${nextDisplay} ${unit}.`;
 }

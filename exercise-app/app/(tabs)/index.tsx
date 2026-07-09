@@ -17,6 +17,10 @@ import {
 } from '@/lib/stats';
 import { planToday } from '@/lib/planToday';
 import { checkForUpdate, versionLabel, UpdateInfo } from '@/lib/updates';
+import { tipOfDay } from '@/lib/coachTips';
+import { WeightUnit, toDisplay } from '@/lib/units';
+import { MuscleRadar } from '@/components/MuscleRadar';
+import { FadeInView } from '@/components/FadeInView';
 import { ProgressRing } from '@/components/ProgressRing';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, SectionHeader, StatTile } from '@/components/ui';
@@ -29,7 +33,7 @@ const BALANCE_MUSCLES = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Co
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { routines, sessions, plans, activePlanId } = useStore();
+  const { routines, sessions, plans, activePlanId, unit, setUnit } = useStore();
 
   // Entrenamiento de hoy según el PLAN ACTIVO, el progreso y el calendario.
   const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
@@ -40,6 +44,7 @@ export default function TodayScreen() {
   const week = weekWorkoutCount(sessions);
   const weekProgress = week / weeklyGoal;
   const volume = totalVolume(sessions);
+  const volumeDisplay = toDisplay(volume, unit);
   const byDay = useMemo(() => weekVolumeByDay(sessions), [sessions]);
   const maxDay = Math.max(1, ...byDay);
   const achievements = useMemo(() => computeAchievements(sessions), [sessions]);
@@ -78,8 +83,8 @@ export default function TodayScreen() {
       Alert.alert('Todo al día ✅', 'Ya tienes la última versión instalada.');
     }
   };
-  const maxMuscleSets = Math.max(1, ...BALANCE_MUSCLES.map((m) => muscleBalance[m] ?? 0));
   const hasBalanceData = BALANCE_MUSCLES.some((m) => (muscleBalance[m] ?? 0) > 0);
+  const coachTip = useMemo(() => tipOfDay(), []);
 
   const today = activePlan ? planToday(activePlan, sessions) : null;
   const todayRoutine =
@@ -129,6 +134,7 @@ export default function TodayScreen() {
       ) : null}
 
       {/* Anillo de progreso semanal (héroe) */}
+      <FadeInView>
       <Card elevated style={styles.hero}>
         <ProgressRing
           progress={weekProgress}
@@ -163,6 +169,7 @@ export default function TodayScreen() {
           </View>
         </View>
       </Card>
+      </FadeInView>
 
       {/* KPIs */}
       <View style={styles.statsRow}>
@@ -170,52 +177,47 @@ export default function TodayScreen() {
         <StatTile emoji="🏋️" value={String(sessions.length)} label="Entrenos" tint={colors.accent} />
         <StatTile
           emoji="📊"
-          value={volume >= 1000 ? `${(volume / 1000).toFixed(1)}t` : `${Math.round(volume)}`}
-          label={volume >= 1000 ? 'Volumen' : 'Volumen kg'}
+          value={
+            volumeDisplay >= 1000
+              ? `${(volumeDisplay / 1000).toFixed(1)}k`
+              : `${Math.round(volumeDisplay)}`
+          }
+          label={`Volumen ${unit}`}
           tint={colors.primary}
         />
       </View>
 
-      {/* Balance muscular semanal */}
-      <View style={{ marginTop: spacing.lg }}>
+      {/* Balance muscular semanal (radar) */}
+      <FadeInView delay={120} style={{ marginTop: spacing.lg }}>
         <SectionHeader title="Balance muscular · semana" />
         <Card>
           {hasBalanceData ? (
-            <View style={{ gap: spacing.sm }}>
-              {BALANCE_MUSCLES.map((m) => {
-                const sets = muscleBalance[m] ?? 0;
-                const tint = muscleColors[m] ?? colors.primary;
-                return (
-                  <View key={m} style={styles.balanceRow}>
-                    <Text style={styles.balanceName}>{m}</Text>
-                    <View style={styles.balanceTrack}>
-                      <View
-                        style={[
-                          styles.balanceFill,
-                          {
-                            width: `${Math.max(sets > 0 ? 8 : 0, (sets / maxMuscleSets) * 100)}%`,
-                            backgroundColor: sets > 0 ? tint : 'transparent',
-                          },
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.balanceSets, sets === 0 && styles.balanceZero]}>
-                      {sets}
-                    </Text>
-                  </View>
-                );
-              })}
+            <>
+              <MuscleRadar
+                labels={BALANCE_MUSCLES}
+                values={BALANCE_MUSCLES.map((m) => muscleBalance[m] ?? 0)}
+                size={250}
+              />
               <Text style={styles.balanceHint}>
-                Series por grupo esta semana. Equilibra los que van por detrás 💡
+                Series por grupo esta semana. Equilibra los vértices hundidos 💡
               </Text>
-            </View>
+            </>
           ) : (
             <Text style={styles.balanceEmpty}>
-              Registra un entrenamiento y verás aquí qué músculos trabajas y cuáles te faltan.
+              Registra un entrenamiento y verás aquí tu radar muscular: qué trabajas y qué te falta.
             </Text>
           )}
         </Card>
-      </View>
+      </FadeInView>
+
+      {/* Consejo técnico del coach */}
+      <FadeInView delay={200} style={{ marginTop: spacing.lg }}>
+        <View style={styles.tipCard}>
+          <Text style={styles.tipKicker}>🎓 CONSEJO DEL COACH</Text>
+          <Text style={styles.tipTitle}>{coachTip.title}</Text>
+          <Text style={styles.tipBody}>{coachTip.body}</Text>
+        </View>
+      </FadeInView>
 
       {/* Entrenamiento de hoy */}
       <View style={{ marginTop: spacing.lg }}>
@@ -313,6 +315,24 @@ export default function TodayScreen() {
         </ScrollView>
       </View>
 
+      {/* Unidades de peso */}
+      <View style={styles.unitRow}>
+        <Text style={styles.unitLabel}>Unidad de peso</Text>
+        <View style={styles.unitPills}>
+          {(['kg', 'lb'] as WeightUnit[]).map((u) => (
+            <Pressable
+              key={u}
+              onPress={() => setUnit(u)}
+              style={[styles.unitPill, unit === u && styles.unitPillOn]}
+            >
+              <Text style={[styles.unitPillText, unit === u && styles.unitPillTextOn]}>
+                {u}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
       {/* Versión + buscar actualización */}
       <View style={styles.versionRow}>
         <Text style={styles.versionText}>{versionLabel()}</Text>
@@ -377,20 +397,29 @@ const styles = StyleSheet.create({
   chartBar: { width: '100%', backgroundColor: colors.primary, borderRadius: 3 },
   chartLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '700' },
   statsRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  balanceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  balanceName: { color: colors.text, fontSize: 13, fontWeight: '700', width: 62 },
-  balanceTrack: {
-    flex: 1,
-    height: 12,
-    borderRadius: radius.pill,
-    backgroundColor: colors.bgElevated,
-    overflow: 'hidden',
+  balanceHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginTop: spacing.xs,
+    lineHeight: 17,
+    textAlign: 'center',
   },
-  balanceFill: { height: '100%', borderRadius: radius.pill, minWidth: 2 },
-  balanceSets: { color: colors.textMuted, fontSize: 13, fontWeight: '800', width: 22, textAlign: 'right' },
-  balanceZero: { color: colors.surfaceAlt },
-  balanceHint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, lineHeight: 17 },
   balanceEmpty: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  tipCard: {
+    backgroundColor: colors.bgElevated,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.streak,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+  },
+  tipKicker: {
+    color: colors.streak,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  tipTitle: { color: colors.text, fontSize: 17, fontWeight: '900', marginTop: 4 },
+  tipBody: { color: colors.textMuted, fontSize: 14, lineHeight: 21, marginTop: 4 },
   todayCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -470,6 +499,30 @@ const styles = StyleSheet.create({
   updateEmoji: { fontSize: 22 },
   updateTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
   updateHint: { color: colors.textMuted, fontSize: 12, marginTop: 2, lineHeight: 17 },
+  unitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  unitLabel: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  unitPills: {
+    flexDirection: 'row',
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 3,
+    gap: 3,
+  },
+  unitPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+  },
+  unitPillOn: { backgroundColor: colors.primary },
+  unitPillText: { color: colors.textMuted, fontSize: 13, fontWeight: '800' },
+  unitPillTextOn: { color: '#08130c' },
   versionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

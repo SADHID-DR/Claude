@@ -13,6 +13,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { lastWeightFor, progressionHint } from '@/lib/coach';
+import { detectNewPRs, e1rmFor } from '@/lib/strength';
+import { fmtWeight, toDisplay, toKg } from '@/lib/units';
 import { notifySuccess, tapMedium } from '@/lib/haptics';
 import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
 import { LoggedSet } from '@/lib/types';
@@ -30,7 +32,7 @@ function fmt(totalSeconds: number): string {
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { routines, sessions, addSession } = useStore();
+  const { routines, sessions, addSession, unit } = useStore();
   const routine = routines.find((r) => r.id === id);
 
   const [elapsed, setElapsed] = useState(0);
@@ -50,13 +52,17 @@ export default function SessionScreen() {
     const map: Record<string, { weight: string; reps: string }> = {};
     routine?.exercises.forEach((re) => {
       const last = lastWeightFor(sessions, re.exerciseId);
-      const prefill = last != null && last > 0 ? String(last) : '';
+      const prefill =
+        last != null && last > 0
+          ? String(Math.round(toDisplay(last, unit) * 10) / 10)
+          : '';
       for (let s = 0; s < re.sets; s++) {
         map[`${re.exerciseId}-${s}`] = { weight: prefill, reps: String(re.reps) };
       }
     });
     return map;
-  }, [routine, sessions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routine, sessions, unit]);
 
   const [sets, setSets] = useState(initialSets);
   const [done, setDone] = useState<Record<string, boolean>>({});
@@ -136,12 +142,13 @@ export default function SessionScreen() {
     routine.exercises.forEach((re) => {
       for (let s = 0; s < re.sets; s++) {
         const entry = sets[`${re.exerciseId}-${s}`];
-        const weight = parseFloat(entry?.weight ?? '');
+        const weightRaw = parseFloat((entry?.weight ?? '').replace(',', '.'));
         const reps = parseInt(entry?.reps ?? '', 10);
         if (!isNaN(reps) && reps > 0) {
+          // Se guarda SIEMPRE en kg; si introduces libras, se convierte.
           logged.push({
             exerciseId: re.exerciseId,
-            weight: isNaN(weight) ? 0 : weight,
+            weight: isNaN(weightRaw) ? 0 : Math.round(toKg(weightRaw, unit) * 100) / 100,
             reps,
           });
         }
@@ -152,6 +159,9 @@ export default function SessionScreen() {
       Alert.alert('Sin series', 'Registra al menos una serie con repeticiones.');
       return;
     }
+
+    // Detecta récords ANTES de guardar (compara contra el historial previo).
+    const newPRs = detectNewPRs(sessions, logged);
 
     addSession({
       routineId: routine.id,
@@ -164,12 +174,23 @@ export default function SessionScreen() {
     });
     notifySuccess();
     const vol = Math.round(logged.reduce((sum, s) => sum + s.weight * s.reps, 0));
+
+    const prLines = newPRs
+      .slice(0, 4)
+      .map((p) => {
+        const name = getExerciseById(p.exerciseId)?.name ?? 'Ejercicio';
+        return `🏆 ${name}: ${fmtWeight(p.weight, unit)} × ${p.reps} (e1RM ${fmtWeight(p.e1rm, unit, { round: true })})`;
+      })
+      .join('\n');
+    const volTxt = fmtWeight(vol, unit);
+
     Alert.alert(
-      '¡Entrenamiento guardado! 💪',
-      `${logged.length} series · ${vol} kg de volumen total.\n¡Bien hecho!`,
-      [
-      { text: 'OK', onPress: () => router.replace('/(tabs)/history') },
-    ]);
+      newPRs.length > 0 ? '¡NUEVO RÉCORD! 🎉' : '¡Entrenamiento guardado! 💪',
+      newPRs.length > 0
+        ? `${prLines}\n\n${logged.length} series · ${volTxt} de volumen.\n¡Estás más fuerte que nunca!`
+        : `${logged.length} series · ${volTxt} de volumen total.\n¡Bien hecho!`,
+      [{ text: 'OK', onPress: () => router.replace('/(tabs)/history') }]
+    );
   };
 
   return (
@@ -225,12 +246,21 @@ export default function SessionScreen() {
               Objetivo: {re.sets}×{re.reps} · descanso {re.restSeconds}s
             </Text>
             <Text style={styles.coachHint}>
-              🎯 {progressionHint(lastWeightFor(sessions, re.exerciseId))}
+              🎯 {progressionHint(lastWeightFor(sessions, re.exerciseId), unit)}
             </Text>
+            {(() => {
+              const e1 = e1rmFor(sessions, re.exerciseId);
+              return e1 != null ? (
+                <Text style={styles.e1rmHint}>
+                  💪 1RM estimado: {fmtWeight(e1, unit, { round: true })} — supera tu mejor
+                  serie y hay récord
+                </Text>
+              ) : null;
+            })()}
 
             <View style={styles.headerRow}>
               <Text style={[styles.colHead, styles.colSet]}>Serie</Text>
-              <Text style={[styles.colHead, styles.colInput]}>Peso (kg)</Text>
+              <Text style={[styles.colHead, styles.colInput]}>Peso ({unit})</Text>
               <Text style={[styles.colHead, styles.colInput]}>Reps</Text>
               <Text style={[styles.colHead, styles.colCheck]}>✓</Text>
             </View>
@@ -406,6 +436,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  e1rmHint: {
+    color: colors.streak,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: -4,
     marginBottom: spacing.sm,
   },
   headerRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },

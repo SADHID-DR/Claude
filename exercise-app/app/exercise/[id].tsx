@@ -3,6 +3,9 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EXERCISES, getExerciseById } from '@/data/exercises';
 import { useStore } from '@/lib/store';
 import { weightProgressFor } from '@/lib/stats';
+import { lastWeightFor } from '@/lib/coach';
+import { allPRs, warmupPlan, ZONES } from '@/lib/strength';
+import { fmtWeight, roundLoad, toDisplay } from '@/lib/units';
 import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
 import { ExerciseIcon } from '@/components/ExerciseIcon';
@@ -13,9 +16,12 @@ import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { sessions } = useStore();
+  const { sessions, unit } = useStore();
   const exercise = getExerciseById(id);
   const progress = weightProgressFor(sessions, id);
+  const pr = allPRs(sessions)[id];
+  const lastWeight = lastWeightFor(sessions, id);
+  const warmup = lastWeight != null && lastWeight > 0 ? warmupPlan(lastWeight) : null;
   const related = exercise
     ? EXERCISES.filter((e) => e.muscle === exercise.muscle && e.id !== exercise.id).slice(0, 8)
     : [];
@@ -58,11 +64,72 @@ export default function ExerciseDetailScreen() {
 
       <Text style={styles.description}>{exercise.description}</Text>
 
+      {/* Récords y zonas de trabajo (coach técnico) */}
+      {pr ? (
+        <Card style={styles.prCard}>
+          <View style={styles.prTop}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.prKicker}>🏆 TU RÉCORD</Text>
+              <Text style={styles.prValue}>{fmtWeight(pr.e1rm, unit, { round: true })}</Text>
+              <Text style={styles.prMeta}>
+                1RM estimado · mejor serie: {fmtWeight(pr.weight, unit)} × {pr.reps}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.zonesBox}>
+            {ZONES.map((z) => {
+              const lo = roundLoad(toDisplay(pr.e1rm * z.pctLow, unit), unit);
+              const hi = roundLoad(toDisplay(pr.e1rm * z.pctHigh, unit), unit);
+              return (
+                <View key={z.name} style={styles.zoneRow}>
+                  <Text style={styles.zoneName}>{z.name}</Text>
+                  <Text style={styles.zoneReps}>{z.reps}</Text>
+                  <Text style={styles.zoneKg}>
+                    {lo}–{hi} {unit}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </Card>
+      ) : null}
+
+      {/* Calentamiento de aproximación calculado */}
+      {warmup ? (
+        <Card style={styles.warmupCard}>
+          <Text style={styles.warmupHeader}>
+            🔥 Calentamiento para {fmtWeight(lastWeight!, unit)}
+          </Text>
+          <View style={styles.warmupRow}>
+            {warmup.map((w, i) => (
+              <View key={i} style={styles.warmupSet}>
+                <Text style={styles.warmupKg}>{fmtWeight(w.kg, unit, { round: true })}</Text>
+                <Text style={styles.warmupReps}>× {w.reps}</Text>
+                <Text style={styles.warmupPct}>{Math.round(w.pct * 100)}%</Text>
+              </View>
+            ))}
+            <View style={[styles.warmupSet, styles.warmupWork]}>
+              <Text style={[styles.warmupKg, { color: '#08130c' }]}>
+                {fmtWeight(lastWeight!, unit)}
+              </Text>
+              <Text style={[styles.warmupReps, { color: '#08130c' }]}>trabajo</Text>
+              <Text style={[styles.warmupPct, { color: '#08130c' }]}>100%</Text>
+            </View>
+          </View>
+        </Card>
+      ) : null}
+
       {/* Progreso: evolución del peso máximo por sesión */}
       {progress.length >= 2 ? (
         <Card style={styles.progressCard}>
           <Text style={styles.progressHeader}>📈 Tu progreso</Text>
-          <LineChart data={progress} unit=" kg" />
+          <LineChart
+            data={progress.map((p) => ({
+              ...p,
+              value: Math.round(toDisplay(p.value, unit) * 10) / 10,
+            }))}
+            unit={` ${unit}`}
+          />
         </Card>
       ) : null}
 
@@ -135,6 +202,36 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   demoHint: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  prCard: { borderColor: colors.streak },
+  prTop: { flexDirection: 'row', alignItems: 'center' },
+  prKicker: { color: colors.streak, fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
+  prValue: { color: colors.text, fontSize: 34, fontWeight: '900', marginTop: 2 },
+  prMeta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  zonesBox: {
+    marginTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    gap: 6,
+  },
+  zoneRow: { flexDirection: 'row', alignItems: 'center' },
+  zoneName: { color: colors.text, fontSize: 13, fontWeight: '800', width: 92 },
+  zoneReps: { color: colors.textMuted, fontSize: 12, flex: 1 },
+  zoneKg: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  warmupCard: { borderColor: colors.primaryDark },
+  warmupHeader: { color: colors.primary, fontSize: 15, fontWeight: '800', marginBottom: spacing.sm },
+  warmupRow: { flexDirection: 'row', gap: spacing.sm },
+  warmupSet: {
+    flex: 1,
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  warmupWork: { backgroundColor: colors.primary },
+  warmupKg: { color: colors.text, fontSize: 15, fontWeight: '900' },
+  warmupReps: { color: colors.textMuted, fontSize: 12, fontWeight: '700', marginTop: 1 },
+  warmupPct: { color: colors.textMuted, fontSize: 10, fontWeight: '700', marginTop: 1 },
   progressCard: { alignItems: 'center' },
   progressHeader: {
     color: colors.text,
