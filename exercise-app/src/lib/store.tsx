@@ -31,6 +31,7 @@ interface StoreValue {
   activePlanId: string | null;
   remindersEnabled: boolean;
   reminderHour: number;
+  reminderMinute: number;
   body: BodyEntry[];
   unit: WeightUnit;
   setUnit: (u: WeightUnit) => void;
@@ -49,6 +50,7 @@ interface StoreValue {
   setActivePlan: (id: string | null) => void;
   setRemindersEnabled: (v: boolean) => void;
   setReminderHour: (h: number) => void;
+  setReminderMinute: (m: number) => void;
   addSession: (input: Omit<WorkoutSession, 'id'>) => WorkoutSession;
   deleteSession: (id: string) => void;
 }
@@ -63,13 +65,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [remindersEnabled, setRemindersEnabledState] = useState(false);
   const [reminderHour, setReminderHourState] = useState(18);
+  const [reminderMinute, setReminderMinuteState] = useState(0);
   const [body, setBody] = useState<BodyEntry[]>([]);
   const [unit, setUnitState] = useState<WeightUnit>('kg');
 
   // Carga inicial desde almacenamiento local.
   useEffect(() => {
     (async () => {
-      const [r, s, p, active, rem, hour, bodyData, unitData] = await Promise.all([
+      const [r, s, p, active, rem, hour, bodyData, unitData, minuteData] = await Promise.all([
         loadJSON<Routine[]>(StorageKeys.routines, []),
         loadJSON<WorkoutSession[]>(StorageKeys.sessions, []),
         loadJSON<Plan[]>(StorageKeys.plans, []),
@@ -78,6 +81,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         loadJSON<number>(StorageKeys.reminderHour, 18),
         loadJSON<BodyEntry[]>(StorageKeys.body, []),
         loadJSON<WeightUnit>(StorageKeys.unit, 'kg'),
+        loadJSON<number>(StorageKeys.reminderMinute, 0),
       ]);
       setRoutines(r);
       setSessions(s);
@@ -85,6 +89,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setActivePlanId(active);
       setRemindersEnabledState(rem);
       setReminderHourState(hour);
+      setReminderMinuteState(minuteData);
       setBody(bodyData);
       setUnitState(unitData === 'lb' ? 'lb' : 'kg');
       setReady(true);
@@ -116,6 +121,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.unit, unit);
   }, [unit, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.reminderMinute, reminderMinute);
+  }, [reminderMinute, ready]);
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -126,6 +134,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       activePlanId,
       remindersEnabled,
       reminderHour,
+      reminderMinute,
       body,
       unit,
       setUnit: (u) => setUnitState(u),
@@ -238,10 +247,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setPlans((prev) =>
           prev.map((p) => (p.id === planId ? { ...p, routineIds: newIds } : p))
         );
+        // Renumera "Día N" según la nueva posición dentro de la semana.
+        const orderedWeekIds = newIds.filter((rid) => {
+          const rr = routines.find((r) => r.id === rid);
+          return (rr?.week ?? 1) === week;
+        });
+        setRoutines((prev) =>
+          prev.map((r) => {
+            const idx = orderedWeekIds.indexOf(r.id);
+            if (idx < 0 || !/Día \d+/.test(r.name)) return r;
+            return { ...r, name: r.name.replace(/Día \d+/, `Día ${idx + 1}`) };
+          })
+        );
       },
       setActivePlan: (id) => setActivePlanId(id),
       setRemindersEnabled: (v) => setRemindersEnabledState(v),
       setReminderHour: (h) => setReminderHourState(h),
+      setReminderMinute: (m) => setReminderMinuteState(Math.max(0, Math.min(59, m))),
       addSession: (input) => {
         const session: WorkoutSession = { ...input, id: makeId() };
         setSessions((prev) => [session, ...prev]);
@@ -251,7 +273,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSessions((prev) => prev.filter((s) => s.id !== id));
       },
     }),
-    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, body, unit]
+    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, reminderMinute, body, unit]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

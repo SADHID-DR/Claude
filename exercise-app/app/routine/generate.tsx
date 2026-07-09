@@ -16,6 +16,10 @@ import {
   Cycle,
   Equipment,
   Duration,
+  Level,
+  Injury,
+  LEVELS,
+  INJURIES,
   GOALS,
   PRIORITIES,
   DAY_OPTIONS,
@@ -46,6 +50,8 @@ export default function GenerateRoutineScreen() {
   const [cycle, setCycle] = useState<Cycle>('Semanal');
   const [duration, setDuration] = useState<Duration>(60);
   const [fullBody, setFullBody] = useState(false);
+  const [level, setLevel] = useState<Level>('Intermedio');
+  const [avoid, setAvoid] = useState<Injury[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [seed, setSeed] = useState(0);
@@ -53,15 +59,19 @@ export default function GenerateRoutineScreen() {
   const ageNum = Math.min(90, Math.max(14, parseInt(age, 10) || 30));
 
   const plan = useMemo(
-    () => generatePlan({ days, goal, age: ageNum, priorities, cycle, equipment, duration, fullBody }),
+    () => generatePlan({ days, goal, age: ageNum, priorities, cycle, equipment, duration, fullBody, level, avoid }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [days, goal, ageNum, priorities, cycle, equipment, duration, fullBody, seed]
+    [days, goal, ageNum, priorities, cycle, equipment, duration, fullBody, level, avoid, seed]
   );
 
   const togglePriority = (p: Priority) => {
     setPriorities((prev) =>
       prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
     );
+  };
+
+  const toggleAvoid = (i: Injury) => {
+    setAvoid((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]));
   };
 
   const toggleEquipment = (e: Equipment) => {
@@ -125,6 +135,21 @@ export default function GenerateRoutineScreen() {
             style={[styles.option, goal === g && styles.optionActive]}
           >
             <Text style={[styles.optionText, goal === g && styles.optionTextActive]}>{g}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Nivel</Text>
+      <View style={styles.optionRow}>
+        {LEVELS.map((l) => (
+          <Pressable
+            key={l}
+            onPress={() => setLevel(l)}
+            style={[styles.option, level === l && styles.optionActive]}
+          >
+            <Text style={[styles.optionText, level === l && styles.optionTextActive]}>
+              {l}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -198,6 +223,21 @@ export default function GenerateRoutineScreen() {
               style={[styles.optionText, priorities.includes(p) && styles.optionTextActive]}
             >
               {p}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Molestias a evitar (opcional)</Text>
+      <View style={styles.optionRow}>
+        {INJURIES.map((i) => (
+          <Pressable
+            key={i}
+            onPress={() => toggleAvoid(i)}
+            style={[styles.option, avoid.includes(i) && styles.avoidActive]}
+          >
+            <Text style={[styles.optionText, avoid.includes(i) && styles.avoidTextActive]}>
+              {avoid.includes(i) ? '🛡 ' : ''}{i}
             </Text>
           </Pressable>
         ))}
@@ -322,6 +362,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  avoidActive: { backgroundColor: '#3a1d1d', borderColor: colors.danger },
+  avoidTextActive: { color: colors.danger },
   optionText: { color: colors.text, fontWeight: '700', fontSize: 15 },
   optionTextActive: { color: '#08130c' },
   ageInput: {

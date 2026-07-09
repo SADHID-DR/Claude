@@ -8,6 +8,34 @@ export const GOALS: Goal[] = ['Fuerza', 'Hipertrofia', 'Pérdida de grasa'];
 export const PRIORITIES: Priority[] = ['Más pierna', 'Más abdominales', 'Más cardio'];
 export const DAY_OPTIONS = [2, 3, 4, 5, 6];
 
+// ───────────────────────── Nivel de experiencia ─────────────────────────
+export type Level = 'Principiante' | 'Intermedio' | 'Avanzado';
+export const LEVELS: Level[] = ['Principiante', 'Intermedio', 'Avanzado'];
+
+// ─────────────── Molestias que el coach evita al elegir ejercicios ───────────────
+export type Injury = 'Rodilla' | 'Hombro' | 'Zona lumbar';
+export const INJURIES: Injury[] = ['Rodilla', 'Hombro', 'Zona lumbar'];
+
+const INJURY_BLOCK: Record<Injury, RegExp> = {
+  Rodilla: /sentadilla|zancada|búlgara|prensa|salto|box jump|extensión de cuádriceps|thruster|wall ball|subida/i,
+  Hombro: /militar|press de hombro|arnold|push press|arrancada|snatch|fondos|elevaciones/i,
+  'Zona lumbar': /peso muerto|buenos días|pendlay|remo con barra|swing|leñador|cargada|clean/i,
+};
+
+/** Quita del pool los ejercicios contraindicados y los que exceden el nivel. */
+function filterConstraints(pool: Exercise[], level: Level, avoid: Injury[]): Exercise[] {
+  let out = pool;
+  if (level === 'Principiante') {
+    const eased = out.filter((e) => e.difficulty !== 'Avanzado');
+    if (eased.length > 0) out = eased;
+  }
+  for (const inj of avoid) {
+    const safe = out.filter((e) => !INJURY_BLOCK[inj].test(e.name));
+    if (safe.length > 0) out = safe;
+  }
+  return out;
+}
+
 interface GoalParams {
   sets: number;
   reps: number;
@@ -302,6 +330,10 @@ export const CYCLE_WEEKS: Record<Cycle, number> = {
 };
 
 export interface PlanInput {
+  /** Nivel de experiencia (ajusta ejercicios y series). */
+  level?: Level;
+  /** Molestias: el coach evita ejercicios que las carguen. */
+  avoid?: Injury[];
   days: number;
   goal: Goal;
   age: number;
@@ -378,7 +410,9 @@ function buildDay(
   priorities: Priority[],
   prog: WeekProg = { repAdd: 0, restAdd: 0, setAdd: 0 },
   avail: Equipment[] = [],
-  perDay?: number
+  perDay?: number,
+  level: Level = 'Intermedio',
+  avoid: Injury[] = []
 ): PlanDay {
   const gp = GOAL_PARAMS[goal];
   const adj = AGE_ADJ[band];
@@ -387,12 +421,13 @@ function buildDay(
     : gp.prefer;
   const reps = gp.reps + adj.repAdd + prog.repAdd;
   const rest = Math.max(30, Math.round((gp.rest * adj.restMult) / 5) * 5 + prog.restAdd);
-  const sets = Math.max(2, gp.sets + prog.setAdd);
+  const levelSetAdd = level === 'Principiante' ? -1 : level === 'Avanzado' ? 1 : 0;
+  const sets = Math.min(6, Math.max(2, gp.sets + prog.setAdd + levelSetAdd));
   const used = new Set<string>();
   const exercises: RoutineExercise[] = [];
 
   // Pool de un slot ya filtrado por el equipo disponible.
-  const P = (key: PoolKey) => filterEquip(poolFor(key), avail);
+  const P = (key: PoolKey) => filterConstraints(filterEquip(poolFor(key), avail), level, avoid);
 
   const perDayCount = perDay ?? gp.exercisesPerDay;
   const target = tpl.key === 'coreCardio' ? Math.max(4, perDayCount) : perDayCount;
@@ -505,7 +540,7 @@ export function generatePlan(input: PlanInput): WeeklyPlan {
   for (let w = 0; w < totalWeeks; w++) {
     const { prog, note } = weekProgression(input.goal, w, totalWeeks);
     const days: PlanDay[] = templates.map((t, i) => {
-      const d = buildDay(t, input.goal, band, input.priorities, prog, input.equipment ?? [], perDay);
+      const d = buildDay(t, input.goal, band, input.priorities, prog, input.equipment ?? [], perDay, input.level ?? 'Intermedio', input.avoid ?? []);
       return { ...d, name: `Día ${i + 1} · ${d.name}` };
     });
     weeks.push({ index: w, label: `Semana ${w + 1}`, note, days });

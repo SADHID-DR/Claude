@@ -1,5 +1,38 @@
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { Plan } from '@/lib/types';
+
+// Muestra la notificación también con la app abierta.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+const CHANNEL_ID = 'entrenos';
+
+/**
+ * Canal Android de MÁXIMA importancia: imprescindible para que el aviso
+ * suene, vibre y se refleje en el reloj (Wear OS solo muestra
+ * notificaciones que llegan como heads-up al teléfono).
+ */
+async function ensureChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  try {
+    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+      name: 'Recordatorios de entrenamiento',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 300, 200, 300],
+      enableVibrate: true,
+      sound: 'default',
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    });
+  } catch {
+    // sin canal seguirá usando el por defecto
+  }
+}
 
 /** Etiqueta de día → weekday de expo (1 = domingo ... 7 = sábado). */
 const LABEL_TO_WEEKDAY: Record<string, number> = {
@@ -37,6 +70,7 @@ export async function scheduleReminders(
     await Notifications.cancelAllScheduledNotificationsAsync();
     const ok = await ensurePermission();
     if (!ok) return false;
+    await ensureChannel();
     for (const label of plan.schedule) {
       const weekday = LABEL_TO_WEEKDAY[label];
       if (!weekday) continue;
@@ -44,9 +78,18 @@ export async function scheduleReminders(
         content: {
           title: '¡Toca entrenar! 💪',
           body: `Hoy tienes sesión de tu plan "${plan.name}". ¡Vamos!`,
+          sound: 'default',
+          vibrate: [0, 300, 200, 300],
+          priority: Notifications.AndroidNotificationPriority.MAX,
         },
         // Disparador semanal (se repite cada semana ese día a esa hora).
-        trigger: { weekday, hour, minute, repeats: true } as Notifications.NotificationTriggerInput,
+        trigger: {
+          channelId: CHANNEL_ID,
+          weekday,
+          hour,
+          minute,
+          repeats: true,
+        } as Notifications.NotificationTriggerInput,
       });
     }
     return true;
@@ -72,12 +115,19 @@ export async function sendTestNotification(): Promise<boolean> {
   try {
     const ok = await ensurePermission();
     if (!ok) return false;
+    await ensureChannel();
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Prueba de aviso ⌚',
         body: 'Si ves esto en tu reloj, ¡los recordatorios llegarán a tu muñeca!',
+        sound: 'default',
+        vibrate: [0, 300, 200, 300],
+        priority: Notifications.AndroidNotificationPriority.MAX,
       },
-      trigger: { seconds: 3 } as Notifications.NotificationTriggerInput,
+      trigger: {
+        channelId: CHANNEL_ID,
+        seconds: 3,
+      } as Notifications.NotificationTriggerInput,
     });
     return true;
   } catch {

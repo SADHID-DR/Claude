@@ -7,7 +7,8 @@ import { scheduleReminders, cancelReminders, sendTestNotification } from '@/lib/
 import { Button, Card, EmptyState, SectionHeader } from '@/components/ui';
 import { colors, radius, spacing } from '@/lib/theme';
 
-const HOUR_OPTIONS = [6, 7, 8, 12, 17, 18, 19, 20, 21];
+const HOUR_OPTIONS = [5, 6, 7, 8, 9, 12, 16, 17, 18, 19, 20, 21, 22];
+const MINUTE_OPTIONS = [0, 15, 30, 45];
 
 export default function RoutinesScreen() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function RoutinesScreen() {
     activePlanId,
     remindersEnabled,
     reminderHour,
+    reminderMinute,
     deleteRoutine,
     deletePlan,
     duplicatePlan,
@@ -24,6 +26,7 @@ export default function RoutinesScreen() {
     setActivePlan,
     setRemindersEnabled,
     setReminderHour,
+    setReminderMinute,
   } = useStore();
 
   const routinesById = useMemo(() => {
@@ -49,7 +52,7 @@ export default function RoutinesScreen() {
     ]);
   };
 
-  const hhmm = (h: number) => `${String(h).padStart(2, '0')}:00`;
+  const hhmm = (h: number, m: number) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
   const toggleReminders = async (plan: Plan) => {
     if (remindersEnabled) {
@@ -57,10 +60,10 @@ export default function RoutinesScreen() {
       setRemindersEnabled(false);
       return;
     }
-    const ok = await scheduleReminders(plan, reminderHour);
+    const ok = await scheduleReminders(plan, reminderHour, reminderMinute);
     if (ok) {
       setRemindersEnabled(true);
-      Alert.alert('Recordatorios activados 🔔', `Te avisaré a las ${hhmm(reminderHour)} tus días de entreno.`);
+      Alert.alert('Recordatorios activados 🔔', `Te avisaré a las ${hhmm(reminderHour, reminderMinute)} tus días de entreno.`);
     } else {
       Alert.alert(
         'No se pudo activar',
@@ -71,7 +74,12 @@ export default function RoutinesScreen() {
 
   const changeHour = async (plan: Plan, h: number) => {
     setReminderHour(h);
-    if (remindersEnabled) await scheduleReminders(plan, h);
+    if (remindersEnabled) await scheduleReminders(plan, h, reminderMinute);
+  };
+
+  const changeMinute = async (plan: Plan, m: number) => {
+    setReminderMinute(m);
+    if (remindersEnabled) await scheduleReminders(plan, reminderHour, m);
   };
 
   const testNotification = async () => {
@@ -136,7 +144,7 @@ export default function RoutinesScreen() {
                 <Pressable onPress={() => toggleReminders(plan)} style={styles.remindersBtn}>
                   <Text style={styles.remindersText}>
                     {remindersEnabled
-                      ? `🔔 Recordatorios ON · ${hhmm(reminderHour)}`
+                      ? `🔔 Recordatorios ON · ${hhmm(reminderHour, reminderMinute)}`
                       : '🔕 Recordatorios OFF'}
                   </Text>
                 </Pressable>
@@ -159,11 +167,30 @@ export default function RoutinesScreen() {
                               reminderHour === h && styles.hourChipTextActive,
                             ]}
                           >
-                            {hhmm(h)}
+                            {String(h).padStart(2, '0')}h
                           </Text>
                         </Pressable>
                       ))}
                     </ScrollView>
+                    <View style={styles.minuteRow}>
+                      <Text style={styles.minuteLabel}>Minutos:</Text>
+                      {MINUTE_OPTIONS.map((m) => (
+                        <Pressable
+                          key={m}
+                          onPress={() => changeMinute(plan, m)}
+                          style={[styles.hourChip, reminderMinute === m && styles.hourChipActive]}
+                        >
+                          <Text
+                            style={[
+                              styles.hourChipText,
+                              reminderMinute === m && styles.hourChipTextActive,
+                            ]}
+                          >
+                            :{String(m).padStart(2, '0')}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
                     <Pressable onPress={testNotification} style={styles.testBtn}>
                       <Text style={styles.testText}>⌚ Probar aviso (llega al reloj)</Text>
                     </Pressable>
@@ -317,6 +344,13 @@ const styles = StyleSheet.create({
   hourChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   hourChipText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
   hourChipTextActive: { color: '#08130c' },
+  minuteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  minuteLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   testBtn: {
     marginTop: spacing.xs,
     alignSelf: 'flex-start',
