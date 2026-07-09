@@ -18,6 +18,8 @@ import {
   Duration,
   Level,
   Injury,
+  DayType,
+  DAY_TYPES,
   LEVELS,
   INJURIES,
   GOALS,
@@ -49,7 +51,7 @@ export default function GenerateRoutineScreen() {
   const [age, setAge] = useState('30');
   const [cycle, setCycle] = useState<Cycle>('Semanal');
   const [duration, setDuration] = useState<Duration>(60);
-  const [fullBody, setFullBody] = useState(false);
+  const [dayTypes, setDayTypes] = useState<DayType[]>(Array.from({ length: 4 }, () => 'Aislado'));
   const [level, setLevel] = useState<Level>('Intermedio');
   const [avoid, setAvoid] = useState<Injury[]>([]);
   const [priorities, setPriorities] = useState<Priority[]>([]);
@@ -59,9 +61,9 @@ export default function GenerateRoutineScreen() {
   const ageNum = Math.min(90, Math.max(14, parseInt(age, 10) || 30));
 
   const plan = useMemo(
-    () => generatePlan({ days, goal, age: ageNum, priorities, cycle, equipment, duration, fullBody, level, avoid }),
+    () => generatePlan({ days, goal, age: ageNum, priorities, cycle, equipment, duration, dayTypes, level, avoid }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [days, goal, ageNum, priorities, cycle, equipment, duration, fullBody, level, avoid, seed]
+    [days, goal, ageNum, priorities, cycle, equipment, duration, dayTypes, level, avoid, seed]
   );
 
   const togglePriority = (p: Priority) => {
@@ -118,7 +120,10 @@ export default function GenerateRoutineScreen() {
         {DAY_OPTIONS.map((d) => (
           <Pressable
             key={d}
-            onPress={() => setDays(d)}
+            onPress={() => {
+              setDays(d);
+              setDayTypes((prev) => Array.from({ length: d }, (_, i) => prev[i] ?? 'Aislado'));
+            }}
             style={[styles.dayOption, days === d && styles.optionActive]}
           >
             <Text style={[styles.optionText, days === d && styles.optionTextActive]}>{d}</Text>
@@ -182,25 +187,37 @@ export default function GenerateRoutineScreen() {
         ))}
       </View>
 
-      <Text style={styles.label}>Estructura</Text>
-      <View style={styles.optionRow}>
-        <Pressable
-          onPress={() => setFullBody(false)}
-          style={[styles.option, !fullBody && styles.optionActive]}
-        >
-          <Text style={[styles.optionText, !fullBody && styles.optionTextActive]}>
-            Split (por grupos)
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setFullBody(true)}
-          style={[styles.option, fullBody && styles.optionActive]}
-        >
-          <Text style={[styles.optionText, fullBody && styles.optionTextActive]}>
-            Cuerpo completo
-          </Text>
-        </Pressable>
-      </View>
+      <Text style={styles.label}>Tipo de cada día (el coach lo diseña)</Text>
+      {Array.from({ length: days }, (_, i) => (
+        <View key={i} style={styles.dayTypeRow}>
+          <Text style={styles.dayTypeLabel}>Día {i + 1}</Text>
+          {DAY_TYPES.map((t) => (
+            <Pressable
+              key={t}
+              onPress={() =>
+                setDayTypes((prev) => prev.map((x, j) => (j === i ? t : x)))
+              }
+              style={[
+                styles.dayTypeChip,
+                (dayTypes[i] ?? 'Aislado') === t && styles.optionActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  (dayTypes[i] ?? 'Aislado') === t && styles.optionTextActive,
+                ]}
+              >
+                {t === 'Aislado' ? '🎯 Aislado' : t === 'Completo' ? '🏋️ Completo' : '🔥 CrossFit'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ))}
+      <Text style={styles.dayTypeHint}>
+        Aislado = grupos musculares repartidos con eficiencia · Completo = todo el
+        cuerpo · CrossFit = WOD de potencia. Mézclalos como quieras.
+      </Text>
 
       <Text style={styles.label}>Edad</Text>
       <TextInput
@@ -362,6 +379,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  dayTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  dayTypeLabel: { color: colors.text, fontSize: 13, fontWeight: '800', width: 48 },
+  dayTypeChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  dayTypeHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: spacing.sm,
+  },
   avoidActive: { backgroundColor: '#3a1d1d', borderColor: colors.danger },
   avoidTextActive: { color: colors.danger },
   optionText: { color: colors.text, fontWeight: '700', fontSize: 15 },

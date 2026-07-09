@@ -8,6 +8,10 @@ export const GOALS: Goal[] = ['Fuerza', 'Hipertrofia', 'Pérdida de grasa'];
 export const PRIORITIES: Priority[] = ['Más pierna', 'Más abdominales', 'Más cardio'];
 export const DAY_OPTIONS = [2, 3, 4, 5, 6];
 
+// ───────────────── Tipo de cada día (mezcla aislado/full/CrossFit) ─────────────────
+export type DayType = 'Aislado' | 'Completo' | 'CrossFit';
+export const DAY_TYPES: DayType[] = ['Aislado', 'Completo', 'CrossFit'];
+
 // ───────────────────────── Nivel de experiencia ─────────────────────────
 export type Level = 'Principiante' | 'Intermedio' | 'Avanzado';
 export const LEVELS: Level[] = ['Principiante', 'Intermedio', 'Avanzado'];
@@ -127,10 +131,13 @@ type PoolKey =
   | 'posterior'
   | 'calf'
   | 'core'
-  | 'cardio';
+  | 'cardio'
+  | 'wod';
 
 function poolFor(key: PoolKey): Exercise[] {
   switch (key) {
+    case 'wod':
+      return EXERCISES.filter((e) => e.category === 'CrossFit');
     case 'chest':
       return EXERCISES.filter((e) => e.muscle === 'Pecho');
     case 'shoulders':
@@ -289,6 +296,13 @@ const FULLBODY: DayTemplate = {
   slots: ['quad', 'chest', 'back', 'shoulders', 'posterior', 'biceps', 'triceps', 'core'],
 };
 
+const WOD: DayTemplate = {
+  key: 'wod',
+  name: 'CrossFit',
+  focus: 'WOD · potencia y motor',
+  slots: ['wod', 'wod', 'wod', 'wod', 'wod', 'wod', 'wod', 'wod'],
+};
+
 function splitFor(days: number, fullBody: boolean): DayTemplate[] {
   if (fullBody) return Array.from({ length: days }, () => FULLBODY);
   switch (days) {
@@ -330,6 +344,8 @@ export const CYCLE_WEEKS: Record<Cycle, number> = {
 };
 
 export interface PlanInput {
+  /** Tipo de cada día (Aislado/Completo/CrossFit); si falta, usa fullBody. */
+  dayTypes?: DayType[];
   /** Nivel de experiencia (ajusta ejercicios y series). */
   level?: Level;
   /** Molestias: el coach evita ejercicios que las carguen. */
@@ -422,7 +438,15 @@ function buildDay(
   const reps = gp.reps + adj.repAdd + prog.repAdd;
   const rest = Math.max(30, Math.round((gp.rest * adj.restMult) / 5) * 5 + prog.restAdd);
   const levelSetAdd = level === 'Principiante' ? -1 : level === 'Avanzado' ? 1 : 0;
-  const sets = Math.min(6, Math.max(2, gp.sets + prog.setAdd + levelSetAdd));
+  let sets = Math.min(6, Math.max(2, gp.sets + prog.setAdd + levelSetAdd));
+  let wodReps = reps;
+  let wodRest = rest;
+  if (tpl.key === 'wod') {
+    // Día CrossFit: formato metcon — rondas moderadas, reps altas, descanso corto.
+    sets = Math.min(sets, 4);
+    wodReps = Math.max(reps, 12);
+    wodRest = Math.min(rest, 60);
+  }
   const used = new Set<string>();
   const exercises: RoutineExercise[] = [];
 
@@ -437,8 +461,8 @@ function buildDay(
     if (asCardio || ex.muscle === 'Cardio') {
       exercises.push(cardioPrescription(ex));
     } else {
-      const r = ex.muscle === 'Core' ? Math.max(reps, 15) : reps;
-      exercises.push({ exerciseId: ex.id, sets, reps: r, restSeconds: rest });
+      const r = ex.muscle === 'Core' ? Math.max(wodReps, 15) : wodReps;
+      exercises.push({ exerciseId: ex.id, sets, reps: r, restSeconds: wodRest });
     }
   };
 
@@ -550,7 +574,20 @@ function weekProgression(
  */
 export function generatePlan(input: PlanInput): WeeklyPlan {
   const band = ageBand(input.age);
-  const templates = splitFor(input.days, input.fullBody ?? false);
+  let templates: DayTemplate[];
+  const types = input.dayTypes;
+  if (types && types.length === input.days && types.some((t) => t !== 'Aislado')) {
+    // Mezcla elegida por el usuario: el split de los días aislados se
+    // dimensiona según CUÁNTOS haya, para repartir músculos con eficiencia.
+    const nSplit = types.filter((t) => t === 'Aislado').length;
+    const splitQueue = splitFor(Math.min(6, Math.max(2, nSplit)), false);
+    let si = 0;
+    templates = types.map((t) =>
+      t === 'Completo' ? FULLBODY : t === 'CrossFit' ? WOD : splitQueue[si++ % splitQueue.length]
+    );
+  } else {
+    templates = splitFor(input.days, input.fullBody ?? false);
+  }
   const totalWeeks = CYCLE_WEEKS[input.cycle];
   const perDay = input.duration
     ? PER_DAY_BY_DURATION[input.duration]
