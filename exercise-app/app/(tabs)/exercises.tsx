@@ -14,7 +14,7 @@ import { Exercise, MuscleGroup } from '@/lib/types';
 import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
 import { ExerciseIcon } from '@/components/ExerciseIcon';
-import { colors, radius, spacing, categoryColors } from '@/lib/theme';
+import { colors, radius, spacing, categoryColors, muscleColors } from '@/lib/theme';
 
 // Filtro de equipo granular (barra, mancuernas, kettlebell…).
 const EQUIPMENTS = [
@@ -121,17 +121,25 @@ export default function ExercisesScreen() {
         style={styles.chips}
         contentContainerStyle={styles.chipsContent}
       >
-        {MUSCLES.map((m) => (
-          <Pressable
-            key={m}
-            onPress={() => setMuscle(m)}
-            style={[styles.chip, muscle === m && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, muscle === m && styles.chipTextActive]}>
-              {m}
-            </Text>
-          </Pressable>
-        ))}
+        {MUSCLES.map((m) => {
+          const active = muscle === m;
+          const tint = m === 'Todos' ? colors.primary : muscleColors[m] ?? colors.primary;
+          return (
+            <Pressable
+              key={m}
+              onPress={() => setMuscle(m)}
+              style={[
+                styles.chip,
+                active && { backgroundColor: tint, borderColor: tint },
+              ]}
+            >
+              {m !== 'Todos' ? (
+                <View style={[styles.chipDot, { backgroundColor: active ? '#08130c' : tint }]} />
+              ) : null}
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>{m}</Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
       <FlatList
@@ -210,6 +218,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: spacing.md,
     paddingVertical: 9,
     borderRadius: radius.lg,
@@ -218,6 +229,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     justifyContent: 'center',
   },
+  chipDot: { width: 9, height: 9, borderRadius: 5 },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { color: colors.textMuted, fontWeight: '600', fontSize: 13, lineHeight: 18 },
   chipTextActive: { color: '#0b1220' },

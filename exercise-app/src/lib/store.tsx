@@ -32,6 +32,8 @@ interface StoreValue {
   remindersEnabled: boolean;
   reminderHour: number;
   reminderMinute: number;
+  onboarded: boolean;
+  setOnboarded: (v: boolean) => void;
   body: BodyEntry[];
   unit: WeightUnit;
   setUnit: (u: WeightUnit) => void;
@@ -66,13 +68,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [remindersEnabled, setRemindersEnabledState] = useState(false);
   const [reminderHour, setReminderHourState] = useState(18);
   const [reminderMinute, setReminderMinuteState] = useState(0);
+  const [onboarded, setOnboardedState] = useState(true); // asume true hasta cargar
   const [body, setBody] = useState<BodyEntry[]>([]);
   const [unit, setUnitState] = useState<WeightUnit>('kg');
 
   // Carga inicial desde almacenamiento local.
   useEffect(() => {
     (async () => {
-      const [r, s, p, active, rem, hour, bodyData, unitData, minuteData] = await Promise.all([
+      const [r, s, p, active, rem, hour, bodyData, unitData, minuteData, onboardedData] = await Promise.all([
         loadJSON<Routine[]>(StorageKeys.routines, []),
         loadJSON<WorkoutSession[]>(StorageKeys.sessions, []),
         loadJSON<Plan[]>(StorageKeys.plans, []),
@@ -82,6 +85,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         loadJSON<BodyEntry[]>(StorageKeys.body, []),
         loadJSON<WeightUnit>(StorageKeys.unit, 'kg'),
         loadJSON<number>(StorageKeys.reminderMinute, 0),
+        loadJSON<boolean>(StorageKeys.onboarded, false),
       ]);
       setRoutines(r);
       setSessions(s);
@@ -90,6 +94,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setRemindersEnabledState(rem);
       setReminderHourState(hour);
       setReminderMinuteState(minuteData);
+      setOnboardedState(onboardedData);
       setBody(bodyData);
       setUnitState(unitData === 'lb' ? 'lb' : 'kg');
       setReady(true);
@@ -124,6 +129,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.reminderMinute, reminderMinute);
   }, [reminderMinute, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.onboarded, onboarded);
+  }, [onboarded, ready]);
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -135,6 +143,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       remindersEnabled,
       reminderHour,
       reminderMinute,
+      onboarded,
+      setOnboarded: (v) => setOnboardedState(v),
       body,
       unit,
       setUnit: (u) => setUnitState(u),
@@ -273,7 +283,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSessions((prev) => prev.filter((s) => s.id !== id));
       },
     }),
-    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, reminderMinute, body, unit]
+    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, reminderMinute, onboarded, body, unit]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

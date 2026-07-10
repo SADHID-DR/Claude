@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Alert, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById } from '@/data/exercises';
 import { WorkoutSession } from '@/lib/types';
@@ -38,6 +39,7 @@ function fmtDuration(seconds: number): string {
 }
 
 export default function ProgressScreen() {
+  const router = useRouter();
   const { sessions, deleteSession, body, addBodyEntry, unit } = useStore();
 
   const [weightIn, setWeightIn] = useState('');
@@ -277,7 +279,9 @@ export default function ProgressScreen() {
           <EmptyState
             emoji="📈"
             title="Sin entrenamientos todavía"
-            hint="Inicia una rutina y pulsa 'Entrenar' para registrar tu primera sesión."
+            hint="Registra tu primera sesión y aquí verás tu progreso, récords y tendencias."
+            actionLabel="▶ Ir a mis rutinas"
+            onAction={() => router.push('/(tabs)/routines')}
           />
         ) : (
           <View style={{ gap: spacing.sm }}>

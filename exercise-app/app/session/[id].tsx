@@ -21,6 +21,7 @@ import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
 import { LoggedSet, RoutineExercise } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
 import { ExerciseDemo } from '@/components/ExerciseDemo';
+import { Confetti } from '@/components/Confetti';
 import { colors, radius, spacing } from '@/lib/theme';
 
 /** Formatea segundos como mm:ss. */
@@ -93,6 +94,8 @@ export default function SessionScreen() {
   }, [routine?.id]);
   // Índice del ejercicio cuyo selector de reemplazo está abierto.
   const [swapFor, setSwapFor] = useState<number | null>(null);
+  // Confeti al finalizar.
+  const [celebrate, setCelebrate] = useState(false);
 
   const totalSets = list.reduce((n, re) => n + re.sets, 0);
   const doneCount = Object.values(done).filter(Boolean).length;
@@ -252,6 +255,7 @@ export default function SessionScreen() {
       note: note.trim() || undefined,
     });
     notifySuccess();
+    setCelebrate(true); // lluvia de confeti de celebración
     const vol = Math.round(logged.reduce((sum, s) => sum + s.weight * s.reps, 0));
 
     const prLines = newPRs
@@ -423,7 +427,12 @@ export default function SessionScreen() {
                   />
                   <Pressable
                     onPress={() => toggleDone(key, re.restSeconds)}
-                    style={[styles.checkBox, isDone && styles.checkBoxDone, styles.colCheck]}
+                    style={({ pressed }) => [
+                      styles.checkBox,
+                      isDone && styles.checkBoxDone,
+                      styles.colCheck,
+                      pressed && { transform: [{ scale: 0.86 }] },
+                    ]}
                   >
                     <Text style={[styles.checkMark, isDone && styles.checkMarkDone]}>✓</Text>
                   </Pressable>
@@ -498,6 +507,8 @@ export default function SessionScreen() {
           </View>
         </View>
       ) : null}
+
+      <Confetti run={celebrate} />
     </View>
   );
 }

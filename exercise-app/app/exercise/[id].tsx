@@ -10,6 +10,7 @@ import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
 import { ExerciseIcon } from '@/components/ExerciseIcon';
 import { ExerciseDemo } from '@/components/ExerciseDemo';
+import { FadeInView } from '@/components/FadeInView';
 import { LineChart } from '@/components/LineChart';
 import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 
@@ -56,11 +57,13 @@ export default function ExerciseDetailScreen() {
       <Text style={styles.equipment}>🏋️ {exercise.equipment}</Text>
 
       {/* Demostración animada del movimiento */}
-      <Card style={styles.demoCard}>
-        <Text style={styles.demoHeader}>🎬 Cómo se hace</Text>
-        <ExerciseDemo exercise={exercise} size={215} />
-        <Text style={styles.demoHint}>Animación orientativa · vista lateral</Text>
-      </Card>
+      <FadeInView>
+        <Card style={styles.demoCard}>
+          <Text style={styles.demoHeader}>🎬 Cómo se hace</Text>
+          <ExerciseDemo exercise={exercise} size={215} />
+          <Text style={styles.demoHint}>Animación orientativa · vista lateral</Text>
+        </Card>
+      </FadeInView>
 
       <Text style={styles.description}>{exercise.description}</Text>
 

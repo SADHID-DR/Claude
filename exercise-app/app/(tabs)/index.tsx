@@ -22,6 +22,7 @@ import { computeInsights } from '@/lib/insights';
 import { WeightUnit, toDisplay } from '@/lib/units';
 import { MuscleRadar } from '@/components/MuscleRadar';
 import { FadeInView } from '@/components/FadeInView';
+import { Onboarding } from '@/components/Onboarding';
 import { ProgressRing } from '@/components/ProgressRing';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, SectionHeader, StatTile } from '@/components/ui';
@@ -34,7 +35,7 @@ const BALANCE_MUSCLES = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Co
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { routines, sessions, plans, activePlanId, unit, setUnit } = useStore();
+  const { routines, sessions, plans, activePlanId, unit, setUnit, ready, onboarded } = useStore();
 
   // Entrenamiento de hoy según el PLAN ACTIVO, el progreso y el calendario.
   const activePlan = plans.find((p) => p.id === activePlanId) ?? null;
@@ -105,6 +106,11 @@ export default function TodayScreen() {
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
   );
   const wodOfDay = WODS[dayOfYear % WODS.length];
+
+  // Primer arranque sin datos: pantalla de bienvenida que crea el primer plan.
+  if (ready && !onboarded && plans.length === 0 && sessions.length === 0) {
+    return <Onboarding />;
+  }
 
   return (
     <ScrollView

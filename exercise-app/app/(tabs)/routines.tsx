@@ -117,7 +117,9 @@ export default function RoutinesScreen() {
         <EmptyState
           emoji="📋"
           title="Aún no tienes rutinas"
-          hint="Pulsa 'Generar plan' para que tu coach te arme un plan semanal, bisemanal o mensual."
+          hint="Deja que tu coach te arme un plan semanal, bisemanal o mensual a tu medida."
+          actionLabel="✨ Generar plan"
+          onAction={() => router.push('/routine/generate')}
         />
       ) : null}
 

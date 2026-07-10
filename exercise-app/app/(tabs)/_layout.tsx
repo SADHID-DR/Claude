@@ -1,24 +1,19 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
 import { colors } from '@/lib/theme';
-
-/** Icono de pestaña basado en emoji para evitar dependencias de fuentes. */
-function TabIcon({ emoji, color }: { emoji: string; color: string }) {
-  return <Text style={{ fontSize: 20, color }}>{emoji}</Text>;
-}
+import { TabBarIcon, TabName } from '@/components/TabBarIcon';
 
 // Renderizadores estables (fuera del componente) para no recrear el icono
 // en cada render — evita remontar la barra y silencia el aviso del linter.
-const icon = (emoji: string) =>
-  function TabBarIcon({ color }: { color: string }) {
-    return <TabIcon emoji={emoji} color={color} />;
+const icon = (name: TabName) =>
+  function TabBarIconRender({ color }: { color: string }) {
+    return <TabBarIcon name={name} color={color} />;
   };
 
-const HomeIcon = icon('🏠');
-const ExercisesIcon = icon('💪');
-const RoutinesIcon = icon('📋');
-const WodsIcon = icon('🔥');
-const HistoryIcon = icon('📈');
+const HomeIcon = icon('home');
+const ExercisesIcon = icon('dumbbell');
+const RoutinesIcon = icon('routines');
+const WodsIcon = icon('wods');
+const HistoryIcon = icon('progress');
 
 export default function TabsLayout() {
   return (

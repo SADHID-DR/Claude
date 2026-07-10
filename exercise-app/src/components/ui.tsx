@@ -137,16 +137,27 @@ export function EmptyState({
   title,
   hint,
   emoji,
+  actionLabel,
+  onAction,
 }: {
   title: string;
   hint?: string;
   emoji?: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }) {
   return (
     <View style={styles.empty}>
-      {emoji ? <Text style={styles.emptyEmoji}>{emoji}</Text> : null}
+      {emoji ? (
+        <View style={styles.emptyEmojiWrap}>
+          <Text style={styles.emptyEmoji}>{emoji}</Text>
+        </View>
+      ) : null}
       <Text style={styles.emptyTitle}>{title}</Text>
       {hint ? <Text style={styles.emptyHint}>{hint}</Text> : null}
+      {actionLabel && onAction ? (
+        <Button title={actionLabel} onPress={onAction} style={{ marginTop: spacing.md, minWidth: 200 }} />
+      ) : null}
     </View>
   );
 }
@@ -167,6 +178,7 @@ const styles = StyleSheet.create({
   },
   tagText: { color: '#08130c', fontSize: 12, fontWeight: '800' },
   button: {
+    minHeight: 48, // objetivo táctil cómodo
     paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
@@ -199,7 +211,18 @@ const styles = StyleSheet.create({
   title: { color: colors.text, fontSize: 26, fontWeight: '900' },
   subtle: { color: colors.textMuted, fontSize: 14 },
   empty: { padding: spacing.xl, alignItems: 'center', justifyContent: 'center' },
-  emptyEmoji: { fontSize: 44, marginBottom: spacing.sm },
+  emptyEmojiWrap: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  emptyEmoji: { fontSize: 42 },
   emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', textAlign: 'center' },
   emptyHint: {
     color: colors.textMuted,

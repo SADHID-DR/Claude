@@ -11,6 +11,7 @@ export const StorageKeys = {
   body: 'exercise-app/body',
   unit: 'exercise-app/unit',
   reminderMinute: 'exercise-app/reminderMinute',
+  onboarded: 'exercise-app/onboarded',
 } as const;
 
 export async function loadJSON<T>(key: string, fallback: T): Promise<T> {

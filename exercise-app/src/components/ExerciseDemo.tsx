@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, View } from 'react-native';
-import Svg, { Circle, G, Line, Rect } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  Ellipse,
+  G,
+  Line,
+  LinearGradient,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 import { Exercise } from '@/lib/types';
 import { colors, muscleColors } from '@/lib/theme';
 
@@ -548,16 +557,21 @@ function ExerciseDemoBase({ exercise, size = 200 }: { exercise: Exercise; size?:
     return out;
   }, [pattern, progress]);
 
-  const stroke = '#dbe4f0';
-  const sw = 3.4;
+  const stroke = '#eef3fb';
+  const sw = 4.2;
+  const gid = `demoBody-${exercise.id}`;
   const seg = (p: { x: any; y: any }, q: { x: any; y: any }, key: string) => (
     <ALine
       key={key}
       x1={p.x} y1={p.y} x2={q.x} y2={q.y}
-      stroke={stroke}
+      stroke={`url(#${gid})`}
       strokeWidth={sw}
       strokeLinecap="round"
     />
+  );
+  // Punto de articulación (rodillas, codo, hombro, cadera) en el color del músculo.
+  const joint = (p: { x: any; y: any }, key: string, r = 2) => (
+    <ACircle key={key} cx={p.x} cy={p.y} r={r} fill={tint} />
   );
 
   // Pies (solo si el tobillo está cerca del suelo en ambas poses).
@@ -578,8 +592,32 @@ function ExerciseDemoBase({ exercise, size = 200 }: { exercise: Exercise; size?:
   return (
     <View style={{ alignItems: 'center' }}>
       <Svg width={size} height={size} viewBox="0 0 100 100">
+        <Defs>
+          {/* Degradado del cuerpo: claro arriba → tenue abajo, con matiz del músculo. */}
+          <LinearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#f4f8ff" />
+            <Stop offset="1" stopColor="#aeb8c9" />
+          </LinearGradient>
+          {/* Fondo tipo "pantalla" con matiz del músculo. */}
+          <LinearGradient id={`${gid}-bg`} x1="0" y1="0" x2="0.6" y2="1">
+            <Stop offset="0" stopColor={colors.bgElevated} />
+            <Stop offset="1" stopColor={colors.surface} />
+          </LinearGradient>
+        </Defs>
+
+        {/* Marco/pantalla */}
+        <Rect x={1.5} y={1.5} width={97} height={97} rx={8} fill={`url(#${gid}-bg)`} />
+        {/* Rejilla sutil */}
+        {[26, 46, 66].map((y) => (
+          <Line key={y} x1={8} y1={y} x2={92} y2={y} stroke={colors.border} strokeWidth={0.5} opacity={0.5} />
+        ))}
+        {/* Foco de color del músculo bajo la figura */}
+        <Ellipse cx={50} cy={90} rx={26} ry={7} fill={tint} opacity={0.14} />
+        {/* Sombra de contacto */}
+        <Ellipse cx={50} cy={92.5} rx={17} ry={2.2} fill="#05070d" opacity={0.55} />
+
         {/* Suelo */}
-        <Line x1={6} y1={92} x2={94} y2={92} stroke={colors.border} strokeWidth={1.6} strokeLinecap="round" />
+        <Line x1={7} y1={92} x2={93} y2={92} stroke={colors.border} strokeWidth={1.4} strokeLinecap="round" />
 
         {/* Banco */}
         {pattern.bench ? (
@@ -623,16 +661,23 @@ function ExerciseDemoBase({ exercise, size = 200 }: { exercise: Exercise; size?:
           />
         ) : null}
 
-        {/* Figura */}
+        {/* Figura (extremidades con degradado y remates redondeados) */}
+        {seg(joints.h, joints.k2, 'thigh2')}
+        {seg(joints.k2, joints.a2, 'shin2')}
+        {seg(joints.s, joints.e, 'uarm')}
+        {seg(joints.e, joints.w, 'farm')}
         {seg(joints.s, joints.h, 'torso')}
         {seg(joints.h, joints.k1, 'thigh1')}
         {seg(joints.k1, joints.a1, 'shin1')}
-        {seg(joints.h, joints.k2, 'thigh2')}
-        {seg(joints.k2, joints.a2, 'shin2')}
         {feet}
-        {seg(joints.s, joints.e, 'uarm')}
-        {seg(joints.e, joints.w, 'farm')}
-        <ACircle cx={joints.hd.x} cy={joints.hd.y} r={5.4} fill={stroke} />
+        {/* Articulaciones en color del músculo */}
+        {joint(joints.h, 'j-h', 2.3)}
+        {joint(joints.k1, 'j-k1')}
+        {joint(joints.k2, 'j-k2', 1.7)}
+        {joint(joints.e, 'j-e')}
+        {/* Cabeza con aro del color del músculo */}
+        <ACircle cx={joints.hd.x} cy={joints.hd.y} r={6} fill={stroke} />
+        <ACircle cx={joints.hd.x} cy={joints.hd.y} r={6} fill="none" stroke={tint} strokeWidth={1.3} />
 
         {/* Peso en la mano */}
         {equip !== 'none' ? (
