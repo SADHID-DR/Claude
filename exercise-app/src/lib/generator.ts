@@ -219,6 +219,58 @@ function pick(pool: Exercise[], prefer: Category[], used: Set<string>): Exercise
   return from[Math.floor(Math.random() * from.length)];
 }
 
+/**
+ * "Firma" de movimiento: herramienta + ángulo/patrón. Sirve para que, al
+ * poner varios ejercicios del MISMO músculo, cada uno ataque una porción
+ * distinta (p. ej. bíceps: barra + inclinado + martillo + polea).
+ */
+function movementSig(ex: Exercise): string {
+  const n = ex.name.toLowerCase();
+  const tag = equipTags(ex)[0] ?? ex.category;
+  let angle = 'base';
+  if (/inclinad/.test(n)) angle = 'incl';
+  else if (/declinad/.test(n)) angle = 'decl';
+  else if (/martillo|hammer|zottman/.test(n)) angle = 'hammer';
+  else if (/predicador|preacher|araña|spider|concentr/.test(n)) angle = 'peak';
+  else if (/polea|cable|cruce|pull|jalón/.test(n)) angle = 'cable';
+  else if (ex.category === 'Máquina') angle = 'machine';
+  else if (/sentad|goblet|frontal|hack|prensa/.test(n)) angle = 'squat';
+  else if (/peso muerto|rumano|buenos días|hip|puente|pull.?through/.test(n)) angle = 'hinge';
+  return `${tag}:${angle}`;
+}
+
+/**
+ * Elige un ejercicio COMPLEMENTARIO a los ya escogidos para el mismo slot:
+ * premia equipo, categoría y patrón distintos para cubrir todas las porciones
+ * del músculo, sin perder la preferencia del objetivo.
+ */
+function pickVaried(
+  pool: Exercise[],
+  prefer: Category[],
+  used: Set<string>,
+  chosen: Exercise[]
+): Exercise | null {
+  const avail = pool.filter((e) => !used.has(e.id));
+  const from = avail.length > 0 ? avail : pool;
+  if (from.length === 0) return null;
+  if (chosen.length === 0) return pick(from, prefer, used);
+
+  const usedTags = new Set(chosen.flatMap(equipTags));
+  const usedCats = new Set(chosen.map((e) => e.category));
+  const usedSigs = new Set(chosen.map(movementSig));
+
+  const scored = from.map((e) => {
+    let s = Math.random() * 0.5;
+    if (!usedSigs.has(movementSig(e))) s += 2; // patrón/porción distinta
+    if (!equipTags(e).some((t) => usedTags.has(t))) s += 1.2; // equipo distinto
+    if (!usedCats.has(e.category)) s += 0.8; // categoría distinta
+    if (prefer.includes(e.category)) s += 0.3; // sigue el objetivo
+    return { e, s };
+  });
+  scored.sort((a, b) => b.s - a.s);
+  return scored[0].e;
+}
+
 function pickCardio(band: AgeBand, used: Set<string>, avail: Equipment[]): Exercise | null {
   const ids = band === 'maduro' || band === 'senior' ? CARDIO_LOW : CARDIO_ALL;
   const pool = ids.map(getExerciseById).filter(Boolean) as Exercise[];
@@ -241,47 +293,50 @@ interface DayTemplate {
   slots: PoolKey[];
 }
 
+// Plantillas ordenadas "de coach": el músculo GRANDE del día encabeza con
+// ≥3 ejercicios (complementarios) y el pequeño principal con ≥2. Los slots
+// extra (al final) solo se usan en sesiones más largas.
 const PUSH: DayTemplate = {
   key: 'push',
   name: 'Empuje',
-  focus: 'Pecho · Hombro · Tríceps',
-  slots: ['chest', 'chest', 'shoulders', 'triceps', 'triceps'],
+  focus: 'Pecho · Tríceps · Hombro',
+  slots: ['chest', 'chest', 'chest', 'triceps', 'triceps', 'shoulders', 'shoulders'],
 };
 const PULL: DayTemplate = {
   key: 'pull',
   name: 'Tirón',
   focus: 'Espalda · Bíceps',
-  slots: ['back', 'back', 'back', 'biceps', 'biceps'],
+  slots: ['back', 'back', 'back', 'biceps', 'biceps', 'back', 'biceps'],
 };
 const LEGS: DayTemplate = {
   key: 'legs',
   name: 'Pierna',
   focus: 'Piernas completas',
-  slots: ['quad', 'quad', 'posterior', 'calf', 'core'],
+  slots: ['quad', 'quad', 'quad', 'posterior', 'posterior', 'calf', 'core'],
 };
 const LEGS_Q: DayTemplate = {
   key: 'legsQ',
   name: 'Pierna (cuádriceps)',
   focus: 'Cuádriceps · Gemelo',
-  slots: ['quad', 'quad', 'quad', 'calf', 'core'],
+  slots: ['quad', 'quad', 'quad', 'posterior', 'posterior', 'calf', 'core'],
 };
 const LEGS_P: DayTemplate = {
   key: 'legsP',
   name: 'Pierna (posterior)',
   focus: 'Femoral · Glúteo',
-  slots: ['posterior', 'posterior', 'quad', 'calf', 'core'],
+  slots: ['posterior', 'posterior', 'posterior', 'quad', 'quad', 'calf', 'core'],
 };
 const UPPER: DayTemplate = {
   key: 'upper',
   name: 'Tren superior',
   focus: 'Pecho · Espalda · Hombro · Brazos',
-  slots: ['chest', 'back', 'shoulders', 'triceps', 'biceps'],
+  slots: ['back', 'chest', 'back', 'chest', 'shoulders', 'biceps', 'triceps'],
 };
 const LOWER: DayTemplate = {
   key: 'lower',
   name: 'Tren inferior + core',
   focus: 'Piernas · Core',
-  slots: ['quad', 'posterior', 'quad', 'calf', 'core'],
+  slots: ['quad', 'quad', 'quad', 'posterior', 'posterior', 'calf', 'core'],
 };
 const CORE_CARDIO: DayTemplate = {
   key: 'coreCardio',
@@ -467,7 +522,8 @@ function buildDay(
   const reps = gp.reps + adj.repAdd + prog.repAdd;
   const rest = Math.max(30, Math.round((gp.rest * adj.restMult) / 5) * 5 + prog.restAdd);
   const levelSetAdd = level === 'Principiante' ? -1 : level === 'Avanzado' ? 1 : 0;
-  let sets = Math.min(6, Math.max(2, gp.sets + prog.setAdd + levelSetAdd));
+  // El coach nunca prescribe más de 4 series de trabajo por ejercicio.
+  let sets = Math.min(4, Math.max(2, gp.sets + prog.setAdd + levelSetAdd));
   let wodReps = reps;
   let wodRest = rest;
   if (tpl.key === 'wod') {
@@ -495,10 +551,16 @@ function buildDay(
     }
   };
 
+  // Elegidos por slot, para que varios del mismo músculo se complementen.
+  const chosenByKey: Partial<Record<PoolKey, Exercise[]>> = {};
   for (const slot of tpl.slots) {
     if (exercises.length >= target) break;
-    const ex = pick(P(slot), prefer, used);
-    if (ex) add(ex, slot === 'cardio');
+    const chosen = chosenByKey[slot] ?? (chosenByKey[slot] = []);
+    const ex = pickVaried(P(slot), prefer, used, chosen);
+    if (ex) {
+      add(ex, slot === 'cardio');
+      chosen.push(ex);
+    }
   }
 
   const hasCore = () =>

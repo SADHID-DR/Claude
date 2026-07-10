@@ -7,6 +7,19 @@ function TabIcon({ emoji, color }: { emoji: string; color: string }) {
   return <Text style={{ fontSize: 20, color }}>{emoji}</Text>;
 }
 
+// Renderizadores estables (fuera del componente) para no recrear el icono
+// en cada render — evita remontar la barra y silencia el aviso del linter.
+const icon = (emoji: string) =>
+  function TabBarIcon({ color }: { color: string }) {
+    return <TabIcon emoji={emoji} color={color} />;
+  };
+
+const HomeIcon = icon('🏠');
+const ExercisesIcon = icon('💪');
+const RoutinesIcon = icon('📋');
+const WodsIcon = icon('🔥');
+const HistoryIcon = icon('📈');
+
 export default function TabsLayout() {
   return (
     <Tabs
@@ -31,35 +44,35 @@ export default function TabsLayout() {
         options={{
           title: 'Hoy',
           headerShown: false,
-          tabBarIcon: ({ color }) => <TabIcon emoji="🏠" color={color} />,
+          tabBarIcon: HomeIcon,
         }}
       />
       <Tabs.Screen
         name="exercises"
         options={{
           title: 'Ejercicios',
-          tabBarIcon: ({ color }) => <TabIcon emoji="💪" color={color} />,
+          tabBarIcon: ExercisesIcon,
         }}
       />
       <Tabs.Screen
         name="routines"
         options={{
           title: 'Rutinas',
-          tabBarIcon: ({ color }) => <TabIcon emoji="📋" color={color} />,
+          tabBarIcon: RoutinesIcon,
         }}
       />
       <Tabs.Screen
         name="wods"
         options={{
           title: 'WODs',
-          tabBarIcon: ({ color }) => <TabIcon emoji="🔥" color={color} />,
+          tabBarIcon: WodsIcon,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: 'Progreso',
-          tabBarIcon: ({ color }) => <TabIcon emoji="📈" color={color} />,
+          tabBarIcon: HistoryIcon,
         }}
       />
     </Tabs>

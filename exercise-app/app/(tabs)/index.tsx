@@ -18,13 +18,14 @@ import {
 import { planToday } from '@/lib/planToday';
 import { checkForUpdate, versionLabel, UpdateInfo } from '@/lib/updates';
 import { tipOfDay } from '@/lib/coachTips';
+import { computeInsights } from '@/lib/insights';
 import { WeightUnit, toDisplay } from '@/lib/units';
 import { MuscleRadar } from '@/components/MuscleRadar';
 import { FadeInView } from '@/components/FadeInView';
 import { ProgressRing } from '@/components/ProgressRing';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, SectionHeader, StatTile } from '@/components/ui';
-import { colors, gradients, muscleColors, radius, spacing, shadow } from '@/lib/theme';
+import { colors, radius, spacing, shadow } from '@/lib/theme';
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 // Grupos que mostramos siempre en el balance (aunque estén a 0 esta semana).
@@ -85,6 +86,12 @@ export default function TodayScreen() {
   };
   const hasBalanceData = BALANCE_MUSCLES.some((m) => (muscleBalance[m] ?? 0) > 0);
   const coachTip = useMemo(() => tipOfDay(), []);
+
+  // Ajustes inteligentes: análisis local del historial (sin internet).
+  const insights = useMemo(
+    () => computeInsights(sessions, weeklyGoal, unit),
+    [sessions, weeklyGoal, unit]
+  );
 
   const today = activePlan ? planToday(activePlan, sessions) : null;
   const todayRoutine =
@@ -209,6 +216,31 @@ export default function TodayScreen() {
           )}
         </Card>
       </FadeInView>
+
+      {/* Ajustes inteligentes (análisis del historial en el propio teléfono) */}
+      {insights.length > 0 ? (
+        <FadeInView delay={160} style={{ marginTop: spacing.lg }}>
+          <SectionHeader title="Ajustes inteligentes 🧠" />
+          <View style={{ gap: spacing.sm }}>
+            {insights.map((it) => (
+              <View
+                key={it.id}
+                style={[
+                  styles.insightCard,
+                  it.tone === 'warn' && styles.insightWarn,
+                  it.tone === 'good' && styles.insightGood,
+                ]}
+              >
+                <Text style={styles.insightEmoji}>{it.emoji}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.insightTitle}>{it.title}</Text>
+                  <Text style={styles.insightBody}>{it.body}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </FadeInView>
+      ) : null}
 
       {/* Consejo técnico del coach */}
       <FadeInView delay={200} style={{ marginTop: spacing.lg }}>
@@ -405,6 +437,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   balanceEmpty: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  insightCard: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderLeftWidth: 3,
+    borderColor: colors.border,
+    borderLeftColor: colors.accent,
+    padding: spacing.md,
+  },
+  insightWarn: { borderLeftColor: colors.warn },
+  insightGood: { borderLeftColor: colors.primary },
+  insightEmoji: { fontSize: 20 },
+  insightTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
+  insightBody: { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 2 },
   tipCard: {
     backgroundColor: colors.bgElevated,
     borderLeftWidth: 3,

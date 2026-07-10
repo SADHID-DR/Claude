@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  AppState,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,13 +12,13 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
-import { getExerciseById } from '@/data/exercises';
+import { getExerciseById, EXERCISES } from '@/data/exercises';
 import { lastWeightFor, progressionHint } from '@/lib/coach';
 import { detectNewPRs, e1rmFor } from '@/lib/strength';
 import { fmtWeight, toDisplay, toKg } from '@/lib/units';
 import { notifySuccess, tapMedium } from '@/lib/haptics';
 import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
-import { LoggedSet } from '@/lib/types';
+import { LoggedSet, RoutineExercise } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
 import { ExerciseDemo } from '@/components/ExerciseDemo';
 import { colors, radius, spacing } from '@/lib/theme';
@@ -32,7 +33,7 @@ function fmt(totalSeconds: number): string {
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { routines, sessions, addSession, unit } = useStore();
+  const { routines, sessions, addSession, unit, setUnit } = useStore();
   const routine = routines.find((r) => r.id === id);
 
   const [elapsed, setElapsed] = useState(0);
@@ -66,20 +67,34 @@ export default function SessionScreen() {
 
   const [sets, setSets] = useState(initialSets);
   const [done, setDone] = useState<Record<string, boolean>>({});
+  // Series cuyo peso el usuario editó a mano (no se sobrescriben al autorrellenar).
+  const [weightEdited, setWeightEdited] = useState<Record<string, boolean>>({});
 
   // Cómo te sentiste + nota del entreno.
   const [feeling, setFeeling] = useState<number | null>(null);
   const [note, setNote] = useState('');
 
-  // Descanso automático entre series.
-  const [rest, setRest] = useState<{ remaining: number; total: number } | null>(null);
+  // Descanso automático entre series. Se basa en la HORA REAL de fin
+  // (endAt), así el conteo sigue correcto aunque se apague la pantalla.
+  const [rest, setRest] = useState<{ endAt: number; total: number } | null>(null);
+  const [remaining, setRemaining] = useState(0);
+  const lastBeep = useRef(-1);
 
   // Demostración de técnica desplegada (solo una a la vez, por rendimiento).
   const [demoFor, setDemoFor] = useState<string | null>(null);
 
-  const totalSets = routine
-    ? routine.exercises.reduce((n, re) => n + re.sets, 0)
-    : 0;
+  // Lista de ejercicios de la sesión (editable: se puede cambiar un ejercicio
+  // por otro relacionado sin tocar la rutina guardada). Se rehace si cambia
+  // la rutina cargada.
+  const [list, setList] = useState<RoutineExercise[]>(() => routine?.exercises ?? []);
+  useEffect(() => {
+    if (routine) setList(routine.exercises);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routine?.id]);
+  // Índice del ejercicio cuyo selector de reemplazo está abierto.
+  const [swapFor, setSwapFor] = useState<number | null>(null);
+
+  const totalSets = list.reduce((n, re) => n + re.sets, 0);
   const doneCount = Object.values(done).filter(Boolean).length;
 
   // Precarga los sonidos del descanso.
@@ -91,26 +106,37 @@ export default function SessionScreen() {
   }, []);
 
   // Cuenta atrás del descanso, con aviso sonoro en los últimos 5 s.
+  // Calcula el tiempo restante desde la hora real, no sumando tics: si la
+  // pantalla se apaga y vuelve, el temporizador muestra el valor correcto
+  // (o ya ha terminado) en vez de "congelarse".
   useEffect(() => {
     if (!rest) return;
-    if (rest.remaining <= 0) {
-      Vibration.vibrate([0, 200, 100, 400]);
-      playGo();
-      const t = setTimeout(() => setRest(null), 900);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => {
-      setRest((prev) => {
-        if (!prev) return prev;
-        const next = prev.remaining - 1;
-        if (next > 0 && next <= 5) {
-          Vibration.vibrate(120);
-          playTick();
-        }
-        return { ...prev, remaining: next };
-      });
-    }, 1000);
-    return () => clearTimeout(t);
+    let finished = false;
+    const tick = () => {
+      const rem = Math.max(0, Math.round((rest.endAt - Date.now()) / 1000));
+      setRemaining(rem);
+      if (rem > 0 && rem <= 5 && lastBeep.current !== rem) {
+        lastBeep.current = rem;
+        Vibration.vibrate(120);
+        playTick();
+      }
+      if (rem <= 0 && !finished) {
+        finished = true;
+        Vibration.vibrate([0, 200, 100, 400]);
+        playGo();
+        setTimeout(() => setRest(null), 900);
+      }
+    };
+    tick();
+    const iv = setInterval(tick, 250);
+    // Al volver de segundo plano (pantalla bloqueada), re-sincroniza al instante.
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') tick();
+    });
+    return () => {
+      clearInterval(iv);
+      sub.remove();
+    };
   }, [rest]);
 
   const toggleDone = (key: string, restSeconds: number) => {
@@ -119,7 +145,9 @@ export default function SessionScreen() {
       const nowDone = !prev[key];
       // Al completar una serie, arranca el descanso automáticamente.
       if (nowDone && restSeconds > 0) {
-        setRest({ remaining: restSeconds, total: restSeconds });
+        lastBeep.current = -1;
+        setRemaining(restSeconds);
+        setRest({ endAt: Date.now() + restSeconds * 1000, total: restSeconds });
       }
       return { ...prev, [key]: nowDone };
     });
@@ -134,12 +162,63 @@ export default function SessionScreen() {
   }
 
   const update = (key: string, field: 'weight' | 'reps', value: string) => {
-    setSets((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
+    setSets((prev) => {
+      const next = { ...prev, [key]: { ...prev[key], [field]: value } };
+      // Peso igual por defecto: al escribirlo en una serie, las siguientes
+      // series de ESE ejercicio que no hayas tocado a mano toman el mismo peso.
+      if (field === 'weight' && value.trim() !== '') {
+        const sep = key.lastIndexOf('-');
+        const exId = key.slice(0, sep);
+        const idx = parseInt(key.slice(sep + 1), 10);
+        Object.keys(next).forEach((k) => {
+          const kSep = k.lastIndexOf('-');
+          if (k.slice(0, kSep) !== exId) return;
+          const kIdx = parseInt(k.slice(kSep + 1), 10);
+          if (kIdx > idx && !weightEdited[k]) {
+            next[k] = { ...next[k], weight: value };
+          }
+        });
+      }
+      return next;
+    });
+    if (field === 'weight') {
+      setWeightEdited((prev) => ({ ...prev, [key]: true }));
+    }
+  };
+
+  // Cambia el ejercicio de un slot por otro relacionado, conservando el
+  // esquema (series/reps/descanso) y migrando las celdas ya escritas.
+  const swapExercise = (index: number, newId: string) => {
+    const old = list[index];
+    if (!old || old.exerciseId === newId) {
+      setSwapFor(null);
+      return;
+    }
+    setList((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...old, exerciseId: newId };
+      return copy;
+    });
+    setSets((prev) => {
+      const next = { ...prev };
+      const last = lastWeightFor(sessions, newId);
+      const prefill =
+        last != null && last > 0 ? String(Math.round(toDisplay(last, unit) * 10) / 10) : '';
+      for (let s = 0; s < old.sets; s++) {
+        next[`${newId}-${s}`] = {
+          weight: prefill,
+          reps: prev[`${old.exerciseId}-${s}`]?.reps ?? String(old.reps),
+        };
+        delete next[`${old.exerciseId}-${s}`];
+      }
+      return next;
+    });
+    setSwapFor(null);
   };
 
   const finish = () => {
     const logged: LoggedSet[] = [];
-    routine.exercises.forEach((re) => {
+    list.forEach((re) => {
       for (let s = 0; s < re.sets; s++) {
         const entry = sets[`${re.exerciseId}-${s}`];
         const weightRaw = parseFloat((entry?.weight ?? '').replace(',', '.'));
@@ -212,14 +291,45 @@ export default function SessionScreen() {
         <Text style={styles.progressText}>
           {doneCount}/{totalSets} series completadas
         </Text>
+        <View style={styles.unitRow}>
+          <Text style={styles.unitLabel}>Peso en</Text>
+          {(['kg', 'lb'] as const).map((u) => (
+            <Pressable
+              key={u}
+              onPress={() => setUnit(u)}
+              style={[styles.unitPill, unit === u && styles.unitPillOn]}
+            >
+              <Text style={[styles.unitPillText, unit === u && styles.unitPillTextOn]}>
+                {u}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </Card>
 
-      {routine.exercises.map((re) => {
+      {list.map((re, exIndex) => {
         const ex = getExerciseById(re.exerciseId);
+        // Ejercicios relacionados: mismo grupo muscular (excluye el actual).
+        const related = ex
+          ? EXERCISES.filter((e) => e.muscle === ex.muscle && e.id !== ex.id)
+          : [];
         return (
-          <Card key={re.exerciseId} style={{ marginBottom: spacing.sm }}>
+          <Card key={`${exIndex}-${re.exerciseId}`} style={{ marginBottom: spacing.sm }}>
             <View style={styles.exHeader}>
               <Text style={[styles.exName, { flex: 1 }]}>{ex?.name ?? 'Ejercicio'}</Text>
+              {ex ? (
+                <Pressable
+                  onPress={() => setSwapFor((prev) => (prev === exIndex ? null : exIndex))}
+                  style={[styles.demoBtn, swapFor === exIndex && styles.swapBtnOn]}
+                  hitSlop={6}
+                >
+                  <Text
+                    style={[styles.demoBtnText, swapFor === exIndex && styles.swapBtnTextOn]}
+                  >
+                    🔀 Cambiar
+                  </Text>
+                </Pressable>
+              ) : null}
               {ex ? (
                 <Pressable
                   onPress={() =>
@@ -239,6 +349,30 @@ export default function SessionScreen() {
                 </Pressable>
               ) : null}
             </View>
+            {swapFor === exIndex && ex ? (
+              <View style={styles.swapBox}>
+                <Text style={styles.swapTitle}>
+                  Cambiar por otro de {ex.muscle.toLowerCase()}:
+                </Text>
+                <ScrollView style={{ maxHeight: 240 }} nestedScrollEnabled>
+                  {related.map((alt) => (
+                    <Pressable
+                      key={alt.id}
+                      onPress={() => swapExercise(exIndex, alt.id)}
+                      style={styles.swapOption}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.swapOptName}>{alt.name}</Text>
+                        <Text style={styles.swapOptEquip}>
+                          {alt.category} · {alt.equipment}
+                        </Text>
+                      </View>
+                      <Text style={styles.swapPick}>Elegir</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
             {ex && demoFor === re.exerciseId ? (
               <ExerciseDemo exercise={ex} size={140} />
             ) : null}
@@ -337,9 +471,9 @@ export default function SessionScreen() {
             <View>
               <Text style={styles.restLabel}>DESCANSO</Text>
               <Text
-                style={[styles.restTime, rest.remaining <= 5 && styles.restTimeAlert]}
+                style={[styles.restTime, remaining <= 5 && styles.restTimeAlert]}
               >
-                {fmt(Math.max(0, rest.remaining))}
+                {fmt(Math.max(0, remaining))}
               </Text>
             </View>
             <View style={styles.restActions}>
@@ -347,7 +481,7 @@ export default function SessionScreen() {
                 title="+15s"
                 variant="ghost"
                 onPress={() =>
-                  setRest((p) => (p ? { remaining: p.remaining + 15, total: p.total + 15 } : p))
+                  setRest((p) => (p ? { endAt: p.endAt + 15000, total: p.total + 15 } : p))
                 }
               />
               <Button title="Saltar" onPress={() => setRest(null)} />
@@ -357,8 +491,8 @@ export default function SessionScreen() {
             <View
               style={[
                 styles.restBarFill,
-                { width: `${rest.total > 0 ? (Math.max(0, rest.remaining) / rest.total) * 100 : 0}%` },
-                rest.remaining <= 5 && { backgroundColor: colors.streak },
+                { width: `${rest.total > 0 ? (Math.max(0, remaining) / rest.total) * 100 : 0}%` },
+                remaining <= 5 && { backgroundColor: colors.streak },
               ]}
             />
           </View>
@@ -418,6 +552,19 @@ const styles = StyleSheet.create({
   },
   progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
   progressText: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, fontWeight: '700' },
+  unitRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm },
+  unitLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
+  unitPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.bgElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  unitPillOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  unitPillText: { color: colors.textMuted, fontSize: 13, fontWeight: '800' },
+  unitPillTextOn: { color: '#08130c' },
   exHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   exName: { color: colors.text, fontSize: 16, fontWeight: '800' },
   demoBtn: {
@@ -430,6 +577,28 @@ const styles = StyleSheet.create({
   demoBtnOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
   demoBtnText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   demoBtnTextOn: { color: colors.accent },
+  swapBtnOn: { borderColor: colors.warn, backgroundColor: '#2b2413' },
+  swapBtnTextOn: { color: colors.warn },
+  swapBox: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.warn,
+    padding: spacing.sm,
+  },
+  swapTitle: { color: colors.text, fontSize: 13, fontWeight: '800', marginBottom: spacing.xs },
+  swapOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  swapOptName: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  swapOptEquip: { color: colors.textMuted, fontSize: 12, marginTop: 1 },
+  swapPick: { color: colors.warn, fontSize: 13, fontWeight: '800' },
   exMeta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   coachHint: {
     color: colors.primary,

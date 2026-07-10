@@ -49,9 +49,9 @@ export default function NewRoutineScreen() {
     editing ? editing.exercises.map((re) => re.exerciseId) : []
   );
 
-  const moveExercise = (id: string, dir: -1 | 1) => {
+  const moveExercise = (exId: string, dir: -1 | 1) => {
     setOrder((prev) => {
-      const i = prev.indexOf(id);
+      const i = prev.indexOf(exId);
       const j = i + dir;
       if (i < 0 || j < 0 || j >= prev.length) return prev;
       const next = [...prev];
@@ -81,10 +81,10 @@ export default function NewRoutineScreen() {
       const next = { ...prev };
       if (next[exerciseId]) {
         delete next[exerciseId];
-        setOrder((prev) => prev.filter((x) => x !== exerciseId));
+        setOrder((ord) => ord.filter((x) => x !== exerciseId));
       } else {
         next[exerciseId] = { exerciseId, sets: 3, reps: 10, restSeconds: 60 };
-        setOrder((prev) => [...prev, exerciseId]);
+        setOrder((ord) => [...ord, exerciseId]);
       }
       return next;
     });
@@ -103,7 +103,7 @@ export default function NewRoutineScreen() {
   };
 
   const save = () => {
-    const exercises = order.map((id) => selected[id]).filter(Boolean);
+    const exercises = order.map((exId) => selected[exId]).filter(Boolean);
     if (name.trim() === '') {
       Alert.alert('Falta el nombre', 'Ponle un nombre a tu rutina.');
       return;
@@ -165,16 +165,16 @@ export default function NewRoutineScreen() {
       {selectedCount > 1 ? (
         <Card style={{ marginBottom: spacing.md }}>
           <Text style={styles.orderTitle}>↕ Orden de la rutina</Text>
-          {order.map((id, i) => {
-            const info = EXERCISES.find((e) => e.id === id);
+          {order.map((exId, i) => {
+            const info = EXERCISES.find((e) => e.id === exId);
             return (
-              <View key={id} style={styles.orderRow}>
+              <View key={exId} style={styles.orderRow}>
                 <Text style={styles.orderIndex}>{i + 1}</Text>
                 <Text style={styles.orderName} numberOfLines={1}>
-                  {info?.name ?? id}
+                  {info?.name ?? exId}
                 </Text>
                 <Pressable
-                  onPress={() => moveExercise(id, -1)}
+                  onPress={() => moveExercise(exId, -1)}
                   disabled={i === 0}
                   style={[styles.orderBtn, i === 0 && styles.orderBtnOff]}
                   hitSlop={6}
@@ -182,7 +182,7 @@ export default function NewRoutineScreen() {
                   <Text style={styles.orderBtnText}>▲</Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => moveExercise(id, 1)}
+                  onPress={() => moveExercise(exId, 1)}
                   disabled={i === order.length - 1}
                   style={[styles.orderBtn, i === order.length - 1 && styles.orderBtnOff]}
                   hitSlop={6}

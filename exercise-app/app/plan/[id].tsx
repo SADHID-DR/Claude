@@ -127,23 +127,6 @@ export default function PlanCalendarScreen() {
             return <View key={`b-${i}`} style={[styles.cell, { width: cellSize, height: cellSize }]} />;
           const info = infoFor(dayNum);
           const training = !!info;
-          const cell = (
-            <View
-              style={[
-                styles.cell,
-                styles.cellInner,
-                training && styles.cellTraining,
-                info?.isToday && styles.cellToday,
-              ]}
-            >
-              <Text style={[styles.cellDay, training && styles.cellDayTraining]}>{dayNum}</Text>
-              {training ? (
-                <Text style={styles.cellTag}>
-                  {plan.weeks > 1 ? `S${info!.weekIdx + 1}·` : ''}D{info!.dayNum}
-                </Text>
-              ) : null}
-            </View>
-          );
           const date = new Date(year, month, dayNum);
           const label = DOW_LABEL[date.getDay()];
           if (training && info) {

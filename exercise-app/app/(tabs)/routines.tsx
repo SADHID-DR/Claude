@@ -84,16 +84,6 @@ export default function RoutinesScreen() {
     }
   };
 
-  const changeHour = async (plan: Plan, h: number) => {
-    setReminderHour(h);
-    if (remindersEnabled) await scheduleReminders(plan, h, reminderMinute);
-  };
-
-  const changeMinute = async (plan: Plan, m: number) => {
-    setReminderMinute(m);
-    if (remindersEnabled) await scheduleReminders(plan, reminderHour, m);
-  };
-
   const testNotification = async () => {
     const ok = await sendTestNotification();
     Alert.alert(
