@@ -14,6 +14,7 @@ import { Exercise, MuscleGroup } from '@/lib/types';
 import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
 import { ExerciseIcon } from '@/components/ExerciseIcon';
+import { ExerciseDemo } from '@/components/ExerciseDemo';
 import { colors, radius, spacing, categoryColors, muscleColors } from '@/lib/theme';
 
 // Filtro de equipo granular (barra, mancuernas, kettlebell…).
@@ -66,6 +67,8 @@ export default function ExercisesScreen() {
   const [query, setQuery] = useState('');
   const [equip, setEquip] = useState<Equip>('Todo');
   const [muscle, setMuscle] = useState<MuscleGroup | 'Todos'>('Todos');
+  // Demostración de técnica abierta (👁) por ejercicio.
+  const [demoId, setDemoId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -144,6 +147,7 @@ export default function ExercisesScreen() {
 
       <FlatList
         data={filtered}
+        extraData={demoId}
         keyExtractor={(item) => item.id}
         initialNumToRender={10}
         maxToRenderPerBatch={10}
@@ -176,7 +180,19 @@ export default function ExercisesScreen() {
                   </View>
                   <Text style={styles.difficulty}>{item.difficulty}</Text>
                 </View>
+                <Pressable
+                  onPress={() => setDemoId((d) => (d === item.id ? null : item.id))}
+                  hitSlop={8}
+                  style={styles.eyeBtn}
+                >
+                  <Text style={styles.eyeText}>{demoId === item.id ? '✕' : '👁'}</Text>
+                </Pressable>
               </View>
+              {demoId === item.id ? (
+                <View style={styles.demoWrap}>
+                  <ExerciseDemo exercise={item} size={150} />
+                </View>
+              ) : null}
             </Card>
           </PressableScale>
         )}
@@ -247,4 +263,14 @@ const styles = StyleSheet.create({
   equipment: { color: colors.textMuted, fontSize: 13, flexShrink: 1 },
   difficulty: { color: colors.textMuted, fontSize: 12, marginTop: 2, fontStyle: 'italic' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
+  eyeBtn: {
+    width: 34,
+    height: 30,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eyeText: { fontSize: 15 },
+  demoWrap: { alignItems: 'center', marginTop: spacing.sm },
 });

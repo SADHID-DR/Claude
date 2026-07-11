@@ -103,6 +103,8 @@ export interface LoggedSet {
   exerciseId: string;
   weight: number;
   reps: number;
+  /** Reps en reserva (RIR 0–5): cuántas te quedaban en el tanque. */
+  rir?: number;
 }
 
 export interface WorkoutSession {
@@ -116,6 +118,8 @@ export interface WorkoutSession {
   feeling?: number;
   /** Nota libre del entrenamiento. */
   note?: string;
+  /** Calorías estimadas de la sesión (método MET). */
+  kcal?: number;
 }
 
 /** Registro de composición corporal (peso y medidas). */

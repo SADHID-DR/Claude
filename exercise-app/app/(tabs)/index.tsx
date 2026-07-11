@@ -214,6 +214,35 @@ export default function TodayScreen() {
               <Text style={styles.balanceHint}>
                 Series por grupo esta semana. Equilibra los vértices hundidos 💡
               </Text>
+              {(() => {
+                // Puntos de referencia de volumen: 10–20 series/músculo/semana.
+                const low = BALANCE_MUSCLES.filter((m) => (muscleBalance[m] ?? 0) < 10);
+                const high = BALANCE_MUSCLES.filter((m) => (muscleBalance[m] ?? 0) > 20);
+                return (
+                  <View style={styles.landmarks}>
+                    <Text style={styles.landmarkTitle}>
+                      🎯 Objetivo: 10–20 series por músculo a la semana
+                    </Text>
+                    {high.length > 0 ? (
+                      <Text style={styles.landmarkHigh}>
+                        ⚠️ Volumen excesivo ({'>'}20):{' '}
+                        {high.map((m) => `${m} (${muscleBalance[m]})`).join(', ')}
+                      </Text>
+                    ) : null}
+                    {low.length > 0 ? (
+                      <Text style={styles.landmarkLow}>
+                        📉 Por debajo de 10:{' '}
+                        {low.map((m) => `${m} (${muscleBalance[m] ?? 0})`).join(', ')}
+                      </Text>
+                    ) : null}
+                    {low.length === 0 && high.length === 0 ? (
+                      <Text style={styles.landmarkOk}>
+                        ✅ Todos los grupos en la zona óptima. ¡Semana redonda!
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })()}
             </>
           ) : (
             <Text style={styles.balanceEmpty}>
@@ -443,6 +472,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   balanceEmpty: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  landmarks: {
+    marginTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    gap: 4,
+  },
+  landmarkTitle: { color: colors.text, fontSize: 12, fontWeight: '700' },
+  landmarkHigh: { color: '#fbbf24', fontSize: 12, lineHeight: 17 },
+  landmarkLow: { color: colors.textMuted, fontSize: 12, lineHeight: 17 },
+  landmarkOk: { color: colors.primary, fontSize: 12, lineHeight: 17 },
   insightCard: {
     flexDirection: 'row',
     gap: spacing.sm,

@@ -1,11 +1,12 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { EXERCISES, getExerciseById } from '@/data/exercises';
 import { useStore } from '@/lib/store';
 import { weightProgressFor } from '@/lib/stats';
 import { lastWeightFor } from '@/lib/coach';
 import { allPRs, warmupPlan, ZONES } from '@/lib/strength';
-import { fmtWeight, roundLoad, toDisplay } from '@/lib/units';
+import { fmtWeight, roundLoad, toDisplay, toKg } from '@/lib/units';
 import { Card, Tag } from '@/components/ui';
 import { PressableScale } from '@/components/PressableScale';
 import { ExerciseIcon } from '@/components/ExerciseIcon';
@@ -17,8 +18,16 @@ import { colors, radius, spacing, categoryColors } from '@/lib/theme';
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { sessions, unit } = useStore();
+  const { sessions, unit, strengthGoals, setStrengthGoal } = useStore();
   const exercise = getExerciseById(id);
+  // Meta de fuerza (1RM estimado objetivo, en kg internamente).
+  const goalKg = strengthGoals[id];
+  const [goalIn, setGoalIn] = useState('');
+  const saveGoal = () => {
+    const g = parseFloat(goalIn.replace(',', '.'));
+    setStrengthGoal(id, isNaN(g) || g <= 0 ? null : Math.round(toKg(g, unit) * 10) / 10);
+    setGoalIn('');
+  };
   const progress = weightProgressFor(sessions, id);
   const pr = allPRs(sessions)[id];
   const lastWeight = lastWeightFor(sessions, id);
@@ -96,6 +105,61 @@ export default function ExerciseDetailScreen() {
           </View>
         </Card>
       ) : null}
+
+      {/* Meta de fuerza: 1RM estimado objetivo con % de progreso */}
+      <Card style={styles.goalCard}>
+        <Text style={styles.goalHeader}>🎯 Meta de fuerza (1RM objetivo)</Text>
+        {goalKg ? (
+          <>
+            <View style={styles.goalRow}>
+              <Text style={styles.goalValue}>{fmtWeight(goalKg, unit, { round: true })}</Text>
+              {pr ? (
+                <Text style={styles.goalPct}>
+                  {Math.min(100, Math.round((pr.e1rm / goalKg) * 100))}%
+                </Text>
+              ) : null}
+            </View>
+            {pr ? (
+              <>
+                <View style={styles.goalTrack}>
+                  <View
+                    style={[
+                      styles.goalFill,
+                      { width: `${Math.min(100, Math.round((pr.e1rm / goalKg) * 100))}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.goalMeta}>
+                  {pr.e1rm >= goalKg
+                    ? '🏆 ¡Meta conseguida! Ponte una nueva.'
+                    : `Tu 1RM estimado: ${fmtWeight(pr.e1rm, unit, { round: true })} · te faltan ${fmtWeight(Math.max(0, goalKg - pr.e1rm), unit, { round: true })}`}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.goalMeta}>
+                Registra una sesión con este ejercicio para medir tu progreso.
+              </Text>
+            )}
+          </>
+        ) : (
+          <Text style={styles.goalMeta}>
+            Ponte un objetivo de 1RM y la app te dirá qué % llevas conseguido.
+          </Text>
+        )}
+        <View style={styles.goalInputRow}>
+          <TextInput
+            value={goalIn}
+            onChangeText={setGoalIn}
+            onSubmitEditing={saveGoal}
+            onBlur={() => (goalIn.trim() !== '' ? saveGoal() : undefined)}
+            keyboardType="decimal-pad"
+            placeholder={goalKg ? `${Math.round(toDisplay(goalKg, unit))}` : `Objetivo (${unit})`}
+            placeholderTextColor={colors.textMuted}
+            style={styles.goalInput}
+          />
+          <Text style={styles.goalUnit}>{unit}</Text>
+        </View>
+      </Card>
 
       {/* Calentamiento de aproximación calculado */}
       {warmup ? (
@@ -221,6 +285,42 @@ const styles = StyleSheet.create({
   zoneName: { color: colors.text, fontSize: 13, fontWeight: '800', width: 92 },
   zoneReps: { color: colors.textMuted, fontSize: 12, flex: 1 },
   zoneKg: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  goalCard: { borderColor: colors.accent },
+  goalHeader: { color: colors.accent, fontSize: 15, fontWeight: '800' },
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+  },
+  goalValue: { color: colors.text, fontSize: 26, fontWeight: '900' },
+  goalPct: { color: colors.primary, fontSize: 20, fontWeight: '900' },
+  goalTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.surfaceAlt,
+    marginTop: spacing.xs,
+    overflow: 'hidden',
+  },
+  goalFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
+  goalMeta: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, lineHeight: 17 },
+  goalInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  goalInput: {
+    flex: 1,
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  goalUnit: { color: colors.textMuted, fontSize: 14, fontWeight: '700' },
   warmupCard: { borderColor: colors.primaryDark },
   warmupHeader: { color: colors.primary, fontSize: 15, fontWeight: '800', marginBottom: spacing.sm },
   warmupRow: { flexDirection: 'row', gap: spacing.sm },

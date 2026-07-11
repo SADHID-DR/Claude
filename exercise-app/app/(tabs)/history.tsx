@@ -40,11 +40,23 @@ function fmtDuration(seconds: number): string {
 
 export default function ProgressScreen() {
   const router = useRouter();
-  const { sessions, deleteSession, body, addBodyEntry, unit } = useStore();
+  const {
+    sessions,
+    deleteSession,
+    body,
+    addBodyEntry,
+    unit,
+    height,
+    setHeight,
+    weightGoal,
+    setWeightGoal,
+  } = useStore();
 
   const [weightIn, setWeightIn] = useState('');
   const [waistIn, setWaistIn] = useState('');
   const [armIn, setArmIn] = useState('');
+  const [heightIn, setHeightIn] = useState(height ? String(height) : '');
+  const [goalIn, setGoalIn] = useState('');
 
   // Serie de peso corporal en orden cronológico.
   const weightSeries = useMemo<ChartPoint[]>(() => {
@@ -87,6 +99,56 @@ export default function ProgressScreen() {
     setArmIn('');
   };
 
+  // IMC a partir de altura (cm) + último peso (kg). Categorías OMS.
+  const bmi = useMemo(() => {
+    if (!height || height <= 0 || !latestBody) return null;
+    const m = height / 100;
+    const v = latestBody.weight / (m * m);
+    const cat =
+      v < 18.5
+        ? 'Bajo peso'
+        : v < 25
+          ? 'Peso saludable ✅'
+          : v < 30
+            ? 'Sobrepeso'
+            : 'Obesidad';
+    return { value: Math.round(v * 10) / 10, cat };
+  }, [height, latestBody]);
+
+  const saveHeight = () => {
+    const h = parseFloat(heightIn.replace(',', '.'));
+    if (isNaN(h) || h < 100 || h > 250) {
+      Alert.alert('Altura no válida', 'Introduce tu altura en cm (ej. 175).');
+      return;
+    }
+    setHeight(Math.round(h));
+  };
+
+  const saveGoal = () => {
+    const g = parseFloat(goalIn.replace(',', '.'));
+    if (isNaN(g) || g <= 0) {
+      setWeightGoal(null);
+      setGoalIn('');
+      return;
+    }
+    setWeightGoal(Math.round(toKg(g, unit) * 10) / 10);
+    setGoalIn('');
+  };
+
+  // Progreso hacia la meta de peso: desde el primer registro hasta la meta.
+  const goalProgress = useMemo(() => {
+    if (!weightGoal || body.length === 0 || !latestBody) return null;
+    const sorted = [...body].sort((a, b) => a.date - b.date);
+    const start = sorted[0].weight;
+    const remaining = Math.round((latestBody.weight - weightGoal) * 10) / 10;
+    let pct = 1;
+    if (Math.abs(start - weightGoal) > 0.01) {
+      pct = (start - latestBody.weight) / (start - weightGoal);
+    }
+    pct = Math.max(0, Math.min(1, pct));
+    return { remaining, pct };
+  }, [weightGoal, body, latestBody]);
+
   const streak = currentStreak(sessions);
   const volume = totalVolume(sessions);
   const achievements = useMemo(() => computeAchievements(sessions), [sessions]);
@@ -125,7 +187,9 @@ export default function ProgressScreen() {
     if (sessions.length > 0) {
       lines.push('', 'Últimos entrenos:');
       sessions.slice(0, 3).forEach((s) => {
-        lines.push(`• ${s.routineName} — ${fmtWeight(sessionVolume(s), unit)}`);
+        lines.push(
+          `• ${s.routineName} — ${fmtWeight(sessionVolume(s), unit)}${s.kcal ? ` · ≈${s.kcal} kcal` : ''}`
+        );
       });
     }
     try {
@@ -217,6 +281,69 @@ export default function ProgressScreen() {
         </Card>
       </View>
 
+      {/* IMC y meta de peso */}
+      <View style={{ marginTop: spacing.lg }}>
+        <SectionHeader title="IMC y meta de peso 🎯" />
+        <Card>
+          <View style={styles.bodyInputs}>
+            <View style={styles.bodyField}>
+              <Text style={styles.bodyLabel}>Altura (cm)</Text>
+              <TextInput
+                value={heightIn}
+                onChangeText={setHeightIn}
+                onBlur={saveHeight}
+                keyboardType="decimal-pad"
+                placeholder="175"
+                placeholderTextColor={colors.textMuted}
+                style={styles.bodyInput}
+              />
+            </View>
+            <View style={styles.bodyField}>
+              <Text style={styles.bodyLabel}>Meta de peso ({unit})</Text>
+              <TextInput
+                value={goalIn}
+                onChangeText={setGoalIn}
+                onBlur={saveGoal}
+                keyboardType="decimal-pad"
+                placeholder={weightGoal ? String(Math.round(toDisplay(weightGoal, unit) * 10) / 10) : '–'}
+                placeholderTextColor={colors.textMuted}
+                style={styles.bodyInput}
+              />
+            </View>
+          </View>
+
+          {bmi ? (
+            <View style={styles.bmiRow}>
+              <Text style={styles.bmiValue}>IMC {bmi.value}</Text>
+              <Text style={styles.bmiCat}>{bmi.cat}</Text>
+            </View>
+          ) : (
+            <Text style={styles.bodyHintSmall}>
+              Registra tu altura y un peso para ver tu IMC.
+            </Text>
+          )}
+
+          {weightGoal && latestBody && goalProgress ? (
+            <View style={{ marginTop: spacing.sm }}>
+              <Text style={styles.goalText}>
+                {Math.abs(goalProgress.remaining) < 0.5
+                  ? '🏆 ¡Meta de peso alcanzada!'
+                  : goalProgress.remaining > 0
+                    ? `Te faltan ${fmtWeight(Math.abs(goalProgress.remaining), unit)} por bajar (meta: ${fmtWeight(weightGoal, unit)})`
+                    : `Te faltan ${fmtWeight(Math.abs(goalProgress.remaining), unit)} por subir (meta: ${fmtWeight(weightGoal, unit)})`}
+              </Text>
+              <View style={styles.goalTrack}>
+                <View style={[styles.goalFill, { width: `${Math.round(goalProgress.pct * 100)}%` }]} />
+              </View>
+            </View>
+          ) : weightGoal ? (
+            <Text style={styles.bodyHintSmall}>
+              Meta guardada: {fmtWeight(weightGoal, unit)}. Registra tu peso para ver el progreso.
+            </Text>
+          ) : null}
+        </Card>
+      </View>
+
       {/* Ánimo a lo largo del tiempo */}
       {moodSeries.length >= 2 ? (
         <View style={{ marginTop: spacing.lg }}>
@@ -301,6 +428,7 @@ export default function ProgressScreen() {
                       {fmtDuration(item.durationSeconds)} · {exerciseCount} ejercicio
                       {exerciseCount !== 1 ? 's' : ''} · {item.sets.length} series ·{' '}
                       {fmtWeight(sessionVolume(item), unit)}
+                      {item.kcal ? ` · 🔥 ≈${item.kcal} kcal` : ''}
                     </Text>
                     {item.note ? <Text style={styles.noteText}>“{item.note}”</Text> : null}
                     <View style={styles.sets}>
@@ -309,6 +437,7 @@ export default function ProgressScreen() {
                         return (
                           <Text key={i} style={styles.setLine}>
                             • {ex?.name ?? 'Ejercicio'}: {fmtWeight(s.weight, unit)} × {s.reps}
+                            {typeof s.rir === 'number' ? ` @RIR ${s.rir}` : ''}
                           </Text>
                         );
                       })}
@@ -332,6 +461,24 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   statsRow: { flexDirection: 'row', gap: spacing.sm },
   bodyHint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.md, lineHeight: 19 },
+  bodyHintSmall: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm, lineHeight: 17 },
+  bmiRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+  },
+  bmiValue: { color: colors.text, fontSize: 18, fontWeight: '900' },
+  bmiCat: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  goalText: { color: colors.textMuted, fontSize: 12, lineHeight: 17 },
+  goalTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.surfaceAlt,
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  goalFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
   bodyInputs: { flexDirection: 'row', gap: spacing.sm },
   bodyField: { flex: 1 },
   bodyLabel: { color: colors.textMuted, fontSize: 12, marginBottom: 4 },

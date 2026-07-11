@@ -13,8 +13,10 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById, EXERCISES } from '@/data/exercises';
-import { lastWeightFor, progressionHint } from '@/lib/coach';
+import { lastWeightFor, doubleProgression } from '@/lib/coach';
 import { detectNewPRs, e1rmFor } from '@/lib/strength';
+import { estimateKcal } from '@/lib/stats';
+import { WARMUPS, WarmupItem, recommendedWarmup } from '@/data/warmups';
 import { fmtWeight, toDisplay, toKg } from '@/lib/units';
 import { notifySuccess, tapMedium } from '@/lib/haptics';
 import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
@@ -34,7 +36,7 @@ function fmt(totalSeconds: number): string {
 export default function SessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { routines, sessions, addSession, unit, setUnit } = useStore();
+  const { routines, sessions, addSession, unit, setUnit, body } = useStore();
   const routine = routines.find((r) => r.id === id);
 
   const [elapsed, setElapsed] = useState(0);
@@ -50,16 +52,17 @@ export default function SessionScreen() {
 
   // Estado editable de cada serie: weight/reps por (ejercicio, serie).
   // El peso se pre-rellena con lo que usaste la última vez (coach).
-  const initialSets = useMemo<Record<string, { weight: string; reps: string }>>(() => {
-    const map: Record<string, { weight: string; reps: string }> = {};
+  const initialSets = useMemo<Record<string, { weight: string; reps: string; rir: string }>>(() => {
+    const map: Record<string, { weight: string; reps: string; rir: string }> = {};
     routine?.exercises.forEach((re) => {
-      const last = lastWeightFor(sessions, re.exerciseId);
+      // Doble progresión: la app decide el peso de hoy según tu última sesión.
+      const presc = doubleProgression(sessions, re.exerciseId, re.reps);
       const prefill =
-        last != null && last > 0
-          ? String(Math.round(toDisplay(last, unit) * 10) / 10)
+        presc.weightKg != null
+          ? String(Math.round(toDisplay(presc.weightKg, unit) * 10) / 10)
           : '';
       for (let s = 0; s < re.sets; s++) {
-        map[`${re.exerciseId}-${s}`] = { weight: prefill, reps: String(re.reps) };
+        map[`${re.exerciseId}-${s}`] = { weight: prefill, reps: String(re.reps), rir: '' };
       }
     });
     return map;
@@ -96,6 +99,23 @@ export default function SessionScreen() {
   const [swapFor, setSwapFor] = useState<number | null>(null);
   // Confeti al finalizar.
   const [celebrate, setCelebrate] = useState(false);
+
+  // Calentamiento (≤15 min): recomendado por el coach, personalizable.
+  const [warmupOn, setWarmupOn] = useState(true);
+  const [warmupItems, setWarmupItems] = useState<WarmupItem[]>(() =>
+    routine ? recommendedWarmup(routine) : []
+  );
+  const [warmupDone, setWarmupDone] = useState<Record<string, boolean>>({});
+  const [showWuLib, setShowWuLib] = useState(false);
+  const [wuDemo, setWuDemo] = useState<string | null>(null);
+
+  const toggleWuItem = (item: WarmupItem) => {
+    setWarmupItems((prev) =>
+      prev.some((w) => w.id === item.id)
+        ? prev.filter((w) => w.id !== item.id)
+        : [...prev, item]
+    );
+  };
 
   const totalSets = list.reduce((n, re) => n + re.sets, 0);
   const doneCount = Object.values(done).filter(Boolean).length;
@@ -164,7 +184,7 @@ export default function SessionScreen() {
     );
   }
 
-  const update = (key: string, field: 'weight' | 'reps', value: string) => {
+  const update = (key: string, field: 'weight' | 'reps' | 'rir', value: string) => {
     setSets((prev) => {
       const next = { ...prev, [key]: { ...prev[key], [field]: value } };
       // Peso igual por defecto: al escribirlo en una serie, las siguientes
@@ -211,6 +231,7 @@ export default function SessionScreen() {
         next[`${newId}-${s}`] = {
           weight: prefill,
           reps: prev[`${old.exerciseId}-${s}`]?.reps ?? String(old.reps),
+          rir: prev[`${old.exerciseId}-${s}`]?.rir ?? '',
         };
         delete next[`${old.exerciseId}-${s}`];
       }
@@ -226,12 +247,14 @@ export default function SessionScreen() {
         const entry = sets[`${re.exerciseId}-${s}`];
         const weightRaw = parseFloat((entry?.weight ?? '').replace(',', '.'));
         const reps = parseInt(entry?.reps ?? '', 10);
+        const rirRaw = parseInt(entry?.rir ?? '', 10);
         if (!isNaN(reps) && reps > 0) {
           // Se guarda SIEMPRE en kg; si introduces libras, se convierte.
           logged.push({
             exerciseId: re.exerciseId,
             weight: isNaN(weightRaw) ? 0 : Math.round(toKg(weightRaw, unit) * 100) / 100,
             reps,
+            rir: !isNaN(rirRaw) && rirRaw >= 0 && rirRaw <= 5 ? rirRaw : undefined,
           });
         }
       }
@@ -245,6 +268,10 @@ export default function SessionScreen() {
     // Detecta récords ANTES de guardar (compara contra el historial previo).
     const newPRs = detectNewPRs(sessions, logged);
 
+    // Calorías estimadas con tu peso corporal más reciente (o 75 kg).
+    const bodyKg = body.length > 0 ? [...body].sort((a, b) => b.date - a.date)[0].weight : 75;
+    const kcal = estimateKcal(elapsed, routine.name, bodyKg);
+
     addSession({
       routineId: routine.id,
       routineName: routine.name,
@@ -253,6 +280,7 @@ export default function SessionScreen() {
       sets: logged,
       feeling: feeling ?? undefined,
       note: note.trim() || undefined,
+      kcal,
     });
     notifySuccess();
     setCelebrate(true); // lluvia de confeti de celebración
@@ -270,8 +298,8 @@ export default function SessionScreen() {
     Alert.alert(
       newPRs.length > 0 ? '¡NUEVO RÉCORD! 🎉' : '¡Entrenamiento guardado! 💪',
       newPRs.length > 0
-        ? `${prLines}\n\n${logged.length} series · ${volTxt} de volumen.\n¡Estás más fuerte que nunca!`
-        : `${logged.length} series · ${volTxt} de volumen total.\n¡Bien hecho!`,
+        ? `${prLines}\n\n${logged.length} series · ${volTxt} · ≈${kcal} kcal.\n¡Estás más fuerte que nunca!`
+        : `${logged.length} series · ${volTxt} · ≈${kcal} kcal quemadas.\n¡Bien hecho!`,
       [{ text: 'OK', onPress: () => router.replace('/(tabs)/history') }]
     );
   };
@@ -309,6 +337,80 @@ export default function SessionScreen() {
             </Pressable>
           ))}
         </View>
+      </Card>
+
+      {/* Calentamiento del día (≤15 min), recomendado por el coach */}
+      <Card style={{ marginBottom: spacing.sm }}>
+        <View style={styles.exHeader}>
+          <Text style={[styles.exName, { flex: 1 }]}>🔥 Calentamiento · ≤15 min</Text>
+          <Pressable
+            onPress={() => setWarmupOn((v) => !v)}
+            style={[styles.wuToggle, warmupOn && styles.wuToggleOn]}
+            hitSlop={6}
+          >
+            <Text style={[styles.wuToggleText, warmupOn && styles.wuToggleTextOn]}>
+              {warmupOn ? 'ON' : 'OFF'}
+            </Text>
+          </Pressable>
+        </View>
+        {warmupOn ? (
+          <>
+            <Text style={styles.wuHint}>Recomendado para este día. Marca al completar.</Text>
+            {warmupItems.map((w) => {
+              const isDone = !!warmupDone[w.id];
+              const demoEx = w.exerciseId ? getExerciseById(w.exerciseId) : undefined;
+              return (
+                <View key={w.id}>
+                  <View style={styles.wuRow}>
+                    <Pressable
+                      onPress={() => {
+                        tapMedium();
+                        setWarmupDone((prev) => ({ ...prev, [w.id]: !prev[w.id] }));
+                      }}
+                      style={[styles.wuCheck, isDone && styles.wuCheckOn]}
+                      hitSlop={6}
+                    >
+                      {isDone ? <Text style={styles.wuCheckMark}>✓</Text> : null}
+                    </Pressable>
+                    <Text style={[styles.wuName, isDone && styles.wuNameDone]}>{w.name}</Text>
+                    <Text style={styles.wuDose}>{w.dose}</Text>
+                    {demoEx ? (
+                      <Pressable
+                        onPress={() => setWuDemo((prev) => (prev === w.id ? null : w.id))}
+                        hitSlop={8}
+                      >
+                        <Text style={styles.wuEye}>👁</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  {wuDemo === w.id && demoEx ? <ExerciseDemo exercise={demoEx} size={130} /> : null}
+                </View>
+              );
+            })}
+            <Pressable onPress={() => setShowWuLib((v) => !v)} style={styles.wuLibBtn} hitSlop={6}>
+              <Text style={styles.wuLibBtnText}>
+                {showWuLib ? '▲ Ocultar biblioteca' : '✎ Elegir ejercicios de calentamiento'}
+              </Text>
+            </Pressable>
+            {showWuLib ? (
+              <View style={styles.wuLib}>
+                {WARMUPS.map((w) => {
+                  const on = warmupItems.some((x) => x.id === w.id);
+                  return (
+                    <Pressable key={w.id} onPress={() => toggleWuItem(w)} style={styles.wuLibRow}>
+                      <Text style={[styles.wuLibAdd, on && { color: colors.primary }]}>
+                        {on ? '✓' : '＋'}
+                      </Text>
+                      <Text style={[styles.wuName, { flex: 1 }]}>{w.name}</Text>
+                      <Text style={styles.wuKind}>{w.kind}</Text>
+                      <Text style={styles.wuDose}>{w.dose}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+          </>
+        ) : null}
       </Card>
 
       {list.map((re, exIndex) => {
@@ -383,9 +485,18 @@ export default function SessionScreen() {
             <Text style={styles.exMeta}>
               Objetivo: {re.sets}×{re.reps} · descanso {re.restSeconds}s
             </Text>
-            <Text style={styles.coachHint}>
-              🎯 {progressionHint(lastWeightFor(sessions, re.exerciseId), unit)}
-            </Text>
+            {(() => {
+              const presc = doubleProgression(sessions, re.exerciseId, re.reps);
+              const txt =
+                presc.weightKg == null
+                  ? lastWeightFor(sessions, re.exerciseId) === 0
+                    ? 'A peso corporal: si lo dominas, añade carga.'
+                    : 'Primera vez: elige un peso con el que completes las reps con buena técnica.'
+                  : presc.levelUp
+                    ? `⬆️ ¡Objetivo cumplido la última vez! Hoy sube a ${fmtWeight(presc.weightKg, unit, { round: true })} (ya prescrito).`
+                    : `Repite ${fmtWeight(presc.weightKg, unit)} hasta completar ${re.sets}×${re.reps}; entonces te subo el peso.`;
+              return <Text style={styles.coachHint}>🎯 {txt}</Text>;
+            })()}
             {(() => {
               const e1 = e1rmFor(sessions, re.exerciseId);
               return e1 != null ? (
@@ -400,6 +511,7 @@ export default function SessionScreen() {
               <Text style={[styles.colHead, styles.colSet]}>Serie</Text>
               <Text style={[styles.colHead, styles.colInput]}>Peso ({unit})</Text>
               <Text style={[styles.colHead, styles.colInput]}>Reps</Text>
+              <Text style={[styles.colHead, styles.colRir]}>RIR</Text>
               <Text style={[styles.colHead, styles.colCheck]}>✓</Text>
             </View>
 
@@ -424,6 +536,15 @@ export default function SessionScreen() {
                     placeholder="0"
                     placeholderTextColor={colors.textMuted}
                     style={[styles.cellInput, styles.colInput]}
+                  />
+                  <TextInput
+                    value={sets[key]?.rir ?? ''}
+                    onChangeText={(v) => update(key, 'rir', v)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    placeholder="–"
+                    placeholderTextColor={colors.textMuted}
+                    style={[styles.cellInput, styles.colRir]}
                   />
                   <Pressable
                     onPress={() => toggleDone(key, re.restSeconds)}
@@ -577,6 +698,45 @@ const styles = StyleSheet.create({
   unitPillText: { color: colors.textMuted, fontSize: 13, fontWeight: '800' },
   unitPillTextOn: { color: '#08130c' },
   exHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  wuToggle: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.bgElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  wuToggleOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  wuToggleText: { color: colors.textMuted, fontSize: 12, fontWeight: '900' },
+  wuToggleTextOn: { color: '#08130c' },
+  wuHint: { color: colors.textMuted, fontSize: 12, marginTop: 2, marginBottom: spacing.xs },
+  wuRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 6 },
+  wuCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wuCheckOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  wuCheckMark: { color: '#08130c', fontWeight: '900', fontSize: 13 },
+  wuName: { color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 },
+  wuNameDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
+  wuDose: { color: colors.accent, fontSize: 12, fontWeight: '800' },
+  wuEye: { fontSize: 16 },
+  wuLibBtn: { marginTop: spacing.xs, paddingVertical: spacing.xs },
+  wuLibBtnText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
+  wuLib: {
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  wuLibRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 6 },
+  wuLibAdd: { color: colors.textMuted, fontSize: 16, fontWeight: '900', width: 20, textAlign: 'center' },
+  wuKind: { color: colors.textMuted, fontSize: 11 },
   exName: { color: colors.text, fontSize: 16, fontWeight: '800' },
   demoBtn: {
     borderWidth: 1,
@@ -629,6 +789,7 @@ const styles = StyleSheet.create({
   colHead: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   colSet: { width: 40, textAlign: 'center' },
   colInput: { flex: 1, textAlign: 'center' },
+  colRir: { width: 44, textAlign: 'center' },
   colCheck: { width: 40, textAlign: 'center' },
   setRow: {
     flexDirection: 'row',

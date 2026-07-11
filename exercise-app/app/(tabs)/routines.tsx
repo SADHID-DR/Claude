@@ -170,6 +170,9 @@ export default function RoutinesScreen() {
                       ⌚ ¿No llega al reloj? En tu teléfono abre Galaxy Wearable →
                       Ajustes del reloj → Notificaciones → Notificaciones de aplicaciones
                       y activa "Ejercicios" (aparece tras enviar el aviso de prueba).
+                      Para que SUENE y VIBRE en el reloj: en esa misma pantalla elige
+                      "Sonido y vibración" como estilo de alerta y comprueba que el
+                      reloj no esté en silencio ni en No molestar.
                       Ojo: el reloj solo muestra avisos si el teléfono está bloqueado.
                     </Text>
                     <Pressable onPress={testNotification} style={styles.testBtn}>

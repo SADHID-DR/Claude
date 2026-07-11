@@ -39,3 +39,33 @@ export function progressionHint(
   const nextDisplay = roundLoad(toDisplay(lastWeight * 1.025, unit), unit);
   return `La última vez usaste ${fmtWeight(lastWeight, unit)}. Si completaste todas las series, prueba ${nextDisplay} ${unit}.`;
 }
+
+export interface Prescription {
+  /** Peso prescrito para hoy (kg) o null si es la primera vez. */
+  weightKg: number | null;
+  /** true si la última vez completaste el objetivo y hoy toca subir. */
+  levelUp: boolean;
+}
+
+/**
+ * Doble progresión: si en tu última sesión completaste TODAS las series de
+ * este ejercicio al objetivo de reps (o más), hoy la app te sube el peso
+ * (+2,5 kg); si no, repites el mismo peso hasta dominarlo.
+ */
+export function doubleProgression(
+  sessions: WorkoutSession[],
+  exerciseId: string,
+  targetReps: number
+): Prescription {
+  for (const session of sessions) {
+    const sets = session.sets.filter((x) => x.exerciseId === exerciseId);
+    if (sets.length === 0) continue;
+    const top = Math.max(...sets.map((x) => x.weight));
+    if (top <= 0) return { weightKg: null, levelUp: false };
+    const done = sets.every((x) => x.reps >= targetReps);
+    return done
+      ? { weightKg: top + 2.5, levelUp: true }
+      : { weightKg: top, levelUp: false };
+  }
+  return { weightKg: null, levelUp: false };
+}

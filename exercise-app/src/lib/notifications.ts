@@ -11,7 +11,10 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const CHANNEL_ID = 'entrenos';
+// v2: Android congela la configuración de un canal al crearlo; para que el
+// sonido + vibración a MÁXIMA importancia apliquen en instalaciones viejas
+// hay que estrenar un id de canal nuevo.
+const CHANNEL_ID = 'entrenos-v2';
 
 /**
  * Canal Android de MÁXIMA importancia: imprescindible para que el aviso

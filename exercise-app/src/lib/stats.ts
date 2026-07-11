@@ -214,3 +214,17 @@ export function computeAchievements(sessions: WorkoutSession[]): Achievement[] {
     },
   ];
 }
+
+/**
+ * Calorías estimadas de una sesión (método MET): fuerza ≈ 5,5 MET,
+ * metcon/CrossFit ≈ 8 MET. kcal = MET × 3,5 × peso(kg) / 200 × minutos.
+ */
+export function estimateKcal(
+  durationSeconds: number,
+  routineName: string,
+  bodyKg: number
+): number {
+  const minutes = Math.max(1, durationSeconds / 60);
+  const met = /crossfit|wod|extra/i.test(routineName) ? 8 : 5.5;
+  return Math.round(((met * 3.5 * bodyKg) / 200) * minutes);
+}

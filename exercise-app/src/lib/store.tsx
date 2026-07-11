@@ -34,6 +34,15 @@ interface StoreValue {
   reminderMinute: number;
   onboarded: boolean;
   setOnboarded: (v: boolean) => void;
+  /** Altura en cm (para IMC). */
+  height: number | null;
+  setHeight: (cm: number | null) => void;
+  /** Meta de peso corporal en kg. */
+  weightGoal: number | null;
+  setWeightGoal: (kg: number | null) => void;
+  /** Metas de fuerza: e1RM objetivo (kg) por ejercicio. */
+  strengthGoals: Record<string, number>;
+  setStrengthGoal: (exerciseId: string, kg: number | null) => void;
   body: BodyEntry[];
   unit: WeightUnit;
   setUnit: (u: WeightUnit) => void;
@@ -69,13 +78,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [reminderHour, setReminderHourState] = useState(18);
   const [reminderMinute, setReminderMinuteState] = useState(0);
   const [onboarded, setOnboardedState] = useState(true); // asume true hasta cargar
+  const [height, setHeightState] = useState<number | null>(null);
+  const [weightGoal, setWeightGoalState] = useState<number | null>(null);
+  const [strengthGoals, setStrengthGoals] = useState<Record<string, number>>({});
   const [body, setBody] = useState<BodyEntry[]>([]);
   const [unit, setUnitState] = useState<WeightUnit>('kg');
 
   // Carga inicial desde almacenamiento local.
   useEffect(() => {
     (async () => {
-      const [r, s, p, active, rem, hour, bodyData, unitData, minuteData, onboardedData] = await Promise.all([
+      const [r, s, p, active, rem, hour, bodyData, unitData, minuteData, onboardedData, heightData, goalData, sGoals] = await Promise.all([
         loadJSON<Routine[]>(StorageKeys.routines, []),
         loadJSON<WorkoutSession[]>(StorageKeys.sessions, []),
         loadJSON<Plan[]>(StorageKeys.plans, []),
@@ -86,6 +98,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         loadJSON<WeightUnit>(StorageKeys.unit, 'kg'),
         loadJSON<number>(StorageKeys.reminderMinute, 0),
         loadJSON<boolean>(StorageKeys.onboarded, false),
+        loadJSON<number | null>(StorageKeys.height, null),
+        loadJSON<number | null>(StorageKeys.weightGoal, null),
+        loadJSON<Record<string, number>>(StorageKeys.strengthGoals, {}),
       ]);
       setRoutines(r);
       setSessions(s);
@@ -95,6 +110,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setReminderHourState(hour);
       setReminderMinuteState(minuteData);
       setOnboardedState(onboardedData);
+      setHeightState(heightData);
+      setWeightGoalState(goalData);
+      setStrengthGoals(sGoals);
       setBody(bodyData);
       setUnitState(unitData === 'lb' ? 'lb' : 'kg');
       setReady(true);
@@ -132,6 +150,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (ready) saveJSON(StorageKeys.onboarded, onboarded);
   }, [onboarded, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.height, height);
+  }, [height, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.weightGoal, weightGoal);
+  }, [weightGoal, ready]);
+  useEffect(() => {
+    if (ready) saveJSON(StorageKeys.strengthGoals, strengthGoals);
+  }, [strengthGoals, ready]);
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -145,6 +172,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       reminderMinute,
       onboarded,
       setOnboarded: (v) => setOnboardedState(v),
+      height,
+      setHeight: (cm) => setHeightState(cm),
+      weightGoal,
+      setWeightGoal: (kg) => setWeightGoalState(kg),
+      strengthGoals,
+      setStrengthGoal: (exerciseId, kg) => {
+        setStrengthGoals((prev) => {
+          const next = { ...prev };
+          if (kg == null || kg <= 0) delete next[exerciseId];
+          else next[exerciseId] = kg;
+          return next;
+        });
+      },
       body,
       unit,
       setUnit: (u) => setUnitState(u),
@@ -283,7 +323,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSessions((prev) => prev.filter((s) => s.id !== id));
       },
     }),
-    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, reminderMinute, onboarded, body, unit]
+    [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, reminderMinute, onboarded, height, weightGoal, strengthGoals, body, unit]
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

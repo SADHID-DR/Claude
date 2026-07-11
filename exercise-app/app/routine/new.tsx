@@ -13,6 +13,7 @@ import { EXERCISES } from '@/data/exercises';
 import { useStore } from '@/lib/store';
 import { MuscleGroup, RoutineExercise } from '@/lib/types';
 import { Button, Card, Tag } from '@/components/ui';
+import { ExerciseDemo } from '@/components/ExerciseDemo';
 import { colors, radius, spacing } from '@/lib/theme';
 
 const MUSCLES: (MuscleGroup | 'Todos')[] = [
@@ -62,6 +63,8 @@ export default function NewRoutineScreen() {
 
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | 'Todos'>('Todos');
+  // Demostración de técnica abierta (👁) por ejercicio.
+  const [demoId, setDemoId] = useState<string | null>(null);
   const selectedCount = Object.keys(selected).length;
 
   const filtered = useMemo(() => {
@@ -170,9 +173,7 @@ export default function NewRoutineScreen() {
             return (
               <View key={exId} style={styles.orderRow}>
                 <Text style={styles.orderIndex}>{i + 1}</Text>
-                <Text style={styles.orderName} numberOfLines={1}>
-                  {info?.name ?? exId}
-                </Text>
+                <Text style={styles.orderName}>{info?.name ?? exId}</Text>
                 <Pressable
                   onPress={() => moveExercise(exId, -1)}
                   disabled={i === 0}
@@ -213,8 +214,21 @@ export default function NewRoutineScreen() {
                 <Text style={styles.exName}>{ex.name}</Text>
                 <Text style={styles.exEquip}>{ex.equipment}</Text>
               </View>
+              <Pressable
+                onPress={() => setDemoId((d) => (d === ex.id ? null : ex.id))}
+                hitSlop={8}
+                style={styles.eyeBtn}
+              >
+                <Text style={styles.eyeText}>{demoId === ex.id ? '✕' : '👁'}</Text>
+              </Pressable>
               <Tag label={ex.muscle} />
             </Pressable>
+
+            {demoId === ex.id ? (
+              <View style={styles.demoWrap}>
+                <ExerciseDemo exercise={ex} size={150} />
+              </View>
+            ) : null}
 
             {chosen ? (
               <View style={styles.fields}>
@@ -357,6 +371,16 @@ const styles = StyleSheet.create({
   check: { color: '#08130c', fontWeight: '900' },
   exName: { color: colors.text, fontSize: 15, fontWeight: '700' },
   exEquip: { color: colors.textMuted, fontSize: 12, marginTop: 1 },
+  eyeBtn: {
+    width: 34,
+    height: 30,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eyeText: { fontSize: 15 },
+  demoWrap: { alignItems: 'center', marginTop: spacing.sm },
   fields: {
     flexDirection: 'row',
     gap: spacing.sm,
