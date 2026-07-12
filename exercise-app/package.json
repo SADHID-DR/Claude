@@ -11,14 +11,18 @@
     "build:aab": "eas build -p android --profile production"
   },
   "dependencies": {
+    "@expo-google-fonts/barlow": "^0.4.1",
+    "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "expo": "~51.0.28",
     "expo-av": "~14.0.7",
     "expo-constants": "~16.0.2",
+    "expo-font": "^57.0.0",
     "expo-haptics": "~13.0.1",
     "expo-linking": "~6.3.1",
     "expo-notifications": "~0.28.19",
     "expo-router": "~3.5.23",
+    "expo-splash-screen": "^57.0.2",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
     "react-native": "0.74.5",

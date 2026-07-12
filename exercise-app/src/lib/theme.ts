@@ -17,7 +17,39 @@ export const colors = {
   warn: '#fbbf24',
   danger: '#ef4444',
   streak: '#fb923c',
+  onPrimary: '#08130c', // texto sobre botones/etiquetas de color primario
 };
+
+/**
+ * Familias tipográficas (pairing Sports/Fitness: Barlow Condensed display +
+ * Barlow cuerpo). Se cargan en fonts.ts; usar estos tokens para no depender
+ * de `fontWeight` (que las fuentes custom ignoran).
+ */
+export const fonts = {
+  body: 'Barlow_400Regular',
+  bodyMedium: 'Barlow_500Medium',
+  bodySemibold: 'Barlow_600SemiBold',
+  bodyBold: 'Barlow_700Bold',
+  display: 'BarlowCondensed_700Bold',
+  displayBold: 'BarlowCondensed_800ExtraBold',
+  displaySemibold: 'BarlowCondensed_600SemiBold',
+};
+
+/**
+ * Escala tipográfica semántica (una sola fuente de verdad). Barlow Condensed
+ * para display/títulos/números; Barlow para cuerpo/etiquetas.
+ */
+export const type = {
+  display: { fontFamily: fonts.displayBold, fontSize: 32, lineHeight: 36 },
+  title: { fontFamily: fonts.display, fontSize: 26, lineHeight: 30 },
+  h2: { fontFamily: fonts.display, fontSize: 20, lineHeight: 24 },
+  stat: { fontFamily: fonts.displayBold, fontSize: 26 },
+  statBig: { fontFamily: fonts.displayBold, fontSize: 40 },
+  body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
+  bodyStrong: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 22 },
+  label: { fontFamily: fonts.bodySemibold, fontSize: 13 },
+  caption: { fontFamily: fonts.body, fontSize: 12, lineHeight: 16 },
+} as const;
 
 /** Parejas de color para degradados (react-native-svg / fondos). */
 export const gradients = {

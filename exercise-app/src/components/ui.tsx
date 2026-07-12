@@ -9,7 +9,7 @@ import {
   TextStyle,
   ViewStyle,
 } from 'react-native';
-import { colors, radius, spacing, muscleColors, shadow } from '@/lib/theme';
+import { colors, radius, spacing, muscleColors, shadow, fonts } from '@/lib/theme';
 import { tapMedium } from '@/lib/haptics';
 
 export function Card({
@@ -53,7 +53,7 @@ export function Button({
       : variant === 'danger'
         ? colors.danger
         : 'transparent';
-  const textColor = variant === 'ghost' ? colors.text : '#08130c';
+  const textColor = variant === 'ghost' ? colors.text : colors.onPrimary;
 
   const to = (v: number) =>
     Animated.spring(scale, { toValue: v, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.sm,
   },
-  tagText: { color: '#08130c', fontSize: 12, fontWeight: '800' },
+  tagText: { color: colors.onPrimary, fontSize: 12, fontFamily: fonts.bodyBold, letterSpacing: 0.3 },
   button: {
     minHeight: 48, // objetivo táctil cómodo
     paddingVertical: spacing.sm + 4,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonGhost: { borderWidth: 1, borderColor: colors.border },
-  buttonText: { fontWeight: '800', fontSize: 15 },
+  buttonText: { fontFamily: fonts.display, fontSize: 16, letterSpacing: 0.4 },
   statTile: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -198,18 +198,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statEmoji: { fontSize: 18, marginBottom: 2 },
-  statValue: { fontSize: 24, fontWeight: '900' },
-  statLabel: { color: colors.textMuted, fontSize: 12, marginTop: 2, textAlign: 'center' },
+  statValue: { fontSize: 28, fontFamily: fonts.displayBold, letterSpacing: 0.3 },
+  statLabel: { color: colors.textMuted, fontSize: 12, marginTop: 2, textAlign: 'center', fontFamily: fonts.bodyMedium },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  sectionTitle: { color: colors.text, fontSize: 19, fontWeight: '800' },
-  sectionAction: { color: colors.accent, fontSize: 14, fontWeight: '700' },
-  title: { color: colors.text, fontSize: 26, fontWeight: '900' },
-  subtle: { color: colors.textMuted, fontSize: 14 },
+  sectionTitle: { color: colors.text, fontSize: 20, fontFamily: fonts.display, letterSpacing: 0.3 },
+  sectionAction: { color: colors.accent, fontSize: 14, fontFamily: fonts.bodySemibold },
+  title: { color: colors.text, fontSize: 30, fontFamily: fonts.displayBold, letterSpacing: 0.3 },
+  subtle: { color: colors.textMuted, fontSize: 14, fontFamily: fonts.body },
   empty: { padding: spacing.xl, alignItems: 'center', justifyContent: 'center' },
   emptyEmojiWrap: {
     width: 84,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   emptyEmoji: { fontSize: 42 },
-  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  emptyTitle: { color: colors.text, fontSize: 18, fontFamily: fonts.display, textAlign: 'center' },
   emptyHint: {
     color: colors.textMuted,
     fontSize: 14,

@@ -1,10 +1,27 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { StoreProvider } from '@/lib/store';
-import { colors } from '@/lib/theme';
+import { colors, fonts } from '@/lib/theme';
+import { fontAssets, installGlobalFont } from '@/lib/fonts';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
+// Barlow como fuente global (mapea fontWeight→familia). Se instala una vez.
+installGlobalFont();
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded, fontError]);
+
+  // No renderizamos hasta tener las fuentes (evita el "flash" con la del sistema).
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <SafeAreaProvider>
       <StoreProvider>
@@ -13,6 +30,7 @@ export default function RootLayout() {
           screenOptions={{
             headerStyle: { backgroundColor: colors.bg },
             headerTintColor: colors.text,
+            headerTitleStyle: { fontFamily: fonts.display, fontSize: 20 },
             contentStyle: { backgroundColor: colors.bg },
           }}
         >
