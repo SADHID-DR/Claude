@@ -470,7 +470,8 @@ const RULES: [RegExp, string][] = [
   [/rueda abdominal|ab wheel/, 'plank'],
   [/abducción/, 'legext'],
   [/elíptica/, 'run'],
-  [/carrera|correr|escaladora|cuerda|comba|double under|box jump|salto|bici|remo \(cardio\)/, 'run'],
+  [/box jump|salto de caja|salto.*caja|box.*jump/, 'burpee'],
+  [/carrera|correr|escaladora|cuerda|comba|double under|salto|bici|remo \(cardio\)/, 'run'],
 ];
 
 const MUSCLE_FALLBACK: Record<string, string> = {

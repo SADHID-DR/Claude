@@ -108,6 +108,8 @@ export default function SessionScreen() {
   const [warmupDone, setWarmupDone] = useState<Record<string, boolean>>({});
   const [showWuLib, setShowWuLib] = useState(false);
   const [wuDemo, setWuDemo] = useState<string | null>(null);
+  // Descanso personalizado por ejercicio (override del default de la rutina).
+  const [restOverride, setRestOverride] = useState<Record<string, number>>({});
 
   const toggleWuItem = (item: WarmupItem) => {
     setWarmupItems((prev) =>
@@ -298,8 +300,8 @@ export default function SessionScreen() {
     Alert.alert(
       newPRs.length > 0 ? '¡NUEVO RÉCORD! 🎉' : '¡Entrenamiento guardado! 💪',
       newPRs.length > 0
-        ? `${prLines}\n\n${logged.length} series · ${volTxt} · ≈${kcal} kcal.\n¡Estás más fuerte que nunca!`
-        : `${logged.length} series · ${volTxt} · ≈${kcal} kcal quemadas.\n¡Bien hecho!`,
+        ? `${prLines}\n\n${logged.length} series · ${volTxt} · ≈${kcal} calorías.\n¡Estás más fuerte que nunca!`
+        : `${logged.length} series · ${volTxt} · ≈${kcal} calorías quemadas.\n¡Bien hecho!`,
       [{ text: 'OK', onPress: () => router.replace('/(tabs)/history') }]
     );
   };
@@ -383,7 +385,11 @@ export default function SessionScreen() {
                       </Pressable>
                     ) : null}
                   </View>
-                  {wuDemo === w.id && demoEx ? <ExerciseDemo exercise={demoEx} size={130} /> : null}
+                  {wuDemo === w.id && demoEx ? (
+                    <View style={styles.wuDemoWrap}>
+                      <ExerciseDemo exercise={demoEx} size={130} />
+                    </View>
+                  ) : null}
                 </View>
               );
             })}
@@ -482,9 +488,30 @@ export default function SessionScreen() {
             {ex && demoFor === re.exerciseId ? (
               <ExerciseDemo exercise={ex} size={140} />
             ) : null}
-            <Text style={styles.exMeta}>
-              Objetivo: {re.sets}×{re.reps} · descanso {re.restSeconds}s
-            </Text>
+            <View style={styles.exMetaRow}>
+              <Text style={styles.exMeta}>Objetivo: {re.sets}×{re.reps}</Text>
+              <View style={styles.restEditRow}>
+                <Text style={styles.restEditLabel}>Descanso:</Text>
+                <TextInput
+                  value={String(restOverride[re.exerciseId] ?? re.restSeconds)}
+                  onChangeText={(v) => {
+                    const num = parseInt(v, 10);
+                    setRestOverride((prev) => {
+                      if (isNaN(num) || num === re.restSeconds) {
+                        const next = { ...prev };
+                        delete next[re.exerciseId];
+                        return next;
+                      }
+                      return { ...prev, [re.exerciseId]: num };
+                    });
+                  }}
+                  keyboardType="number-pad"
+                  style={styles.restInput}
+                  maxLength={3}
+                />
+                <Text style={styles.restUnit}>s</Text>
+              </View>
+            </View>
             {(() => {
               const presc = doubleProgression(sessions, re.exerciseId, re.reps);
               const txt =
@@ -547,7 +574,7 @@ export default function SessionScreen() {
                     style={[styles.cellInput, styles.colRir]}
                   />
                   <Pressable
-                    onPress={() => toggleDone(key, re.restSeconds)}
+                    onPress={() => toggleDone(key, restOverride[re.exerciseId] ?? re.restSeconds)}
                     style={({ pressed }) => [
                       styles.checkBox,
                       isDone && styles.checkBoxDone,
@@ -726,6 +753,7 @@ const styles = StyleSheet.create({
   wuNameDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
   wuDose: { color: colors.accent, fontSize: 12, fontWeight: '800' },
   wuEye: { fontSize: 16 },
+  wuDemoWrap: { alignItems: 'center', marginTop: spacing.sm, paddingVertical: spacing.sm },
   wuLibBtn: { marginTop: spacing.xs, paddingVertical: spacing.xs },
   wuLibBtnText: { color: colors.accent, fontSize: 13, fontWeight: '800' },
   wuLib: {
@@ -770,7 +798,23 @@ const styles = StyleSheet.create({
   swapOptName: { color: colors.text, fontSize: 14, fontWeight: '700' },
   swapOptEquip: { color: colors.textMuted, fontSize: 12, marginTop: 1 },
   swapPick: { color: colors.warn, fontSize: 13, fontWeight: '800' },
-  exMeta: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  exMeta: { color: colors.textMuted, fontSize: 13 },
+  exMetaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
+  restEditRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  restEditLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  restInput: {
+    backgroundColor: colors.bgElevated,
+    color: colors.text,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    textAlign: 'center',
+    width: 40,
+    fontSize: 13,
+  },
+  restUnit: { color: colors.textMuted, fontSize: 12, fontWeight: '600', width: 14 },
   coachHint: {
     color: colors.primary,
     fontSize: 13,

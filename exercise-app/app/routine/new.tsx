@@ -86,7 +86,7 @@ export default function NewRoutineScreen() {
         delete next[exerciseId];
         setOrder((ord) => ord.filter((x) => x !== exerciseId));
       } else {
-        next[exerciseId] = { exerciseId, sets: 3, reps: 10, restSeconds: 60 };
+        next[exerciseId] = { exerciseId, sets: 3, reps: 10, restSeconds: 120 };
         setOrder((ord) => [...ord, exerciseId]);
       }
       return next;

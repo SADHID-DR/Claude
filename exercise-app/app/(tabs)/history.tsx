@@ -50,6 +50,8 @@ export default function ProgressScreen() {
     setHeight,
     weightGoal,
     setWeightGoal,
+    clearAllSessions,
+    clearBodyData,
   } = useStore();
 
   const [weightIn, setWeightIn] = useState('');
@@ -174,6 +176,40 @@ export default function ProgressScreen() {
     ]);
   };
 
+  const confirmClearBody = () => {
+    Alert.alert(
+      'Borrar datos de peso corporal',
+      '¿Eliminar altura, peso, medidas y metas guardadas? Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Borrar datos',
+          style: 'destructive',
+          onPress: () => {
+            clearBodyData();
+            setHeightIn('');
+            setGoalIn('');
+          },
+        },
+      ]
+    );
+  };
+
+  const confirmClearAllHistory = () => {
+    Alert.alert(
+      'Borrar TODO el historial',
+      `¿Eliminar todos los ${sessions.length} entrenamientos registrados? Esta acción no se puede deshacer.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Borrar TODO',
+          style: 'destructive',
+          onPress: () => clearAllSessions(),
+        },
+      ]
+    );
+  };
+
   const shareProgress = async () => {
     const volDisp = toDisplay(volume, unit);
     const vol = volDisp >= 1000 ? `${(volDisp / 1000).toFixed(1)}k ${unit}` : `${Math.round(volDisp)} ${unit}`;
@@ -188,7 +224,7 @@ export default function ProgressScreen() {
       lines.push('', 'Últimos entrenos:');
       sessions.slice(0, 3).forEach((s) => {
         lines.push(
-          `• ${s.routineName} — ${fmtWeight(sessionVolume(s), unit)}${s.kcal ? ` · ≈${s.kcal} kcal` : ''}`
+          `• ${s.routineName} — ${fmtWeight(sessionVolume(s), unit)}${s.kcal ? ` · ≈${s.kcal} calorías` : ''}`
         );
       });
     }
@@ -341,8 +377,30 @@ export default function ProgressScreen() {
               Meta guardada: {fmtWeight(weightGoal, unit)}. Registra tu peso para ver el progreso.
             </Text>
           ) : null}
+
+          <Button
+            title="🗑️ Borrar datos de peso corporal"
+            variant="ghost"
+            onPress={confirmClearBody}
+            style={{ marginTop: spacing.md }}
+          />
         </Card>
       </View>
+
+      {/* Botón de borrar TODO el historial */}
+      {sessions.length > 0 ? (
+        <View style={{ marginTop: spacing.lg, marginBottom: spacing.lg }}>
+          <Button
+            title={`🗑️ Borrar TODO el historial (${sessions.length} entrenamientos)`}
+            variant="ghost"
+            onPress={confirmClearAllHistory}
+            style={{ paddingVertical: spacing.md }}
+          />
+          <Text style={styles.deleteHint}>
+            Esta acción eliminará todos tus entrenamientos registrados y no se puede deshacer.
+          </Text>
+        </View>
+      ) : null}
 
       {/* Ánimo a lo largo del tiempo */}
       {moodSeries.length >= 2 ? (
@@ -428,7 +486,7 @@ export default function ProgressScreen() {
                       {fmtDuration(item.durationSeconds)} · {exerciseCount} ejercicio
                       {exerciseCount !== 1 ? 's' : ''} · {item.sets.length} series ·{' '}
                       {fmtWeight(sessionVolume(item), unit)}
-                      {item.kcal ? ` · 🔥 ≈${item.kcal} kcal` : ''}
+                      {item.kcal ? ` · 🔥 ≈${item.kcal} calorías` : ''}
                     </Text>
                     {item.note ? <Text style={styles.noteText}>“{item.note}”</Text> : null}
                     <View style={styles.sets}>
@@ -535,4 +593,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   hintDelete: { color: colors.surfaceAlt, fontSize: 11, marginTop: spacing.sm },
+  deleteHint: { color: colors.textMuted, fontSize: 11, marginTop: spacing.xs, textAlign: 'center' },
 });

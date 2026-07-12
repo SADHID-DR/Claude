@@ -64,6 +64,8 @@ interface StoreValue {
   setReminderMinute: (m: number) => void;
   addSession: (input: Omit<WorkoutSession, 'id'>) => WorkoutSession;
   deleteSession: (id: string) => void;
+  clearAllSessions: () => void;
+  clearBodyData: () => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -321,6 +323,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
       deleteSession: (id) => {
         setSessions((prev) => prev.filter((s) => s.id !== id));
+      },
+      clearAllSessions: () => {
+        setSessions([]);
+      },
+      clearBodyData: () => {
+        setBody([]);
+        setHeightState(null);
+        setWeightGoalState(null);
       },
     }),
     [ready, routines, sessions, plans, activePlanId, remindersEnabled, reminderHour, reminderMinute, onboarded, height, weightGoal, strengthGoals, body, unit]
