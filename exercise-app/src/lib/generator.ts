@@ -53,15 +53,15 @@ const GOAL_PARAMS: Record<Goal, GoalParams> = {
   Fuerza: {
     sets: 5,
     reps: 5,
-    rest: 180,
+    rest: 120,
     exercisesPerDay: 4,
     prefer: ['Peso libre', 'Máquina'],
-    summary: 'Básicos pesados, pocas reps y descansos largos.',
+    summary: 'Básicos pesados, pocas reps y descansos amplios.',
   },
   Hipertrofia: {
     sets: 4,
     reps: 10,
-    rest: 75,
+    rest: 90,
     exercisesPerDay: 5,
     prefer: ['Peso libre', 'Máquina', 'Peso corporal'],
     summary: 'Volumen moderado, 8–12 reps y descansos medios.',

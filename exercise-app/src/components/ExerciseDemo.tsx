@@ -421,7 +421,7 @@ const RULES: [RegExp, string][] = [
   [/molino|slam|battle|olas con cuerda/, 'chop'],
   [/trineo/, 'carry'],
   [/muscle.?up/, 'pullup'],
-  [/pino|hspu|wall walk/, 'ohp'],
+  [/\bpino\b|hspu|wall walk/, 'ohp'], // \b evita casar "supino" (agarre supino)
   [/man maker|bear|complejo de oso/, 'thruster'],
   [/devil/, 'thruster'],
   [/tirón alto/, 'upright'],
@@ -460,14 +460,14 @@ const RULES: [RegExp, string][] = [
   [/tríceps en polea|pushdown|extensión de tríceps/, 'pushdown'],
   [/curl/, 'curl'],
   [/plancha/, 'plank'],
+  [/rueda abdominal|ab wheel/, 'plank'], // antes de la regla 'abdominal': el rollout es tipo plancha
   [/crunch|abdominal|giro ruso/, 'crunch'],
-  [/mountain climber|escalador/, 'mclimber'],
+  [/mountain climber/, 'mclimber'], // "escaladora" (cardio) cae en 'run', no aquí
   [/burpee/, 'burpee'],
   [/thruster|wall ball|cargada|clean|snatch|arrancada|turkish/, 'thruster'],
   [/leñador/, 'chop'],
   [/hiperextensi|extensión lumbar/, 'backext'],
   [/granjero|farmer/, 'carry'],
-  [/rueda abdominal|ab wheel/, 'plank'],
   [/abducción/, 'legext'],
   [/elíptica/, 'run'],
   [/box jump|salto de caja|salto.*caja|box.*jump/, 'burpee'],

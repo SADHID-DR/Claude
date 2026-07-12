@@ -110,6 +110,9 @@ export default function SessionScreen() {
   const [wuDemo, setWuDemo] = useState<string | null>(null);
   // Descanso personalizado por ejercicio (override del default de la rutina).
   const [restOverride, setRestOverride] = useState<Record<string, number>>({});
+  // Texto en edición del campo de descanso: permite borrar todo y reescribir
+  // sin que el valor "salte" de vuelta al default mientras escribes.
+  const [restText, setRestText] = useState<Record<string, string>>({});
 
   const toggleWuItem = (item: WarmupItem) => {
     setWarmupItems((prev) =>
@@ -493,16 +496,28 @@ export default function SessionScreen() {
               <View style={styles.restEditRow}>
                 <Text style={styles.restEditLabel}>Descanso:</Text>
                 <TextInput
-                  value={String(restOverride[re.exerciseId] ?? re.restSeconds)}
+                  value={restText[re.exerciseId] ?? String(restOverride[re.exerciseId] ?? re.restSeconds)}
                   onChangeText={(v) => {
-                    const num = parseInt(v, 10);
+                    // Aceptamos solo dígitos y permitimos el campo vacío mientras editas.
+                    const clean = v.replace(/[^0-9]/g, '');
+                    setRestText((prev) => ({ ...prev, [re.exerciseId]: clean }));
+                    const num = parseInt(clean, 10);
                     setRestOverride((prev) => {
-                      if (isNaN(num) || num === re.restSeconds) {
-                        const next = { ...prev };
-                        delete next[re.exerciseId];
-                        return next;
-                      }
-                      return { ...prev, [re.exerciseId]: num };
+                      const next = { ...prev };
+                      if (isNaN(num) || num === re.restSeconds) delete next[re.exerciseId];
+                      else next[re.exerciseId] = num;
+                      return next;
+                    });
+                  }}
+                  onBlur={() => {
+                    // Al salir, si quedó vacío o inválido volvemos a mostrar el valor efectivo.
+                    setRestText((prev) => {
+                      if (prev[re.exerciseId] == null) return prev;
+                      const num = parseInt(prev[re.exerciseId], 10);
+                      const next = { ...prev };
+                      if (isNaN(num) || num <= 0) delete next[re.exerciseId];
+                      else next[re.exerciseId] = String(num);
+                      return next;
                     });
                   }}
                   keyboardType="number-pad"
