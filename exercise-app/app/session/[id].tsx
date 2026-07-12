@@ -639,7 +639,7 @@ export default function SessionScreen() {
         />
       </Card>
 
-      <Button title="✔ Finalizar y guardar" onPress={finish} style={{ marginVertical: spacing.md }} />
+      <Button title="Finalizar y guardar" icon="check" onPress={finish} style={{ marginVertical: spacing.md }} />
       </ScrollView>
 
       {/* Descanso automático flotante */}

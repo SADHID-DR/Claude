@@ -101,12 +101,14 @@ export default function RoutinesScreen() {
     >
       <View style={styles.header}>
         <Button
-          title="✨ Generar plan"
+          title="Generar plan"
+          icon="sparkle"
           onPress={() => router.push('/routine/generate')}
           style={{ flex: 1 }}
         />
         <Button
-          title="＋ Nueva"
+          title="Nueva"
+          icon="plus"
           variant="ghost"
           onPress={() => router.push('/routine/new')}
           style={{ flex: 1 }}
@@ -219,11 +221,12 @@ export default function RoutinesScreen() {
                         <Text style={styles.dayMeta}>{r.exercises.length} ejercicios</Text>
                       </View>
                       <Button
-                        title="✎"
+                        title=""
+                        icon="pencil"
                         variant="ghost"
                         onPress={() => router.push(`/routine/new?id=${r.id}`)}
                       />
-                      <Button title="▶" onPress={() => router.push(`/session/${r.id}`)} />
+                      <Button title="" icon="play" onPress={() => router.push(`/session/${r.id}`)} />
                     </View>
                   ))}
                 </View>
@@ -231,7 +234,8 @@ export default function RoutinesScreen() {
             })}
 
             <Button
-              title="📅 Ver calendario"
+              title="Ver calendario"
+              icon="calendar"
               variant="ghost"
               onPress={() => router.push(`/plan/${plan.id}`)}
               style={{ marginTop: spacing.md }}
@@ -240,18 +244,20 @@ export default function RoutinesScreen() {
             <View style={styles.planActions}>
               {!active ? (
                 <Button
-                  title="✓ Activar"
+                  title="Activar"
+                  icon="check"
                   onPress={() => setActivePlan(plan.id)}
                   style={{ flex: 1 }}
                 />
               ) : null}
               <Button
-                title="✎"
+                title=""
+                icon="pencil"
                 variant="ghost"
                 onPress={() => router.push(`/plan/edit/${plan.id}`)}
               />
-              <Button title="⧉" variant="ghost" onPress={() => duplicatePlan(plan.id)} />
-              <Button title="🗑" variant="danger" onPress={() => confirmDeletePlan(plan)} />
+              <Button title="" icon="copy" variant="ghost" onPress={() => duplicatePlan(plan.id)} />
+              <Button title="" icon="trash" variant="danger" onPress={() => confirmDeletePlan(plan)} />
             </View>
           </Card>
         );
@@ -270,17 +276,20 @@ export default function RoutinesScreen() {
           </Text>
           <View style={styles.actions}>
             <Button
-              title="▶ Entrenar"
+              title="Entrenar"
+              icon="play"
               onPress={() => router.push(`/session/${item.id}`)}
               style={{ flex: 1 }}
             />
             <Button
-              title="✎ Editar"
+              title="Editar"
+              icon="pencil"
               variant="ghost"
               onPress={() => router.push(`/routine/new?id=${item.id}`)}
             />
             <Button
-              title="🗑"
+              title=""
+              icon="trash"
               variant="danger"
               onPress={() => confirmDeleteRoutine(item.id, item.name)}
             />

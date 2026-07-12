@@ -273,7 +273,7 @@ export default function TodayScreen() {
       {/* Ajustes inteligentes (análisis del historial en el propio teléfono) */}
       {insights.length > 0 ? (
         <FadeInView delay={160} style={{ marginTop: spacing.lg }}>
-          <SectionHeader title="Ajustes inteligentes 🧠" />
+          <SectionHeader title="Ajustes inteligentes" icon="bulb" tint={colors.accent} />
           <View style={{ gap: spacing.sm }}>
             {insights.map((it) => (
               <View
@@ -353,7 +353,7 @@ export default function TodayScreen() {
 
       {/* WOD del día */}
       <View style={{ marginTop: spacing.lg }}>
-        <SectionHeader title="WOD del día 🔥" action="Ver todos" onAction={() => router.push('/(tabs)/wods')} />
+        <SectionHeader title="WOD del día" icon="flame" tint={colors.streak} action="Ver todos" onAction={() => router.push('/(tabs)/wods')} />
         <PressableScale onPress={() => router.push(`/wod/${wodOfDay.id}`)}>
           <View style={[styles.wodCard, shadow]}>
             <Text style={styles.wodName}>{wodOfDay.name}</Text>

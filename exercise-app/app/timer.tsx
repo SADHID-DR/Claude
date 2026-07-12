@@ -160,7 +160,7 @@ export default function TimerScreen() {
           onPress={() => setRunning((r) => !r)}
           style={{ flex: 1 }}
         />
-        <Button title="↺ Reiniciar" variant="ghost" onPress={reset} style={{ flex: 1 }} />
+        <Button title="Reiniciar" icon="refresh" variant="ghost" onPress={reset} style={{ flex: 1 }} />
       </View>
     </View>
   );

@@ -255,7 +255,8 @@ export default function ProgressScreen() {
 
       {sessions.length > 0 ? (
         <Button
-          title="📤 Compartir mi progreso"
+          title="Compartir mi progreso"
+          icon="share"
           variant="ghost"
           onPress={shareProgress}
           style={{ marginTop: spacing.md }}
@@ -319,7 +320,7 @@ export default function ProgressScreen() {
 
       {/* IMC y meta de peso */}
       <View style={{ marginTop: spacing.lg }}>
-        <SectionHeader title="IMC y meta de peso 🎯" />
+        <SectionHeader title="IMC y meta de peso" icon="target" tint={colors.primary} />
         <Card>
           <View style={styles.bodyInputs}>
             <View style={styles.bodyField}>
@@ -379,7 +380,8 @@ export default function ProgressScreen() {
           ) : null}
 
           <Button
-            title="🗑️ Borrar datos de peso corporal"
+            title="Borrar datos de peso corporal"
+            icon="trash"
             variant="ghost"
             onPress={confirmClearBody}
             style={{ marginTop: spacing.md }}
@@ -391,7 +393,8 @@ export default function ProgressScreen() {
       {sessions.length > 0 ? (
         <View style={{ marginTop: spacing.lg, marginBottom: spacing.lg }}>
           <Button
-            title={`🗑️ Borrar TODO el historial (${sessions.length} entrenamientos)`}
+            title={`Borrar TODO el historial (${sessions.length} entrenamientos)`}
+            icon="trash"
             variant="ghost"
             onPress={confirmClearAllHistory}
             style={{ paddingVertical: spacing.md }}
@@ -415,7 +418,7 @@ export default function ProgressScreen() {
       {/* Salón de récords: mejores 1RM estimados */}
       {topPRs.length > 0 ? (
         <View style={{ marginTop: spacing.lg }}>
-          <SectionHeader title="Salón de récords 🏆" />
+          <SectionHeader title="Salón de récords" icon="trophy" tint={colors.warn} />
           <Card>
             {topPRs.map((p, i) => (
               <View key={p.exerciseId} style={styles.prRow}>

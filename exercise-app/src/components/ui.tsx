@@ -40,12 +40,14 @@ export function Button({
   variant = 'primary',
   style,
   haptic = true,
+  icon,
 }: {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'ghost' | 'danger';
   style?: ViewStyle;
   haptic?: boolean;
+  icon?: IconName;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
   const bg =
@@ -76,7 +78,8 @@ export function Button({
           style,
         ]}
       >
-        <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
+        {icon ? <Icon name={icon} size={17} color={textColor} strokeWidth={2.2} /> : null}
+        {title ? <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text> : null}
       </Animated.View>
     </Pressable>
   );
@@ -117,14 +120,21 @@ export function SectionHeader({
   title,
   action,
   onAction,
+  icon,
+  tint = colors.primary,
 }: {
   title: string;
   action?: string;
   onAction?: () => void;
+  icon?: IconName;
+  tint?: string;
 }) {
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionTitleRow}>
+        {icon ? <Icon name={icon} size={19} color={tint} strokeWidth={2.2} /> : null}
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
       {action ? (
         <Pressable onPress={onAction} hitSlop={8}>
           <Text style={styles.sectionAction}>{action}</Text>
@@ -191,6 +201,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
+    flexDirection: 'row',
+    gap: 7,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -216,6 +228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   sectionTitle: { color: colors.text, fontSize: 20, fontFamily: fonts.display, letterSpacing: 0.3 },
   sectionAction: { color: colors.accent, fontSize: 14, fontFamily: fonts.bodySemibold },
   title: { color: colors.text, fontSize: 30, fontFamily: fonts.displayBold, letterSpacing: 0.3 },

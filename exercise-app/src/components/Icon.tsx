@@ -26,7 +26,12 @@ export type IconName =
   | 'clock'      // tiempo / descanso
   | 'calendar'   // plan / calendario
   | 'share'      // compartir
-  | 'watch';     // wearable
+  | 'watch'      // wearable
+  | 'play'       // entrenar / iniciar
+  | 'copy'       // duplicar
+  | 'plus'       // añadir
+  | 'refresh'    // actualizar / regenerar
+  | 'sparkle';   // generar (IA)
 
 export function Icon({
   name,
@@ -169,6 +174,33 @@ export function Icon({
           <Line x1={14.5} y1={7} x2={14.5} y2={4} {...c} />
           <Line x1={9.5} y1={17} x2={9.5} y2={20} {...c} />
           <Line x1={14.5} y1={17} x2={14.5} y2={20} {...c} />
+        </>
+      )}
+      {name === 'play' && (
+        <Path d="M7 5 L18 12 L7 19 Z" {...c} fill={color} />
+      )}
+      {name === 'copy' && (
+        <>
+          <Rect x={8} y={8} width={11} height={11} rx={2} {...c} />
+          <Path d="M5 15 H4.5 A1.5 1.5 0 0 1 3 13.5 V5 A2 2 0 0 1 5 3 H13.5 A1.5 1.5 0 0 1 15 4.5 V5" {...c} />
+        </>
+      )}
+      {name === 'plus' && (
+        <>
+          <Line x1={12} y1={5} x2={12} y2={19} {...c} />
+          <Line x1={5} y1={12} x2={19} y2={12} {...c} />
+        </>
+      )}
+      {name === 'refresh' && (
+        <>
+          <Path d="M20 12 A8 8 0 1 1 17.5 6.3" {...c} />
+          <Polyline points="17.5,3 17.5,6.5 14,6.5" {...c} />
+        </>
+      )}
+      {name === 'sparkle' && (
+        <>
+          <Path d="M12 4 C12.6 8.5 13.5 9.4 18 10 C13.5 10.6 12.6 11.5 12 16 C11.4 11.5 10.5 10.6 6 10 C10.5 9.4 11.4 8.5 12 4 Z" {...c} fill={color} />
+          <Path d="M18 15 C18.25 16.8 18.6 17.15 20.4 17.4 C18.6 17.65 18.25 18 18 19.8 C17.75 18 17.4 17.65 15.6 17.4 C17.4 17.15 17.75 16.8 18 15 Z" {...c} fill={color} />
         </>
       )}
     </Svg>

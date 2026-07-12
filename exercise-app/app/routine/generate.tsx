@@ -281,7 +281,8 @@ export default function GenerateRoutineScreen() {
       <Text style={styles.previewTitle}>{plan.title}</Text>
       <Text style={styles.summary}>{plan.summary}</Text>
       <Button
-        title="🔄 Regenerar ejercicios"
+        title="Regenerar ejercicios"
+        icon="refresh"
         variant="ghost"
         onPress={() => setSeed((s) => s + 1)}
         style={{ marginTop: spacing.sm }}

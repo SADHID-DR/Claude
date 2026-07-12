@@ -228,7 +228,8 @@ export default function PlanCalendarScreen() {
             />
           ))}
           <Button
-            title="✎ Elegir ejercicios yo mismo"
+            title="Elegir ejercicios yo mismo"
+            icon="pencil"
             variant="ghost"
             onPress={() => {
               setQuickFor(null);

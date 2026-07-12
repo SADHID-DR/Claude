@@ -57,7 +57,8 @@ export default function WodDetailScreen() {
       </Card>
 
       <Button
-        title="⏱️ Abrir temporizador"
+        title="Abrir temporizador"
+        icon="clock"
         onPress={() => router.push('/timer')}
         style={{ marginVertical: spacing.md }}
       />
