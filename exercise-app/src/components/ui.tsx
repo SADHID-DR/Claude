@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { colors, radius, spacing, muscleColors, shadow, fonts } from '@/lib/theme';
 import { tapMedium } from '@/lib/haptics';
+import { Icon, IconName } from '@/components/Icon';
 
 export function Card({
   children,
@@ -86,18 +87,26 @@ export function StatTile({
   value,
   label,
   emoji,
+  icon,
   tint = colors.primary,
   style,
 }: {
   value: string;
   label: string;
   emoji?: string;
+  icon?: IconName;
   tint?: string;
   style?: ViewStyle;
 }) {
   return (
     <View style={[styles.statTile, style]}>
-      {emoji ? <Text style={styles.statEmoji}>{emoji}</Text> : null}
+      {icon ? (
+        <View style={styles.statIcon}>
+          <Icon name={icon} size={20} color={tint} strokeWidth={2.2} />
+        </View>
+      ) : emoji ? (
+        <Text style={styles.statEmoji}>{emoji}</Text>
+      ) : null}
       <Text style={[styles.statValue, { color: tint }]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -198,6 +207,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statEmoji: { fontSize: 18, marginBottom: 2 },
+  statIcon: { marginBottom: 4, height: 20, justifyContent: 'center' },
   statValue: { fontSize: 28, fontFamily: fonts.displayBold, letterSpacing: 0.3 },
   statLabel: { color: colors.textMuted, fontSize: 12, marginTop: 2, textAlign: 'center', fontFamily: fonts.bodyMedium },
   sectionHeader: {

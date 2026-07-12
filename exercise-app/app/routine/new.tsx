@@ -13,6 +13,7 @@ import { EXERCISES } from '@/data/exercises';
 import { useStore } from '@/lib/store';
 import { MuscleGroup, RoutineExercise } from '@/lib/types';
 import { Button, Card, Tag } from '@/components/ui';
+import { Icon } from '@/components/Icon';
 import { ExerciseDemo } from '@/components/ExerciseDemo';
 import { colors, radius, spacing } from '@/lib/theme';
 
@@ -219,7 +220,7 @@ export default function NewRoutineScreen() {
                 hitSlop={8}
                 style={styles.eyeBtn}
               >
-                <Text style={styles.eyeText}>{demoId === ex.id ? '✕' : '👁'}</Text>
+                <Icon name={demoId === ex.id ? 'close' : 'eye'} size={20} color={demoId === ex.id ? colors.textMuted : colors.accent} />
               </Pressable>
               <Tag label={ex.muscle} />
             </Pressable>

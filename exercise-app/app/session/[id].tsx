@@ -22,6 +22,7 @@ import { notifySuccess, tapMedium } from '@/lib/haptics';
 import { initSounds, playTick, playGo, unloadSounds } from '@/lib/sound';
 import { LoggedSet, RoutineExercise } from '@/lib/types';
 import { Button, Card } from '@/components/ui';
+import { Icon } from '@/components/Icon';
 import { ExerciseDemo } from '@/components/ExerciseDemo';
 import { Confetti } from '@/components/Confetti';
 import { colors, radius, spacing } from '@/lib/theme';
@@ -384,7 +385,7 @@ export default function SessionScreen() {
                         onPress={() => setWuDemo((prev) => (prev === w.id ? null : w.id))}
                         hitSlop={8}
                       >
-                        <Text style={styles.wuEye}>👁</Text>
+                        <Icon name={wuDemo === w.id ? 'close' : 'eye'} size={18} color={colors.accent} />
                       </Pressable>
                     ) : null}
                   </View>
@@ -453,13 +454,18 @@ export default function SessionScreen() {
                   style={[styles.demoBtn, demoFor === re.exerciseId && styles.demoBtnOn]}
                   hitSlop={6}
                 >
+                  <Icon
+                    name={demoFor === re.exerciseId ? 'close' : 'eye'}
+                    size={16}
+                    color={demoFor === re.exerciseId ? colors.onPrimary : colors.accent}
+                  />
                   <Text
                     style={[
                       styles.demoBtnText,
                       demoFor === re.exerciseId && styles.demoBtnTextOn,
                     ]}
                   >
-                    👁 Técnica
+                    Técnica
                   </Text>
                 </Pressable>
               ) : null}
@@ -782,6 +788,9 @@ const styles = StyleSheet.create({
   wuKind: { color: colors.textMuted, fontSize: 11 },
   exName: { color: colors.text, fontSize: 16, fontWeight: '800' },
   demoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,

@@ -26,6 +26,8 @@ import { Onboarding } from '@/components/Onboarding';
 import { ProgressRing } from '@/components/ProgressRing';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, SectionHeader, StatTile } from '@/components/ui';
+import { Icon } from '@/components/Icon';
+import { Skeleton, StatRowSkeleton, CardSkeleton } from '@/components/Skeleton';
 import { colors, radius, spacing, shadow } from '@/lib/theme';
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -112,6 +114,22 @@ export default function TodayScreen() {
     return <Onboarding />;
   }
 
+  // Cargando desde AsyncStorage: esqueleto para evitar el "flash" de datos vacíos.
+  if (!ready) {
+    return (
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ padding: spacing.md, paddingTop: insets.top + spacing.sm, gap: spacing.md }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Skeleton width="60%" height={26} />
+        <StatRowSkeleton />
+        <CardSkeleton height={220} />
+        <CardSkeleton height={120} />
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView
       style={styles.container}
@@ -125,7 +143,7 @@ export default function TodayScreen() {
           <Text style={styles.subGreeting}>¿List@ para entrenar?</Text>
         </View>
         <View style={styles.streakBadge}>
-          <Text style={styles.streakFlame}>🔥</Text>
+          <Icon name="flame" size={18} color={colors.streak} strokeWidth={2.2} />
           <Text style={styles.streakNum}>{streak}</Text>
           <Text style={styles.streakLabel}>días</Text>
         </View>
@@ -186,10 +204,10 @@ export default function TodayScreen() {
 
       {/* KPIs */}
       <View style={styles.statsRow}>
-        <StatTile emoji="🔥" value={String(streak)} label="Racha" tint={colors.streak} />
-        <StatTile emoji="🏋️" value={String(sessions.length)} label="Entrenos" tint={colors.accent} />
+        <StatTile icon="flame" value={String(streak)} label="Racha" tint={colors.streak} />
+        <StatTile icon="dumbbell" value={String(sessions.length)} label="Entrenos" tint={colors.accent} />
         <StatTile
-          emoji="📊"
+          icon="bars"
           value={
             volumeDisplay >= 1000
               ? `${(volumeDisplay / 1000).toFixed(1)}k`

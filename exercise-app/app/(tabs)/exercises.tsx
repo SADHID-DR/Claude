@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { EXERCISES } from '@/data/exercises';
 import { Exercise, MuscleGroup } from '@/lib/types';
 import { Card, Tag } from '@/components/ui';
+import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/PressableScale';
 import { ExerciseIcon } from '@/components/ExerciseIcon';
 import { ExerciseDemo } from '@/components/ExerciseDemo';
@@ -185,7 +186,7 @@ export default function ExercisesScreen() {
                   hitSlop={8}
                   style={styles.eyeBtn}
                 >
-                  <Text style={styles.eyeText}>{demoId === item.id ? '✕' : '👁'}</Text>
+                  <Icon name={demoId === item.id ? 'close' : 'eye'} size={20} color={demoId === item.id ? colors.textMuted : colors.accent} />
                 </Pressable>
               </View>
               {demoId === item.id ? (

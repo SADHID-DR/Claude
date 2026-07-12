@@ -243,10 +243,10 @@ export default function ProgressScreen() {
     >
       {/* KPIs */}
       <View style={styles.statsRow}>
-        <StatTile emoji="🔥" value={String(streak)} label="Racha (días)" tint={colors.streak} />
-        <StatTile emoji="🏋️" value={String(sessions.length)} label="Entrenos" tint={colors.accent} />
+        <StatTile icon="flame" value={String(streak)} label="Racha (días)" tint={colors.streak} />
+        <StatTile icon="dumbbell" value={String(sessions.length)} label="Entrenos" tint={colors.accent} />
         <StatTile
-          emoji="📊"
+          icon="bars"
           value={toDisplay(volume, unit) >= 1000 ? `${(toDisplay(volume, unit) / 1000).toFixed(1)}k` : `${Math.round(toDisplay(volume, unit))}`}
           label={`Volumen ${unit}`}
           tint={colors.primary}
