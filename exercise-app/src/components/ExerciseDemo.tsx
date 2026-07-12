@@ -410,6 +410,29 @@ const PATTERNS: Record<string, Pattern> = {
     noWeight: true,
     ms: 800,
   },
+  // Pliométrico: agrupa/carga → extensión aérea con pies fuera del suelo y
+  // brazos arriba (box jump, sentadilla con salto, zancada con salto).
+  jump: {
+    a: {
+      hd: [48, 34], s: [48, 44], h: [46, 62],
+      k1: [57, 70], a1: [53, 88], k2: [55, 72], a2: [51, 88],
+      e: [51, 52], w: [43, 55],
+    },
+    b: {
+      hd: [50, 10], s: [50, 20], h: [50, 44],
+      k1: [51, 58], a1: [50, 72], k2: [49, 59], a2: [48, 73],
+      e: [52, 10], w: [53, 3],
+    },
+    noWeight: true,
+    ms: 520,
+  },
+  // Apertura (fly): tumbado, brazos abiertos en arco → juntos sobre el pecho.
+  // Distinto del press (empuje vertical): describe el arco característico.
+  fly: {
+    a: { ...BENCH_BODY, e: [28, 60], w: [20, 64] },
+    b: { ...BENCH_BODY, e: [34, 52], w: [35, 44] },
+    bench: { x: 16, y: 74, w: 48 },
+  },
 };
 
 /** Reglas por nombre (en orden: la primera que casa gana). */
@@ -426,11 +449,12 @@ const RULES: [RegExp, string][] = [
   [/devil/, 'thruster'],
   [/tirón alto/, 'upright'],
   [/pull.?through/, 'swing'],
-  [/contractora/, 'bench'],
+  [/contractora|apertura/, 'fly'], // pec-deck y aperturas: arco de fly, no press
   [/deltoide posterior/, 'kickback'],
   [/cruce de poleas|crossover/, 'chop'],
   [/aductor/, 'legext'],
   [/hack/, 'squat'],
+  [/sentadilla con salto|zancada con salto|salto vertical/, 'jump'], // pliométrico
   [/búlgara|zancada|subida al cajón|lunge/, 'lunge'],
   [/sentadilla|air squat|prensa de pierna|goblet|wall sit/, 'squat'],
   [/curl femoral/, 'legcurl'],
@@ -470,7 +494,7 @@ const RULES: [RegExp, string][] = [
   [/granjero|farmer/, 'carry'],
   [/abducción/, 'legext'],
   [/elíptica/, 'run'],
-  [/box jump|salto de caja|salto.*caja|box.*jump/, 'burpee'],
+  [/box jump|salto de caja|salto.*caja|box.*jump/, 'jump'],
   [/carrera|correr|escaladora|cuerda|comba|double under|salto|bici|remo \(cardio\)/, 'run'],
 ];
 
