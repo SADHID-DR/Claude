@@ -82,7 +82,7 @@ export default function ExercisesScreen() {
         e.equipment.toLowerCase().includes(q) ||
         e.muscle.toLowerCase().includes(q);
       return matchCategory && matchMuscle && matchQuery;
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
   }, [query, equip, muscle]);
 
   return (

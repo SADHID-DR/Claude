@@ -427,7 +427,9 @@ export default function SessionScreen() {
         const ex = getExerciseById(re.exerciseId);
         // Ejercicios relacionados: mismo grupo muscular (excluye el actual).
         const related = ex
-          ? EXERCISES.filter((e) => e.muscle === ex.muscle && e.id !== ex.id)
+          ? EXERCISES.filter((e) => e.muscle === ex.muscle && e.id !== ex.id).sort((a, b) =>
+              a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+            )
           : [];
         return (
           <Card key={`${exIndex}-${re.exerciseId}`} style={{ marginBottom: spacing.sm }}>

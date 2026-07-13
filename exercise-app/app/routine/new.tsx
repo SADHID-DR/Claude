@@ -77,7 +77,7 @@ export default function NewRoutineScreen() {
         e.name.toLowerCase().includes(q) ||
         e.equipment.toLowerCase().includes(q);
       return matchMuscle && matchQuery;
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
   }, [query, muscle]);
 
   const toggle = (exerciseId: string) => {
