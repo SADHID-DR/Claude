@@ -13,7 +13,7 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/lib/store';
 import { getExerciseById, EXERCISES } from '@/data/exercises';
-import { lastWeightFor, doubleProgression } from '@/lib/coach';
+import { lastWeightFor, doubleProgression, lastPerformanceFor } from '@/lib/coach';
 import { detectNewPRs, e1rmFor } from '@/lib/strength';
 import { estimateKcal } from '@/lib/stats';
 import { WARMUPS, WarmupItem, recommendedWarmup } from '@/data/warmups';
@@ -548,6 +548,24 @@ export default function SessionScreen() {
               return <Text style={styles.coachHint}>🎯 {txt}</Text>;
             })()}
             {(() => {
+              const last = lastPerformanceFor(sessions, re.exerciseId);
+              if (!last) return null;
+              const days = Math.round((Date.now() - last.date) / 86400000);
+              const when = days <= 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`;
+              const setsTxt = last.sets
+                .map((s) => `${fmtWeight(s.weight, unit, { round: true })}×${s.reps}`)
+                .join('  ·  ');
+              return (
+                <View style={styles.lastPerfRow}>
+                  <Icon name="refresh" size={13} color={colors.textMuted} strokeWidth={2} />
+                  <Text style={styles.lastPerfText}>
+                    <Text style={styles.lastPerfLabel}>Última vez ({when}): </Text>
+                    {setsTxt}
+                  </Text>
+                </View>
+              );
+            })()}
+            {(() => {
               const e1 = e1rmFor(sessions, re.exerciseId);
               return e1 != null ? (
                 <Text style={styles.e1rmHint}>
@@ -846,8 +864,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginTop: spacing.xs,
+    marginBottom: 6,
+  },
+  lastPerfRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
     marginBottom: spacing.sm,
   },
+  lastPerfText: { color: colors.text, fontSize: 12.5, lineHeight: 17, flex: 1 },
+  lastPerfLabel: { color: colors.textMuted, fontWeight: '700' },
   e1rmHint: {
     color: colors.streak,
     fontSize: 12,

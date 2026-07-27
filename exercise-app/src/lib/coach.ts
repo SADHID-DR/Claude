@@ -40,6 +40,35 @@ export function progressionHint(
   return `La última vez usaste ${fmtWeight(lastWeight, unit)}. Si completaste todas las series, prueba ${nextDisplay} ${unit}.`;
 }
 
+export interface LastPerformance {
+  /** Fecha (ms) de la última sesión que incluyó este ejercicio. */
+  date: number;
+  /** Series realizadas esa vez, en orden, con peso (kg), reps y RIR. */
+  sets: { weight: number; reps: number; rir?: number }[];
+}
+
+/**
+ * Última actuación registrada del ejercicio: las series (peso×reps) de la
+ * sesión más reciente que lo incluyó. Se muestra como referencia para que
+ * sepas exactamente qué hiciste la última vez antes de cargar la barra.
+ * Se asume `sessions` ordenada de más reciente a más antigua.
+ */
+export function lastPerformanceFor(
+  sessions: WorkoutSession[],
+  exerciseId: string
+): LastPerformance | null {
+  for (const session of sessions) {
+    const sets = session.sets.filter((s) => s.exerciseId === exerciseId);
+    if (sets.length > 0) {
+      return {
+        date: session.date,
+        sets: sets.map((s) => ({ weight: s.weight, reps: s.reps, rir: s.rir })),
+      };
+    }
+  }
+  return null;
+}
+
 export interface Prescription {
   /** Peso prescrito para hoy (kg) o null si es la primera vez. */
   weightKg: number | null;
