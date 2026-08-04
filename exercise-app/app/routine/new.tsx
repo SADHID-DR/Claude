@@ -217,8 +217,10 @@ export default function NewRoutineScreen() {
               </View>
               <Pressable
                 onPress={() => setDemoId((d) => (d === ex.id ? null : ex.id))}
-                hitSlop={8}
+                hitSlop={12}
                 style={styles.eyeBtn}
+                accessibilityRole="button"
+                accessibilityLabel={demoId === ex.id ? 'Ocultar técnica' : 'Ver técnica'}
               >
                 <Icon name={demoId === ex.id ? 'close' : 'eye'} size={20} color={demoId === ex.id ? colors.textMuted : colors.accent} />
               </Pressable>

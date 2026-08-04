@@ -34,6 +34,21 @@ export function Tag({ label }: { label: string }) {
   );
 }
 
+/** Etiqueta accesible por defecto para botones solo-icono (sin texto). */
+const ICON_A11Y: Partial<Record<IconName, string>> = {
+  pencil: 'Editar',
+  play: 'Entrenar',
+  trash: 'Eliminar',
+  copy: 'Duplicar',
+  plus: 'Añadir',
+  check: 'Confirmar',
+  close: 'Cerrar',
+  share: 'Compartir',
+  calendar: 'Ver calendario',
+  refresh: 'Actualizar',
+  clock: 'Temporizador',
+};
+
 export function Button({
   title,
   onPress,
@@ -41,6 +56,7 @@ export function Button({
   style,
   haptic = true,
   icon,
+  a11yLabel,
 }: {
   title: string;
   onPress: () => void;
@@ -48,6 +64,8 @@ export function Button({
   style?: ViewStyle;
   haptic?: boolean;
   icon?: IconName;
+  /** Etiqueta para lector de pantalla; útil en botones solo-icono. */
+  a11yLabel?: string;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
   const bg =
@@ -57,6 +75,7 @@ export function Button({
         ? colors.danger
         : 'transparent';
   const textColor = variant === 'ghost' ? colors.text : colors.onPrimary;
+  const label = a11yLabel ?? (title || (icon ? ICON_A11Y[icon] : undefined) || 'Botón');
 
   const to = (v: number) =>
     Animated.spring(scale, { toValue: v, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
@@ -69,6 +88,8 @@ export function Button({
         if (haptic) tapMedium();
         onPress();
       }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       <Animated.View
         style={[
@@ -136,7 +157,12 @@ export function SectionHeader({
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       {action ? (
-        <Pressable onPress={onAction} hitSlop={8}>
+        <Pressable
+          onPress={onAction}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={action}
+        >
           <Text style={styles.sectionAction}>{action}</Text>
         </Pressable>
       ) : null}

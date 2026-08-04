@@ -383,7 +383,9 @@ export default function SessionScreen() {
                     {demoEx ? (
                       <Pressable
                         onPress={() => setWuDemo((prev) => (prev === w.id ? null : w.id))}
-                        hitSlop={8}
+                        hitSlop={14}
+                        accessibilityRole="button"
+                        accessibilityLabel={wuDemo === w.id ? 'Ocultar técnica' : 'Ver técnica'}
                       >
                         <Icon name={wuDemo === w.id ? 'close' : 'eye'} size={18} color={colors.accent} />
                       </Pressable>
@@ -439,12 +441,15 @@ export default function SessionScreen() {
                 <Pressable
                   onPress={() => setSwapFor((prev) => (prev === exIndex ? null : exIndex))}
                   style={[styles.demoBtn, swapFor === exIndex && styles.swapBtnOn]}
-                  hitSlop={6}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cambiar ejercicio"
                 >
+                  <Icon name="refresh" size={15} color={swapFor === exIndex ? colors.onPrimary : colors.textMuted} />
                   <Text
                     style={[styles.demoBtnText, swapFor === exIndex && styles.swapBtnTextOn]}
                   >
-                    🔀 Cambiar
+                    Cambiar
                   </Text>
                 </Pressable>
               ) : null}
@@ -454,7 +459,9 @@ export default function SessionScreen() {
                     setDemoFor((prev) => (prev === re.exerciseId ? null : re.exerciseId))
                   }
                   style={[styles.demoBtn, demoFor === re.exerciseId && styles.demoBtnOn]}
-                  hitSlop={6}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={demoFor === re.exerciseId ? 'Ocultar técnica' : 'Ver técnica'}
                 >
                   <Icon
                     name={demoFor === re.exerciseId ? 'close' : 'eye'}

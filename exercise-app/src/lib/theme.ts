@@ -8,7 +8,7 @@ export const colors = {
   surfaceAlt: '#334155',
   border: '#26324a',
   text: '#f1f5f9',
-  textMuted: '#94a3b8',
+  textMuted: '#a8b4c6', // WCAG AA sobre todas las superficies (incl. surfaceAlt 4.9:1)
   primary: '#22c55e',
   primaryDark: '#16a34a',
   primarySoft: '#14251f',

@@ -183,8 +183,10 @@ export default function ExercisesScreen() {
                 </View>
                 <Pressable
                   onPress={() => setDemoId((d) => (d === item.id ? null : item.id))}
-                  hitSlop={8}
+                  hitSlop={12}
                   style={styles.eyeBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={demoId === item.id ? 'Ocultar técnica' : 'Ver técnica'}
                 >
                   <Icon name={demoId === item.id ? 'close' : 'eye'} size={20} color={demoId === item.id ? colors.textMuted : colors.accent} />
                 </Pressable>

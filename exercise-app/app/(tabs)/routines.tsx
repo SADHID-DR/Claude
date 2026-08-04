@@ -223,10 +223,11 @@ export default function RoutinesScreen() {
                       <Button
                         title=""
                         icon="pencil"
+                        a11yLabel="Editar rutina"
                         variant="ghost"
                         onPress={() => router.push(`/routine/new?id=${r.id}`)}
                       />
-                      <Button title="" icon="play" onPress={() => router.push(`/session/${r.id}`)} />
+                      <Button title="" icon="play" a11yLabel="Entrenar rutina" onPress={() => router.push(`/session/${r.id}`)} />
                     </View>
                   ))}
                 </View>
@@ -253,11 +254,12 @@ export default function RoutinesScreen() {
               <Button
                 title=""
                 icon="pencil"
+                a11yLabel="Editar plan"
                 variant="ghost"
                 onPress={() => router.push(`/plan/edit/${plan.id}`)}
               />
-              <Button title="" icon="copy" variant="ghost" onPress={() => duplicatePlan(plan.id)} />
-              <Button title="" icon="trash" variant="danger" onPress={() => confirmDeletePlan(plan)} />
+              <Button title="" icon="copy" a11yLabel="Duplicar plan" variant="ghost" onPress={() => duplicatePlan(plan.id)} />
+              <Button title="" icon="trash" a11yLabel="Eliminar plan" variant="danger" onPress={() => confirmDeletePlan(plan)} />
             </View>
           </Card>
         );
@@ -290,6 +292,7 @@ export default function RoutinesScreen() {
             <Button
               title=""
               icon="trash"
+              a11yLabel="Eliminar rutina"
               variant="danger"
               onPress={() => confirmDeleteRoutine(item.id, item.name)}
             />
