@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""
+CLI unificado: Elige entre Claude (via stdin) o Nemotron (via Ollama).
+Siempre te da la opción de elegir qué modelo usar.
+"""
+
+import subprocess
+import sys
+import os
+import requests
+import json
+
+OLLAMA_API_URL = "http://localhost:11434"
+NEMOTRON_MODEL = "nemotron-3.5-lightning"
+
+def check_ollama_running():
+    """Verifica si ollama está corriendo."""
+    try:
+        response = requests.get(f"{OLLAMA_API_URL}/api/tags", timeout=5)
+        return response.status_code == 200
+    except:
+        return False
+
+def run_nemotron(prompt):
+    """Ejecuta prompt en Nemotron."""
+    try:
+        response = requests.post(
+            f"{OLLAMA_API_URL}/api/generate",
+            json={"model": NEMOTRON_MODEL, "prompt": prompt, "stream": True},
+            timeout=300
+        )
+
+        if response.status_code == 200:
+            result = ""
+            for line in response.iter_lines():
+                if line:
+                    data = json.loads(line)
+                    chunk = data.get("response", "")
+                    result += chunk
+                    sys.stdout.write(chunk)
+                    sys.stdout.flush()
+            return result
+        else:
+            print(f"\n❌ Error en Nemotron: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"\n❌ Error de conexión: {e}")
+        return None
+
+def choose_model():
+    """Menú interactivo para elegir modelo."""
+    print("\n🤖 ¿Qué modelo quieres usar?")
+    print("  1) Claude (via Claude Code)")
+    print("  2) Nemotron 3.5 Lightning (via Ollama)")
+
+    # Verificar disponibilidad
+    if not check_ollama_running():
+        print("     ⚠️  (Ollama no está disponible)")
+
+    print("\nOpción [1-2]: ", end="")
+    choice = input().strip()
+
+    if choice == "2":
+        if not check_ollama_running():
+            print("\n❌ Ollama no está corriendo")
+            print("   Inicia con: ollama serve")
+            return None
+        return "nemotron"
+    else:
+        return "claude"
+
+def main():
+    if len(sys.argv) < 2:
+        print("Uso: claude-nemotron-cli [opción] '<prompt>'")
+        print("\nOpciones:")
+        print("  --claude      Usar Claude")
+        print("  --nemotron    Usar Nemotron 3.5 Lightning")
+        print("  --ask         Preguntarte qué modelo usar")
+        print("  --help        Mostrar esta ayuda")
+        print("\nEjemplo:")
+        print("  claude-nemotron-cli --ask 'Explica Python'")
+        sys.exit(1)
+
+    # Parsear argumentos
+    model = None
+    prompt = None
+
+    if sys.argv[1] == "--help":
+        print("Uso: claude-nemotron-cli [opción] '<prompt>'")
+        sys.exit(0)
+    elif sys.argv[1] == "--ask":
+        model = choose_model()
+        prompt = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None
+    elif sys.argv[1] == "--claude":
+        model = "claude"
+        prompt = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None
+    elif sys.argv[1] == "--nemotron":
+        model = "nemotron"
+        prompt = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None
+    else:
+        # Default: preguntar
+        model = choose_model()
+        prompt = " ".join(sys.argv[1:])
+
+    if not model or not prompt:
+        print("❌ Necesitas especificar un modelo y un prompt")
+        sys.exit(1)
+
+    print(f"\n📝 Prompt: {prompt}")
+    print("─" * 60)
+    print("Respuesta:\n")
+
+    if model == "nemotron":
+        print(f"🤖 Nemotron 3.5 Lightning\n")
+        run_nemotron(prompt)
+        print("\n─" * 60)
+        print("✅ Listo")
+    elif model == "claude":
+        print("🧠 Claude (via Claude Code)\n")
+        print("💡 Para usar Claude, ejecuta esto manualmente en tu sesión de Claude Code")
+        print(f"   Pregunta: {prompt}")
+
+if __name__ == "__main__":
+    main()
