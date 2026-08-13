@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ProjectParams, Contractor, ProductionSheet, AuditLogEntry, GeneralPriceGuide, Project, ProductionReport } from './types';
+import { ProjectParams, Contractor, ProductionSheet, AuditLogEntry, GeneralPriceGuide, Project, ProductionReport, PurchaseOrder } from './types';
 import { INITIAL_PARAMS, INITIAL_CONTRACTORS, INITIAL_SHEETS, INITIAL_GENERAL_PRICE_GUIDE } from './data';
 import { exportSystemToExcel } from './excelExporter';
 import { syncService } from './syncService';
@@ -21,6 +21,7 @@ import ResumenTab from './components/ResumenTab';
 import AiChatTab from './components/AiChatTab';
 import GoogleDriveTab from './components/GoogleDriveTab';
 import UsersTab from './components/UsersTab';
+import PurchaseOrdersTab from './components/PurchaseOrdersTab';
 import LoginScreen from './components/LoginScreen';
 import { AppLogo } from './components/AppLogo';
 import { autoBackupToDrive } from './googleDriveSync';
@@ -68,6 +69,7 @@ const STORAGE_KEY_CONTRACTORS = 'nom_construction_v2_contractors';
 const STORAGE_KEY_SHEETS = 'nom_construction_v2_sheets';
 const STORAGE_KEY_ITBIS_NET = 'nom_construction_v2_itbis_net_toggle';
 const STORAGE_KEY_GENERAL_PRICE_GUIDE = 'nom_construction_v2_general_price_guide';
+const STORAGE_KEY_PURCHASE_ORDERS = 'nom_construction_v2_purchase_orders';
 
 function normalizeSheets(rawSheets: ProductionSheet[]): ProductionSheet[] {
   const normalizedList = rawSheets;
@@ -367,10 +369,24 @@ export default function App() {
     }
   }, [params, contractors, sheets, isOnline]);
 
-  const [selectedTab, setSelectedTab] = useState<'dashboard' | 'params' | 'contractors' | 'sheets' | 'resumen' | 'aiChat' | 'googleDrive' | 'users'>('dashboard');
+  const [selectedTab, setSelectedTab] = useState<'dashboard' | 'params' | 'contractors' | 'sheets' | 'resumen' | 'aiChat' | 'googleDrive' | 'users' | 'purchaseOrders'>('dashboard');
   const [activeSheetId, setActiveSheetId] = useState<string | null>(() => {
     const defaultId = INITIAL_SHEETS[0]?.id || null;
     return defaultId;
+  });
+
+  // Purchase Orders State
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_PURCHASE_ORDERS);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error loading purchase orders', e);
+        return [];
+      }
+    }
+    return [];
   });
 
   // --- REGISTRO DE AUDITORÍA (AUDIT LOG) EN LOCALSTORAGE ---
@@ -461,6 +477,52 @@ export default function App() {
       localStorage.setItem(STORAGE_KEY_AUDIT_LOGS, JSON.stringify(limited));
       return limited;
     });
+  };
+
+  // Purchase Orders Handlers
+  const handleAddPurchaseOrder = (po: PurchaseOrder) => {
+    if (isReadOnly) {
+      showAppToast("Modo Lectura: No tienes permiso para crear órdenes de compra.", "warn");
+      return;
+    }
+    setPurchaseOrders(prev => {
+      const updated = [po, ...prev];
+      localStorage.setItem(STORAGE_KEY_PURCHASE_ORDERS, JSON.stringify(updated));
+      return updated;
+    });
+    addAuditEntry('Crear OC', `Orden ${po.poNumber} creada para ${po.supplierName}`);
+    showAppToast(`Orden ${po.poNumber} creada exitosamente`, 'success');
+  };
+
+  const handleUpdatePurchaseOrder = (po: PurchaseOrder) => {
+    if (isReadOnly) {
+      showAppToast("Modo Lectura: No tienes permiso para actualizar órdenes de compra.", "warn");
+      return;
+    }
+    setPurchaseOrders(prev => {
+      const updated = prev.map(p => p.id === po.id ? po : p);
+      localStorage.setItem(STORAGE_KEY_PURCHASE_ORDERS, JSON.stringify(updated));
+      return updated;
+    });
+    addAuditEntry('Actualizar OC', `Orden ${po.poNumber} actualizada a estado ${po.status}`);
+    showAppToast(`Orden ${po.poNumber} actualizada exitosamente`, 'success');
+  };
+
+  const handleDeletePurchaseOrder = (poId: string) => {
+    if (isReadOnly) {
+      showAppToast("Modo Lectura: No tienes permiso para eliminar órdenes de compra.", "warn");
+      return;
+    }
+    setPurchaseOrders(prev => {
+      const po = prev.find(p => p.id === poId);
+      const updated = prev.filter(p => p.id !== poId);
+      localStorage.setItem(STORAGE_KEY_PURCHASE_ORDERS, JSON.stringify(updated));
+      if (po) {
+        addAuditEntry('Eliminar OC', `Orden ${po.poNumber} eliminada`);
+      }
+      return updated;
+    });
+    showAppToast('Orden de compra eliminada', 'success');
   };
 
   useEffect(() => {
@@ -1475,13 +1537,26 @@ export default function App() {
           <button
             onClick={() => setSelectedTab('users')}
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer hover:bg-slate-50 ${
-              selectedTab === 'users' 
-                ? "text-blue-600 border-b-2 border-blue-600 bg-slate-50 font-extrabold" 
+              selectedTab === 'users'
+                ? "text-blue-600 border-b-2 border-blue-600 bg-slate-50 font-extrabold"
                 : "text-slate-500 hover:text-slate-950"
             }`}
           >
             <Lock size={15} className="text-indigo-500" />
             <span className="font-extrabold">Base Usuarios</span>
+          </button>
+
+          {/* Purchase Orders tab button */}
+          <button
+            onClick={() => setSelectedTab('purchaseOrders')}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5 cursor-pointer hover:bg-slate-50 ${
+              selectedTab === 'purchaseOrders'
+                ? "text-amber-600 border-b-2 border-amber-600 bg-slate-50 font-extrabold"
+                : "text-slate-500 hover:text-slate-950"
+            }`}
+          >
+            <Briefcase size={15} className="text-amber-500" />
+            <span className="font-extrabold">Órdenes de Compra</span>
           </button>
         </div>
       </nav>
@@ -1598,6 +1673,16 @@ export default function App() {
             showAppToast={showAppToast}
             projects={projects}
             isGlobalAdmin={isGlobalAdmin}
+          />
+        )}
+
+        {selectedTab === 'purchaseOrders' && (
+          <PurchaseOrdersTab
+            contractors={contractors}
+            purchaseOrders={purchaseOrders}
+            onAdd={handleAddPurchaseOrder}
+            onUpdate={handleUpdatePurchaseOrder}
+            onDelete={handleDeletePurchaseOrder}
           />
         )}
       </main>

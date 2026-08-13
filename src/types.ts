@@ -209,4 +209,100 @@ export interface UserBaseEntry {
   projectRoles?: Record<string, 'supervisor' | 'auditor' | 'admin'>;
 }
 
+// ============================================
+// QuickBooks Purchase Order Types
+// ============================================
+
+export interface PurchaseOrderLineItem {
+  id: string;
+  itemName: string;
+  description: string;
+  quantity: number;
+  unit: string; // m2, m3, gl, kg, ud, pcs, etc.
+  unitPrice: number;
+  taxable?: boolean;
+  taxRate?: number;
+}
+
+export interface PurchaseOrder {
+  id: string; // Unique PO identifier (e.g., PO-2026-001)
+  poNumber: string; // QuickBooks PO Number
+  date: string; // ISO date string (creation date)
+  dueDate: string; // Expected delivery/payment date
+  supplierId: string; // Link to supplier/contractor
+  supplierName: string;
+  supplierEmail: string;
+  supplierPhone: string;
+  supplierAddress: string;
+  supplierDocument: string; // RNC/Cédula
+
+  projectId?: string; // Link to project if applicable
+  projectName?: string;
+
+  lineItems: PurchaseOrderLineItem[];
+
+  subtotal: number;
+  discount: number; // Amount or percentage
+  discountType?: 'AMOUNT' | 'PERCENTAGE'; // Default: AMOUNT
+  itbis: number;
+  total: number;
+
+  status: 'BORRADOR' | 'ENVIADA' | 'CONFIRMADA' | 'RECIBIDA' | 'CANCELADA';
+  notes?: string;
+
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+
+  // QuickBooks specific fields
+  qbClassRef?: string; // QuickBooks Class reference
+  qbMemo?: string; // Memo for QuickBooks
+
+  // Control fields
+  approvedBy?: string;
+  approvedAt?: string;
+  receivedBy?: string;
+  receivedAt?: string;
+  invoiceNumber?: string; // Link to supplier invoice
+
+  // Audit trail
+  changes?: AuditLogEntry[];
+}
+
+export interface PurchaseOrderTemplate {
+  id: string;
+  name: string; // e.g., "Suministros de Construcción"
+  description: string;
+  supplierId: string;
+  supplierName: string;
+
+  defaultLineItems: Omit<PurchaseOrderLineItem, 'id'>[];
+  defaultTerms?: string;
+  defaultNotes?: string;
+
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PurchaseOrderControl {
+  id: string;
+  month: string; // YYYY-MM
+  totalOrders: number;
+  totalAmount: number;
+  orders: PurchaseOrder[];
+
+  byStatus: {
+    BORRADOR: number;
+    ENVIADA: number;
+    CONFIRMADA: number;
+    RECIBIDA: number;
+    CANCELADA: number;
+  };
+
+  bySupplier: Record<string, number>; // supplierId -> total amount
+
+  generatedAt: string;
+}
+
 
