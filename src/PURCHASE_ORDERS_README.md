@@ -72,17 +72,39 @@ Haz clic en **"Crear OC"** para guardar
 
 ---
 
-## 📤 Exportar a QuickBooks 15
+## 📤 Exportar a QuickBooks 15 Desktop
 
-### Formato IIF (Recomendado para QB 15)
+### ⭐ Opción 1: Web Connect (MÁS FÁCIL) - Recomendado
+
+**El archivo `.qbwc` abre QuickBooks automáticamente e importa la orden:**
 
 1. Abre la orden que quieres exportar
-2. Haz clic en el botón **"📊 Exportar QuickBooks"** (disponible cuando está en estado ENVIADA)
+2. Haz clic en **"📊 Enviar a QuickBooks Desktop"** (disponible cuando está en estado ENVIADA)
+3. Se descargará un archivo `.qbwc`
+4. **Haz doble clic en el archivo `.qbwc`**
+5. QuickBooks abrirá automáticamente e **importará la orden de compra directamente**
+
+**¡Eso es todo! La orden ya está en QB.**
+
+**Ventajas:**
+✅ Más rápido y fácil  
+✅ QB abre automáticamente  
+✅ No necesitas navegar por menús  
+✅ La orden se crea automáticamente  
+
+---
+
+### Opción 2: IIF (Alternativa)
+
+Si prefieres importar manualmente:
+
+1. Abre la orden
+2. Haz clic en **"📋 Exportar IIF"**
 3. Se descargará un archivo `.iif`
 4. En QuickBooks 15:
    - Ve a **File → Utilities → Import → IIF Files**
-   - Selecciona el archivo descargado
-   - QuickBooks importará automáticamente la orden de compra
+   - Selecciona el archivo
+   - QB importará la orden
 
 **Nota**: El archivo IIF contiene:
 - Información del proveedor
@@ -98,6 +120,32 @@ Haz clic en **"Crear OC"** para guardar
    - Microsoft Excel
    - Google Sheets
    - OpenOffice
+
+---
+
+## 🔧 Configuración para QuickBooks Desktop
+
+### Habilitar Web Connect (primera vez)
+
+Si es la primera vez que usas Web Connect en QB 15:
+
+1. En QuickBooks Desktop, ve a **Edit → Preferences**
+2. Busca **Web Services** o **Web Connect**
+3. Asegúrate que está **habilitado**
+4. Reinicia QuickBooks
+
+### Importar desde Web Connect
+
+**Método automático (recomendado):**
+1. Descarga el archivo `.qbwc` desde la app
+2. Haz doble clic → QB abre automáticamente
+3. Confirma la importación
+4. ¡Listo!
+
+**Método manual (si el anterior no funciona):**
+1. En QuickBooks: **File → Utilities → Web Connect**
+2. Busca el archivo `.qbwc` descargado
+3. QB importará la orden
 
 ---
 

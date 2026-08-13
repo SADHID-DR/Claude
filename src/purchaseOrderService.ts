@@ -201,6 +201,56 @@ export function cancelPurchaseOrder(po: PurchaseOrder): PurchaseOrder {
   };
 }
 
+// Export to QuickBooks QBXML format (for Web Connect integration with QB 15 Desktop)
+export function exportPOToQuickBooksQBXML(po: PurchaseOrder): string {
+  const lines: string[] = [];
+
+  // XML Header
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push('<?qbxml version="13.0"?>');
+  lines.push('<QBXMLMsgsRs onError="stopOnError">');
+  lines.push('  <PurchaseOrderAddRs>');
+
+  // Purchase Order Add Request
+  lines.push('    <PurchaseOrderAdd>');
+  lines.push(`      <VendorRef>${escapeXML(po.supplierName)}</VendorRef>`);
+  lines.push(`      <PoNumber>${escapeXML(po.poNumber)}</PoNumber>`);
+  lines.push(`      <TxnDate>${formatDateForQB(po.date)}</TxnDate>`);
+  lines.push(`      <DueDate>${formatDateForQB(po.dueDate)}</DueDate>`);
+  lines.push(`      <Memo>${escapeXML(po.notes || `Orden de Compra ${po.poNumber}`)}</Memo>`);
+
+  // Line items
+  po.lineItems.forEach((item) => {
+    lines.push('      <PurchaseOrderLineAdd>');
+    lines.push(`        <ItemRef>${escapeXML(item.itemName)}</ItemRef>`);
+    lines.push(`        <Desc>${escapeXML(item.description)}</Desc>`);
+    lines.push(`        <Quantity>${item.quantity}</Quantity>`);
+    lines.push(`        <UnitOfMeasure>${escapeXML(item.unit)}</UnitOfMeasure>`);
+    lines.push(`        <Rate>${item.unitPrice.toFixed(2)}</Rate>`);
+    lines.push('      </PurchaseOrderLineAdd>');
+  });
+
+  // Apply discount if exists
+  if (po.discount > 0) {
+    const discountAmount = po.discountType === 'AMOUNT'
+      ? po.discount
+      : po.subtotal * (po.discount / 100);
+
+    lines.push('      <PurchaseOrderLineAdd>');
+    lines.push('        <ItemRef>Discount Item</ItemRef>');
+    lines.push(`        <Desc>Descuento${po.discountType === 'PERCENTAGE' ? ` ${po.discount}%` : ''}</Desc>`);
+    lines.push('        <Quantity>1</Quantity>');
+    lines.push(`        <Rate>-${discountAmount.toFixed(2)}</Rate>`);
+    lines.push('      </PurchaseOrderLineAdd>');
+  }
+
+  lines.push('    </PurchaseOrderAdd>');
+  lines.push('  </PurchaseOrderAddRs>');
+  lines.push('</QBXMLMsgsRs>');
+
+  return lines.join('\n');
+}
+
 // Export to QuickBooks IIF format (for import into QB 15)
 export function exportPOToQuickBooksIIF(po: PurchaseOrder): string {
   const lines: string[] = [];
@@ -223,6 +273,36 @@ export function exportPOToQuickBooksIIF(po: PurchaseOrder): string {
   lines.push('ENDPO');
 
   return lines.join('\n');
+}
+
+// Generate Web Connect file (.qbwc) for QB Desktop integration
+export function generateWebConnectFile(qbxmlContent: string, fileName: string = 'purchase_order.qbwc'): string {
+  const lines: string[] = [];
+
+  lines.push('<?xml version="1.0"?>');
+  lines.push('<WebConnectResult>');
+  lines.push(`  <ServerVersion>13.0</ServerVersion>`);
+  lines.push(`  <SessionTicket>QB15-DESKTOP-SESSION</SessionTicket>`);
+  lines.push(`  <AppURL>qbpos://localhost:8080/import</AppURL>`);
+  lines.push(`  <CompanyFile>${fileName}</CompanyFile>`);
+  lines.push(`  <QBXMLCountInEnvelope>${qbxmlContent.split('<PurchaseOrderAdd>').length - 1}</QBXMLCountInEnvelope>`);
+  lines.push('  <QBXMLEnvelope onError="stopOnError">');
+  lines.push(qbxmlContent);
+  lines.push('  </QBXMLEnvelope>');
+  lines.push('</WebConnectResult>');
+
+  return lines.join('\n');
+}
+
+// Helper function to escape XML special characters
+function escapeXML(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 // Export to CSV format

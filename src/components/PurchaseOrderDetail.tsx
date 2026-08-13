@@ -22,6 +22,8 @@ import {
   confirmPurchaseOrder,
   markPOAsReceived,
   calculateLineItemTotal,
+  exportPOToQuickBooksQBXML,
+  generateWebConnectFile,
 } from '../purchaseOrderService';
 
 interface PurchaseOrderDetailProps {
@@ -30,7 +32,7 @@ interface PurchaseOrderDetailProps {
   onEdit: () => void;
   onClone: () => void;
   onDelete: () => void;
-  onExport: (format: 'csv' | 'iif') => void;
+  onExport: (format: 'csv' | 'iif' | 'qbwc') => void;
   onClose: () => void;
   onUpdate: (po: PurchaseOrder) => void;
 }
@@ -286,12 +288,21 @@ export default function PurchaseOrderDetail({
                 Exportar CSV
               </button>
               {po.status === 'ENVIADA' && (
-                <button
-                  onClick={() => onExport('iif')}
-                  className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all font-semibold"
-                >
-                  📊 Exportar QuickBooks
-                </button>
+                <>
+                  <button
+                    onClick={() => onExport('qbwc')}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all font-semibold flex items-center justify-center gap-2"
+                    title="Descargar para importar directamente en QB Desktop"
+                  >
+                    📊 Enviar a QuickBooks Desktop
+                  </button>
+                  <button
+                    onClick={() => onExport('iif')}
+                    className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all font-semibold text-sm"
+                  >
+                    📋 Exportar IIF
+                  </button>
+                </>
               )}
               {po.status === 'BORRADOR' && (
                 <button

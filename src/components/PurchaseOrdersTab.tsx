@@ -24,6 +24,8 @@ import {
   clonePurchaseOrder,
   exportPOToCSV,
   exportPOToQuickBooksIIF,
+  exportPOToQuickBooksQBXML,
+  generateWebConnectFile,
 } from '../purchaseOrderService';
 import PurchaseOrderForm from './PurchaseOrderForm';
 import PurchaseOrderDetail from './PurchaseOrderDetail';
@@ -100,9 +102,10 @@ export default function PurchaseOrdersTab({
     }
   };
 
-  const handleExportPO = (po: PurchaseOrder, format: 'csv' | 'iif') => {
+  const handleExportPO = (po: PurchaseOrder, format: 'csv' | 'iif' | 'qbwc') => {
     let content = '';
     let filename = '';
+    let mimeType = 'text/plain';
 
     if (format === 'csv') {
       content = exportPOToCSV(po);
@@ -110,9 +113,14 @@ export default function PurchaseOrdersTab({
     } else if (format === 'iif') {
       content = exportPOToQuickBooksIIF(po);
       filename = `${po.poNumber}.iif`;
+    } else if (format === 'qbwc') {
+      const qbxml = exportPOToQuickBooksQBXML(po);
+      content = generateWebConnectFile(qbxml, po.poNumber);
+      filename = `${po.poNumber}.qbwc`;
+      mimeType = 'application/x-qbwc';
     }
 
-    const blob = new Blob([content], { type: 'text/plain' });
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -283,13 +291,22 @@ export default function PurchaseOrdersTab({
                           <Download className="w-5 h-5" />
                         </button>
                         {po.status === 'ENVIADA' && (
-                          <button
-                            onClick={() => handleExportPO(po, 'iif')}
-                            className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all"
-                            title="Exportar QuickBooks"
-                          >
-                            📊
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleExportPO(po, 'qbwc')}
+                              className="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-all font-bold"
+                              title="Enviar a QuickBooks Desktop"
+                            >
+                              📊
+                            </button>
+                            <button
+                              onClick={() => handleExportPO(po, 'iif')}
+                              className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all text-xs"
+                              title="Exportar IIF"
+                            >
+                              📋
+                            </button>
+                          </>
                         )}
                         {po.status === 'BORRADOR' && (
                           <button
