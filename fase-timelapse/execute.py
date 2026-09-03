@@ -54,8 +54,8 @@ def encode_image_base64(image_path):
     with open(image_path, "rb") as f:
         return base64.standard_b64encode(f.read()).decode("utf-8")
 
-def generate_frame_curl(frame_num, prompt, prev_frame_path):
-    """Generate frame using curl + Gemini API."""
+def generate_frame_nano(frame_num, prompt, prev_frame_path):
+    """Generate frame using Nano Banana (Stable Diffusion img2img)."""
     print(f"\n>>> Generando Frame {frame_num}: {frames_config[frame_num-1]['name']}")
 
     if not Path(prev_frame_path).exists():
@@ -66,31 +66,25 @@ def generate_frame_curl(frame_num, prompt, prev_frame_path):
 
     full_prompt = f"""{prompt}
 
-REQUISITOS CRÍTICOS:
-- Edita la imagen existente, NO crees desde cero
-- Mantén EXACTAMENTE el mismo ángulo de cámara, encuadre y proporciones
-- Luz de día neutra constante
-- Sin transiciones, destellos ni gradación dramática
-- Devuelve SOLO la imagen editada"""
+CRITICAL: maintain exact camera angle, framing, proportions. Constant daylight. No flares, transitions or dramatic effects. Edit existing image, don't create new."""
 
+    # Nano Banana API payload for Stable Diffusion img2img
     payload = {
-        "contents": [{
-            "parts": [
-                {"text": full_prompt},
-                {
-                    "inlineData": {
-                        "mimeType": "image/jpeg",
-                        "data": image_b64
-                    }
-                }
-            ]
-        }]
+        "MODEL_ID": "stabilityai/stable-diffusion-xl-refiner-1.0",
+        "input": {
+            "prompt": full_prompt,
+            "init_image": image_b64,
+            "strength": 0.7,  # How much to modify (0.7 = moderate editing)
+            "guidance_scale": 7.5,
+            "num_inference_steps": 30,
+            "negative_prompt": "blurry, distorted, morphing, lens flare, bloom, dramatic lighting, unrealistic, stylized"
+        }
     }
 
-    # Call Gemini API
     cmd = [
-        "curl", "-s",
-        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}",
+        "curl", "-s", "-X", "POST",
+        "https://api.nanobananai.com/api/v1/image/txt2img",
+        "-H", f"Authorization: Bearer {API_KEY}",
         "-H", "Content-Type: application/json",
         "-d", json.dumps(payload)
     ]
@@ -99,17 +93,20 @@ REQUISITOS CRÍTICOS:
         response_text = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode("utf-8")
         response = json.loads(response_text)
 
-        if "candidates" in response and response["candidates"]:
-            candidate = response["candidates"][0]
-            if "content" in candidate and "parts" in candidate["content"]:
-                for part in candidate["content"]["parts"]:
-                    if "inlineData" in part:
-                        image_data = base64.standard_b64decode(part["inlineData"]["data"])
-                        output_path = f"frames/frame_{frame_num:02d}.jpg"
-                        with open(output_path, "wb") as f:
-                            f.write(image_data)
-                        print(f"✓ Guardado: {output_path}")
-                        return output_path
+        if "images" in response and response["images"]:
+            image_data = base64.standard_b64decode(response["images"][0])
+            output_path = f"frames/frame_{frame_num:02d}.jpg"
+            with open(output_path, "wb") as f:
+                f.write(image_data)
+            print(f"✓ Guardado: {output_path}")
+            return output_path
+        elif "image" in response:
+            image_data = base64.standard_b64decode(response["image"])
+            output_path = f"frames/frame_{frame_num:02d}.jpg"
+            with open(output_path, "wb") as f:
+                f.write(image_data)
+            print(f"✓ Guardado: {output_path}")
+            return output_path
 
         print(f"⚠ Respuesta API: {str(response)[:200]}")
         return None
@@ -130,7 +127,7 @@ current_frame = "frames/frame_00.jpg"
 generated_frames = [current_frame]
 
 for i in range(1, 6):
-    next_frame = generate_frame_curl(i, frames_config[i-1]["prompt"], current_frame)
+    next_frame = generate_frame_nano(i, frames_config[i-1]["prompt"], current_frame)
     if next_frame:
         current_frame = next_frame
         generated_frames.append(next_frame)
