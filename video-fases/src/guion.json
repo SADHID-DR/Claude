@@ -1,0 +1,63 @@
+{
+  "voz": "es-DO-RamonaNeural",
+  "musica": "musica/fondo.mp3",
+  "ancho": 1080,
+  "alto": 1920,
+  "escenas": [
+    {
+      "id": "01-afuera",
+      "titulo": "Sábado, 4:17",
+      "narracion": "Sábado. Cuatro y diecisiete de la tarde. La ciudad sigue corriendo allá afuera, detrás de las palmeras.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [85, 5],
+      "zoom": [2.4, 2.15],
+      "cartel": false,
+      "segundos": 0
+    },
+    {
+      "id": "02-mesa",
+      "titulo": "Mesa de mármol",
+      "narracion": "Aquí adentro manda otra velocidad. Una mesa de mármol, una cerveza fría, un plato que ya cumplió su trabajo.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [25, 100],
+      "zoom": [2.6, 2.9],
+      "cartel": false,
+      "segundos": 0
+    },
+    {
+      "id": "03-karen",
+      "titulo": "Karen",
+      "narracion": "Karen revisa el teléfono con la gorra todavía puesta. No posa. Ignora que esta foto existe.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [44, 44],
+      "zoom": [1.3, 1.75],
+      "cartel": false,
+      "segundos": 0
+    },
+    {
+      "id": "04-pausa",
+      "titulo": "La pausa",
+      "narracion": "Las obras y los plazos esperan hasta el lunes. Esta tarde pertenece a la pausa.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [50, 50],
+      "zoom": [1.25, 1],
+      "cartel": false,
+      "segundos": 0
+    },
+    {
+      "id": "05-cartel",
+      "titulo": "Una viejita roca",
+      "narracion": "",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [44, 40],
+      "zoom": [1, 1.12],
+      "cartel": true,
+      "segundos": 4.5
+    }
+  ]
+}

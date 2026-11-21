@@ -1,0 +1,58 @@
+import { CalculateMetadataFunction, Composition, staticFile } from "remotion";
+import guion from "./guion.json";
+import { existe, medirAudio } from "./duracion";
+import { Video, VideoProps } from "./Video";
+
+const fps = 30;
+const respiro = 15;
+const palabrasPorSegundo = 2.5;
+
+const calculateMetadata: CalculateMetadataFunction<VideoProps> = async () => {
+  const escenas = await Promise.all(
+    guion.escenas.map(async (escena) => {
+      const audio = staticFile(`audio/${escena.id}.mp3`);
+      const foto = staticFile(escena.foto);
+      const narrada = escena.narracion.trim().length > 0;
+      const medido = narrada ? await medirAudio(audio) : null;
+      const estimado =
+        escena.narracion.trim().split(/\s+/).length / palabrasPorSegundo;
+      return {
+        id: escena.id,
+        titulo: escena.titulo,
+        puntos: escena.puntos as string[],
+        foco: escena.foco,
+        zoom: escena.zoom,
+        cartel: escena.cartel,
+        foto: (await existe(foto)) ? foto : null,
+        audio: medido === null ? null : audio,
+        frames: narrada
+          ? Math.ceil((medido ?? estimado) * fps) + respiro
+          : Math.round(escena.segundos * fps),
+      };
+    }),
+  );
+
+  const musica = staticFile(guion.musica);
+
+  return {
+    width: guion.ancho,
+    height: guion.alto,
+    durationInFrames: escenas.reduce((suma, escena) => suma + escena.frames, 0),
+    props: { escenas, musica: (await existe(musica)) ? musica : null },
+  };
+};
+
+export const RemotionRoot: React.FC = () => {
+  return (
+    <Composition
+      id="Video"
+      component={Video}
+      durationInFrames={300}
+      fps={fps}
+      width={guion.ancho}
+      height={guion.alto}
+      defaultProps={{ escenas: [], musica: null }}
+      calculateMetadata={calculateMetadata}
+    />
+  );
+};
