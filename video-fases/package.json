@@ -1,7 +1,7 @@
 {
   "name": "video-fases",
   "version": "1.0.0",
-  "description": "My Remotion video",
+  "description": "Videos animados con narración en español",
   "repository": {},
   "license": "UNLICENSED",
   "engines": {
@@ -10,6 +10,8 @@
   "private": true,
   "dependencies": {
     "@remotion/cli": "4.0.545",
+    "@remotion/media": "4.0.545",
+    "mediabunny": "1.66.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "remotion": "4.0.545"
@@ -26,7 +28,9 @@
     "dev": "remotion studio",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src && tsc",
+    "voz": "python voz.py",
+    "video": "npm run voz && remotion render Video out/video.mp4"
   },
   "allowScripts": {
     "esbuild": false

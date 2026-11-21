@@ -1,0 +1,20 @@
+{
+  "voz": "es-DO-RamonaNeural",
+  "escenas": [
+    {
+      "id": "01-apertura",
+      "titulo": "Título de la primera escena",
+      "narracion": "Este texto de ejemplo ocupa el lugar de la narración. Sustitúyelo por el guion definitivo.",
+      "puntos": ["Primer dato en pantalla", "Segundo dato en pantalla"]
+    },
+    {
+      "id": "02-cierre",
+      "titulo": "Título de la segunda escena",
+      "narracion": "Cada escena dura exactamente lo que dura su audio, más medio segundo de respiro.",
+      "puntos": [
+        "Duración tomada del MP3",
+        "Sin audio, estimación por palabras"
+      ]
+    }
+  ]
+}

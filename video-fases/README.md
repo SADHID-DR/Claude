@@ -1,54 +1,27 @@
-# Remotion video
+# video-fases
 
-<p align="center">
-  <a href="https://github.com/remotion-dev/logo">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-dark.apng">
-      <img alt="Animated Remotion Logo" src="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-light.gif">
-    </picture>
-  </a>
-</p>
+Videos MP4 con animación Remotion y narración en español generada con edge-tts.
 
-Welcome to your Remotion project!
+## Instalación
 
-## Commands
-
-**Install Dependencies**
-
-```console
-npm i --loglevel=error
+```bash
+npm install
+pip install -r requirements.txt
 ```
 
-**Start Preview**
+## Uso
 
-```console
-npm run dev
-```
+1. Edita `src/guion.json`. Cada escena lleva `id`, `titulo`, `narracion` y `puntos`.
+2. Ejecuta `npm run video`. Genera un MP3 por escena en `public/audio` y renderiza `out/video.mp4`.
 
-**Render video**
+`npm run voz` genera solo los audios. Reutiliza los MP3 cuya narración no cambió.
 
-```console
-npx remotion render
-```
+`npm run dev` abre Remotion Studio para previsualizar.
 
-**Upgrade Remotion**
+## Sincronía
 
-```console
-npx remotion upgrade
-```
+Cada escena dura lo que mide su MP3 más medio segundo. Sin MP3, la duración sale de una estimación de 2.5 palabras por segundo y el video queda mudo.
 
-## Docs
+## Voces
 
-Get started with Remotion by reading the [fundamentals page](https://www.remotion.dev/docs/the-fundamentals).
-
-## Help
-
-We provide help on our [Discord server](https://discord.gg/6VzzNDwUwV).
-
-## Issues
-
-Found an issue with Remotion? [File an issue here](https://github.com/remotion-dev/remotion/issues/new).
-
-## License
-
-Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+`es-DO-RamonaNeural` y `es-DO-EmilioNeural`. Lista completa con `edge-tts --list-voices`. La voz se fija en el campo `voz` del guion.
