@@ -1,5 +1,7 @@
 import {
   AbsoluteFill,
+  Easing,
+  Img,
   interpolate,
   spring,
   useCurrentFrame,
@@ -9,7 +11,7 @@ import type { EscenaProps } from "./Video";
 
 const tinta = "#f4f1ea";
 const acento = "#f2a33a";
-const tenue = "rgba(244, 241, 234, 0.55)";
+const fondo = "#0e1a2b";
 
 export const Escena: React.FC<{
   escena: EscenaProps;
@@ -17,74 +19,96 @@ export const Escena: React.FC<{
   total: number;
 }> = ({ escena, numero, total }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width } = useVideoConfig();
+  const u = width / 1080;
+  const margen = 80 * u;
 
-  const opacidad = interpolate(
+  const escala = interpolate(frame, [0, escena.frames], escena.zoom, {
+    easing: Easing.inOut(Easing.ease),
+    extrapolateRight: "clamp",
+  });
+
+  const telon = interpolate(
     frame,
-    [0, 10, escena.frames - 10, escena.frames],
+    [0, 20, escena.frames - 25, escena.frames],
+    [numero === 1 ? 1 : 0, 0, 0, numero === total ? 1 : 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+
+  const texto = interpolate(
+    frame,
+    [8, 22, escena.frames - 14, escena.frames - 4],
     [0, 1, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
-  const entradaTitulo = spring({ frame, fps, config: { damping: 200 } });
+  const entrada = spring({ frame: frame - 8, fps, config: { damping: 200 } });
   const tramo = (escena.frames - fps) / (escena.puntos.length + 1);
-  const avance = interpolate(frame, [0, escena.frames], [0, 100], {
-    extrapolateRight: "clamp",
-  });
 
   return (
-    <AbsoluteFill
-      style={{
-        opacity: opacidad,
-        padding: "120px 140px",
-        fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-        color: tinta,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 30,
-          letterSpacing: 6,
-          color: acento,
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {String(numero).padStart(2, "0")} / {String(total).padStart(2, "0")}
-      </div>
+    <AbsoluteFill style={{ backgroundColor: fondo, color: tinta }}>
+      {escena.foto ? (
+        <Img
+          src={escena.foto}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: `scale(${escala})`,
+            transformOrigin: `${escena.foco[0]}% ${escena.foco[1]}%`,
+          }}
+        />
+      ) : null}
 
-      <h1
+      <AbsoluteFill
         style={{
-          margin: "28px 0 0",
-          fontSize: 96,
-          lineHeight: 1.05,
-          fontWeight: 700,
-          maxWidth: 1400,
-          opacity: entradaTitulo,
-          transform: `translateY(${interpolate(entradaTitulo, [0, 1], [40, 0])}px)`,
-        }}
-      >
-        {escena.titulo}
-      </h1>
-
-      <div
-        style={{
-          width: interpolate(entradaTitulo, [0, 1], [0, 220]),
-          height: 8,
-          marginTop: 40,
-          backgroundColor: acento,
+          background:
+            "linear-gradient(180deg, rgba(14,26,43,0.35) 0%, rgba(14,26,43,0) 22%, rgba(14,26,43,0) 52%, rgba(14,26,43,0.92) 100%)",
         }}
       />
 
-      <div
+      <AbsoluteFill
         style={{
-          marginTop: 64,
-          display: "flex",
-          flexDirection: "column",
-          gap: 30,
+          justifyContent: "flex-end",
+          padding: `${margen}px ${margen}px ${150 * u}px`,
+          fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+          opacity: texto,
         }}
       >
+        <div
+          style={{
+            fontSize: 30 * u,
+            letterSpacing: 6 * u,
+            color: acento,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {String(numero).padStart(2, "0")} / {String(total).padStart(2, "0")}
+        </div>
+
+        <h1
+          style={{
+            margin: `${20 * u}px 0 0`,
+            fontSize: 104 * u,
+            lineHeight: 1.04,
+            fontWeight: 700,
+            transform: `translateY(${interpolate(entrada, [0, 1], [40 * u, 0])}px)`,
+          }}
+        >
+          {escena.titulo}
+        </h1>
+
+        <div
+          style={{
+            width: interpolate(entrada, [0, 1], [0, 200 * u]),
+            height: 8 * u,
+            marginTop: 32 * u,
+            backgroundColor: acento,
+          }}
+        />
+
         {escena.puntos.map((punto, indice) => {
-          const entrada = spring({
+          const aparece = spring({
             frame: frame - Math.round(tramo * (indice + 1)),
             fps,
             config: { damping: 200 },
@@ -93,35 +117,19 @@ export const Escena: React.FC<{
             <div
               key={punto}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 28,
-                fontSize: 52,
-                opacity: entrada,
-                transform: `translateX(${interpolate(entrada, [0, 1], [-50, 0])}px)`,
+                marginTop: 28 * u,
+                fontSize: 46 * u,
+                opacity: aparece,
+                transform: `translateX(${interpolate(aparece, [0, 1], [-40 * u, 0])}px)`,
               }}
             >
-              <div style={{ width: 18, height: 18, backgroundColor: acento }} />
               {punto}
             </div>
           );
         })}
-      </div>
+      </AbsoluteFill>
 
-      <div
-        style={{
-          position: "absolute",
-          left: 140,
-          right: 140,
-          bottom: 90,
-          height: 4,
-          backgroundColor: tenue,
-        }}
-      >
-        <div
-          style={{ width: `${avance}%`, height: 4, backgroundColor: acento }}
-        />
-      </div>
+      <AbsoluteFill style={{ backgroundColor: fondo, opacity: telon }} />
     </AbsoluteFill>
   );
 };

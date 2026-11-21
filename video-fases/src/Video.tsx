@@ -5,8 +5,10 @@ import { Escena } from "./Escena";
 export type EscenaProps = {
   id: string;
   titulo: string;
-  narracion: string;
   puntos: string[];
+  foto: string | null;
+  foco: number[];
+  zoom: number[];
   audio: string | null;
   frames: number;
 };

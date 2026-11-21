@@ -1,20 +1,43 @@
 {
   "voz": "es-DO-RamonaNeural",
+  "ancho": 1080,
+  "alto": 1920,
   "escenas": [
     {
-      "id": "01-apertura",
-      "titulo": "Título de la primera escena",
-      "narracion": "Este texto de ejemplo ocupa el lugar de la narración. Sustitúyelo por el guion definitivo.",
-      "puntos": ["Primer dato en pantalla", "Segundo dato en pantalla"]
+      "id": "01-afuera",
+      "titulo": "Sábado, 4:17",
+      "narracion": "Sábado. Cuatro y diecisiete de la tarde. La ciudad sigue corriendo allá afuera, detrás de las palmeras.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [85, 5],
+      "zoom": [2.4, 2.15]
     },
     {
-      "id": "02-cierre",
-      "titulo": "Título de la segunda escena",
-      "narracion": "Cada escena dura exactamente lo que dura su audio, más medio segundo de respiro.",
-      "puntos": [
-        "Duración tomada del MP3",
-        "Sin audio, estimación por palabras"
-      ]
+      "id": "02-mesa",
+      "titulo": "Mesa de mármol",
+      "narracion": "Aquí adentro manda otra velocidad. Una mesa de mármol, una cerveza fría, un plato que ya cumplió su trabajo.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [25, 100],
+      "zoom": [2.6, 2.9]
+    },
+    {
+      "id": "03-ella",
+      "titulo": "Ella",
+      "narracion": "Ella revisa el teléfono con la gorra todavía puesta. No posa. Ignora que esta foto existe.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [44, 44],
+      "zoom": [1.3, 1.75]
+    },
+    {
+      "id": "04-pausa",
+      "titulo": "La pausa",
+      "narracion": "Las obras y los plazos esperan hasta el lunes. Esta tarde pertenece a la pausa.",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [50, 50],
+      "zoom": [1.25, 1]
     }
   ]
 }

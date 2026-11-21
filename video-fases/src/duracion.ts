@@ -1,11 +1,19 @@
 import { ALL_FORMATS, Input, UrlSource } from "mediabunny";
 
-export const medirAudio = async (src: string): Promise<number | null> => {
+export const existe = async (src: string): Promise<boolean> => {
   try {
     const respuesta = await fetch(src, { method: "HEAD" });
-    if (!respuesta.ok) {
-      return null;
-    }
+    return respuesta.ok;
+  } catch {
+    return false;
+  }
+};
+
+export const medirAudio = async (src: string): Promise<number | null> => {
+  if (!(await existe(src))) {
+    return null;
+  }
+  try {
     const entrada = new Input({
       formats: ALL_FORMATS,
       source: new UrlSource(src),
