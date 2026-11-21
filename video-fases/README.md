@@ -30,3 +30,7 @@ Cada escena dura lo que mide su MP3 más medio segundo. Sin MP3, la duración sa
 ## Fotos
 
 `foco` marca el punto de la imagen hacia el que se acerca la cámara, en porcentaje horizontal y vertical. `zoom` fija la escala inicial y final de la escena. `ancho` y `alto` del guion definen el formato del video.
+
+## Música
+
+`musica` en el guion apunta a un archivo dentro de `public`. Suena atenuada bajo la narración y sube en las escenas sin voz. `public/musica/fondo.mp3` es una pista ambiental sintetizada para este proyecto, sin derechos de terceros.

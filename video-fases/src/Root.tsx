@@ -32,11 +32,13 @@ const calculateMetadata: CalculateMetadataFunction<VideoProps> = async () => {
     }),
   );
 
+  const musica = staticFile(guion.musica);
+
   return {
     width: guion.ancho,
     height: guion.alto,
     durationInFrames: escenas.reduce((suma, escena) => suma + escena.frames, 0),
-    props: { escenas },
+    props: { escenas, musica: (await existe(musica)) ? musica : null },
   };
 };
 
@@ -49,7 +51,7 @@ export const RemotionRoot: React.FC = () => {
       fps={fps}
       width={guion.ancho}
       height={guion.alto}
-      defaultProps={{ escenas: [] }}
+      defaultProps={{ escenas: [], musica: null }}
       calculateMetadata={calculateMetadata}
     />
   );

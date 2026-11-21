@@ -1,5 +1,6 @@
 {
   "voz": "es-DO-RamonaNeural",
+  "musica": "musica/fondo.mp3",
   "ancho": 1080,
   "alto": 1920,
   "escenas": [
