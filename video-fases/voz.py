@@ -11,6 +11,8 @@ if not os.path.isdir(carpeta):
     os.makedirs(carpeta)
 
 for escena in guion["escenas"]:
+    if not escena["narracion"].strip():
+        continue
     destino = os.path.join(carpeta, escena["id"] + ".mp3")
     huella = os.path.join(carpeta, escena["id"] + ".txt")
     firma = guion["voz"] + "\n" + escena["narracion"]

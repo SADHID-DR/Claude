@@ -67,67 +67,124 @@ export const Escena: React.FC<{
         }}
       />
 
-      <AbsoluteFill
-        style={{
-          justifyContent: "flex-end",
-          padding: `${margen}px ${margen}px ${150 * u}px`,
-          fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-          opacity: texto,
-        }}
-      >
-        <div
+      {escena.cartel ? (
+        <AbsoluteFill
           style={{
-            fontSize: 30 * u,
-            letterSpacing: 6 * u,
-            color: acento,
-            fontVariantNumeric: "tabular-nums",
+            backgroundColor: "rgba(14, 26, 43, 0.62)",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            padding: `${margen}px ${margen}px ${260 * u}px`,
+            fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+            textAlign: "center",
           }}
         >
-          {String(numero).padStart(2, "0")} / {String(total).padStart(2, "0")}
-        </div>
-
-        <h1
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: `0 ${34 * u}px`,
+              fontSize: 168 * u,
+              lineHeight: 1.02,
+              fontWeight: 800,
+            }}
+          >
+            {escena.titulo.split(" ").map((palabra, indice) => {
+              const golpe = spring({
+                frame: frame - 12 - indice * 9,
+                fps,
+                config: { damping: 14, stiffness: 160 },
+              });
+              return (
+                <span
+                  key={palabra + indice}
+                  style={{
+                    display: "inline-block",
+                    opacity: Math.min(1, golpe * 2),
+                    transform: `scale(${interpolate(golpe, [0, 1], [1.5, 1])})`,
+                  }}
+                >
+                  {palabra}
+                </span>
+              );
+            })}
+          </div>
+          <div
+            style={{
+              width: interpolate(
+                spring({ frame: frame - 45, fps, config: { damping: 200 } }),
+                [0, 1],
+                [0, 320 * u],
+              ),
+              height: 10 * u,
+              marginTop: 48 * u,
+              backgroundColor: acento,
+            }}
+          />
+        </AbsoluteFill>
+      ) : (
+        <AbsoluteFill
           style={{
-            margin: `${20 * u}px 0 0`,
-            fontSize: 104 * u,
-            lineHeight: 1.04,
-            fontWeight: 700,
-            transform: `translateY(${interpolate(entrada, [0, 1], [40 * u, 0])}px)`,
+            justifyContent: "flex-end",
+            padding: `${margen}px ${margen}px ${150 * u}px`,
+            fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+            opacity: texto,
           }}
         >
-          {escena.titulo}
-        </h1>
+          <div
+            style={{
+              fontSize: 30 * u,
+              letterSpacing: 6 * u,
+              color: acento,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {String(numero).padStart(2, "0")} / {String(total).padStart(2, "0")}
+          </div>
 
-        <div
-          style={{
-            width: interpolate(entrada, [0, 1], [0, 200 * u]),
-            height: 8 * u,
-            marginTop: 32 * u,
-            backgroundColor: acento,
-          }}
-        />
+          <h1
+            style={{
+              margin: `${20 * u}px 0 0`,
+              fontSize: 104 * u,
+              lineHeight: 1.04,
+              fontWeight: 700,
+              transform: `translateY(${interpolate(entrada, [0, 1], [40 * u, 0])}px)`,
+            }}
+          >
+            {escena.titulo}
+          </h1>
 
-        {escena.puntos.map((punto, indice) => {
-          const aparece = spring({
-            frame: frame - Math.round(tramo * (indice + 1)),
-            fps,
-            config: { damping: 200 },
-          });
-          return (
-            <div
-              key={punto}
-              style={{
-                marginTop: 28 * u,
-                fontSize: 46 * u,
-                opacity: aparece,
-                transform: `translateX(${interpolate(aparece, [0, 1], [-40 * u, 0])}px)`,
-              }}
-            >
-              {punto}
-            </div>
-          );
-        })}
-      </AbsoluteFill>
+          <div
+            style={{
+              width: interpolate(entrada, [0, 1], [0, 200 * u]),
+              height: 8 * u,
+              marginTop: 32 * u,
+              backgroundColor: acento,
+            }}
+          />
+
+          {escena.puntos.map((punto, indice) => {
+            const aparece = spring({
+              frame: frame - Math.round(tramo * (indice + 1)),
+              fps,
+              config: { damping: 200 },
+            });
+            return (
+              <div
+                key={punto}
+                style={{
+                  marginTop: 28 * u,
+                  fontSize: 46 * u,
+                  opacity: aparece,
+                  transform: `translateX(${interpolate(aparece, [0, 1], [-40 * u, 0])}px)`,
+                }}
+              >
+                {punto}
+              </div>
+            );
+          })}
+        </AbsoluteFill>
+      )}
 
       <AbsoluteFill style={{ backgroundColor: fondo, opacity: telon }} />
     </AbsoluteFill>

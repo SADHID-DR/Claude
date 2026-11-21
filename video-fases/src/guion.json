@@ -10,7 +10,9 @@
       "puntos": [],
       "foto": "fotos/terraza.jpg",
       "foco": [85, 5],
-      "zoom": [2.4, 2.15]
+      "zoom": [2.4, 2.15],
+      "cartel": false,
+      "segundos": 0
     },
     {
       "id": "02-mesa",
@@ -19,7 +21,9 @@
       "puntos": [],
       "foto": "fotos/terraza.jpg",
       "foco": [25, 100],
-      "zoom": [2.6, 2.9]
+      "zoom": [2.6, 2.9],
+      "cartel": false,
+      "segundos": 0
     },
     {
       "id": "03-karen",
@@ -28,7 +32,9 @@
       "puntos": [],
       "foto": "fotos/terraza.jpg",
       "foco": [44, 44],
-      "zoom": [1.3, 1.75]
+      "zoom": [1.3, 1.75],
+      "cartel": false,
+      "segundos": 0
     },
     {
       "id": "04-pausa",
@@ -37,7 +43,20 @@
       "puntos": [],
       "foto": "fotos/terraza.jpg",
       "foco": [50, 50],
-      "zoom": [1.25, 1]
+      "zoom": [1.25, 1],
+      "cartel": false,
+      "segundos": 0
+    },
+    {
+      "id": "05-cartel",
+      "titulo": "Una viejita roca",
+      "narracion": "",
+      "puntos": [],
+      "foto": "fotos/terraza.jpg",
+      "foco": [44, 40],
+      "zoom": [1, 1.12],
+      "cartel": true,
+      "segundos": 4
     }
   ]
 }

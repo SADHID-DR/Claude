@@ -9,6 +9,7 @@ export type EscenaProps = {
   foto: string | null;
   foco: number[];
   zoom: number[];
+  cartel: boolean;
   audio: string | null;
   frames: number;
 };

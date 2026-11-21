@@ -12,7 +12,8 @@ const calculateMetadata: CalculateMetadataFunction<VideoProps> = async () => {
     guion.escenas.map(async (escena) => {
       const audio = staticFile(`audio/${escena.id}.mp3`);
       const foto = staticFile(escena.foto);
-      const medido = await medirAudio(audio);
+      const narrada = escena.narracion.trim().length > 0;
+      const medido = narrada ? await medirAudio(audio) : null;
       const estimado =
         escena.narracion.trim().split(/\s+/).length / palabrasPorSegundo;
       return {
@@ -21,9 +22,12 @@ const calculateMetadata: CalculateMetadataFunction<VideoProps> = async () => {
         puntos: escena.puntos as string[],
         foco: escena.foco,
         zoom: escena.zoom,
+        cartel: escena.cartel,
         foto: (await existe(foto)) ? foto : null,
         audio: medido === null ? null : audio,
-        frames: Math.ceil((medido ?? estimado) * fps) + respiro,
+        frames: narrada
+          ? Math.ceil((medido ?? estimado) * fps) + respiro
+          : Math.round(escena.segundos * fps),
       };
     }),
   );
